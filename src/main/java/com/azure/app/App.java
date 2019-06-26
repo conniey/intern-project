@@ -18,6 +18,7 @@ public class App {
         System.out.print("Welcome! ");
         Scanner sc = new Scanner(System.in);
         int choice;
+
         do {
             showMenu();
             String option = sc.nextLine();
@@ -39,7 +40,6 @@ public class App {
                     System.out.println("Please try again.");
             }
         } while (choice != 5);
-
     }
 
     private static void showMenu() {
@@ -56,7 +56,17 @@ public class App {
     }
 
     private static void addBook() {
+        Scanner sc = new Scanner(System.in);
         System.out.println("Please enter the following information:");
+        String title;
+        String author;
+        System.out.println("1. Title?");
+        title = sc.nextLine();
+        System.out.println("2. Author?");
+        author = sc.nextLine();
+        System.out.println("3. Cover image?");
+        System.out.println("4. Save? Enter 'Y' or 'N'.");
+
     }
 
     private static void findBook() {
@@ -78,6 +88,25 @@ public class App {
             System.out.print("Please enter a numerical value. ");
         }
         return choice;
+    }
+}
+
+class Book {
+    private String title;
+    private String author;
+
+    Book() {
+    }
+
+    ;
+
+    public String getTitle() {
+        return title;
+
+    }
+
+    public String getAuthor() {
+        return author;
     }
 }
 
