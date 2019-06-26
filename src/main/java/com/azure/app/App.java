@@ -72,6 +72,10 @@ public class App {
 
     private static int checkOption(String option) {
         int choice = -1;
+        if (option.isEmpty()) {
+            System.out.println("Please enter a value.");
+            return choice;
+        }
         try {
             choice = Integer.parseInt(option);
             if (choice > 5 || choice < 1) {
