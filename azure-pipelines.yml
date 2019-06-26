@@ -6,6 +6,9 @@
 trigger:
 - master
 
+variables:
+  LoggingOptions: '-Dorg.slf4j.simpleLogger.defaultLogLevel=error -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn'
+
 pool:
   vmImage: 'ubuntu-latest'
 
@@ -15,7 +18,7 @@ steps:
   inputs:
     mavenPomFile: 'pom.xml'
     goals: 'compile'
-    mavenOptions: '-Xmx3072m'
+    mavenOptions: '$(LoggingOptions)'
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.8'
     jdkArchitectureOption: 'x64'
@@ -25,7 +28,7 @@ steps:
   inputs:
     mavenPomFile: 'pom.xml'
     goals: 'test'
-    mavenOptions: '-Xmx3072m'
+    mavenOptions: '$(LoggingOptions)'
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.8'
     jdkArchitectureOption: 'x64'
