@@ -11,15 +11,46 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <packageOutputDirectory>${project.build.directory}</packageOutputDirectory>
+
+    <!-- All the plugin and dependency versions. -->
+    <checkstyle.version>8.18</checkstyle.version>
+    <junit.version>3.8.1</junit.version>
+
+    <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
+    <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+    <maven-jar-plugin.version>3.0.2</maven-jar-plugin.version>
+    <maven-jxr-plugin.version>3.0.0</maven-jxr-plugin.version>
+    <maven-project-info-reports-plugin.version>3.0.0</maven-project-info-reports-plugin.version>
+    <maven-site-plugin.version>3.7.1</maven-site-plugin.version>
   </properties>
 
   <build>
+    <plugins>
+      <!-- This plugin scans checkstyle issues in the code -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
+
+      <!-- Configure the jar plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <outputDirectory>${packageOutputDirectory}</outputDirectory>
+        </configuration>
+      </plugin>
+    </plugins>
+
+    <!-- Manage plugins for this project. -->
     <pluginManagement>
       <plugins>
+        <!-- To compile code. -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.0</version>
+          <version>${maven-compiler-plugin.version}</version>
           <configuration>
             <source>1.8</source>
             <target>1.8</target>
@@ -33,23 +64,25 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${maven-checkstyle-plugin.version}</version>
           <dependencies>
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.18</version>
+              <version>${checkstyle.version}</version>
             </dependency>
           </dependencies>
           <configuration>
             <configLocation>checkstyle.xml</configLocation>
-            <failsOnError>true</failsOnError>
-            <failOnViolation>true</failOnViolation>
+            <propertyExpansion>samedir=</propertyExpansion>
             <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
+            <linkXRef>true</linkXRef>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
             <failsOnError>true</failsOnError>
-            <linkXRef>false</linkXRef>
-            <propertyExpansion>samedir=</propertyExpansion>
+            <failOnViolation>true</failOnViolation>
           </configuration>
+
           <executions>
             <execution>
               <id>validate</id>
@@ -60,16 +93,34 @@
             </execution>
           </executions>
         </plugin>
+
+        <!-- This plugin provides the capability to build jars. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar-plugin.version}</version>
+        </plugin>
+
+        <!-- This plugin is used to generate project's site and reports -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>${maven-site-plugin.version}</version>
+          <configuration>
+            <relativizeDecorationLinks>false</relativizeDecorationLinks>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
 
+  <!-- Configuration when generating mvn site. -->
   <reporting>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>${maven-checkstyle-plugin.version}</version>
         <configuration>
           <encoding>UTF-8</encoding>
           <consoleOutput>true</consoleOutput>
@@ -84,6 +135,18 @@
           </reportSet>
         </reportSets>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>${maven-project-info-reports-plugin.version}</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>${maven-jxr-plugin.version}</version>
+      </plugin>
     </plugins>
   </reporting>
 
@@ -91,7 +154,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
