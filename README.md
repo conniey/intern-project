@@ -1,5 +1,8 @@
 # Book inventory console app
 
+Build Status:
+[![Build Status](https://dev.azure.com/conniey0950/intern%20project/_apis/build/status/conniey.intern-project?branchName=master)](https://dev.azure.com/conniey0950/intern%20project/_build/latest?definitionId=1&branchName=master)
+
 # Overview
 
 The book inventory application can do multiple things, it can store books, search books, list books and delete books.
