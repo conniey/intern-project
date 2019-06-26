@@ -13,10 +13,16 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        System.out.println("Hello World!");
-        for (int i = 1; i < 11; i++) {
-            System.out.println(i);
-        }
-        System.out.println("Goodbye");
+        showMenu();
     }
+
+    public static void showMenu() {
+        System.out.println("Welcome! Select one of the options below (1 - 5).");
+        System.out.println("1. List books");
+        System.out.println("2. Add a book");
+        System.out.println("3. Find a book");
+        System.out.println("4. Delete book");
+        System.out.println("5. Quit");
+    }
+
 }
