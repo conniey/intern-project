@@ -16,11 +16,14 @@ public class App {
      */
     public static void main(String[] args) {
         System.out.print("Welcome! ");
-        showMenu();
         Scanner sc = new Scanner(System.in);
-        int option = sc.nextInt();
-        while (option != 5) {
-            switch (option) {
+
+        int choice;
+        do {
+            showMenu();
+            String option = sc.nextLine();
+            choice = checkOption(option);
+            switch (choice) {
                 case 1: {
                     listBooks();
                     break;
@@ -38,9 +41,7 @@ public class App {
                     break;
                 }
             }
-            showMenu();
-            option = sc.nextInt();
-        }
+        } while (choice != 5);
     }
 
 
@@ -67,5 +68,18 @@ public class App {
 
     private static void deleteBook() {
         System.out.println("Enter the title of the book to delete: ");
+    }
+
+    private static int checkOption(String option) {
+        int choice = -1;
+        try {
+            choice = Integer.parseInt(option);
+            if (choice > 5 || choice < 1) {
+                System.out.println("Incorrect entry. Please try again.");
+            }
+        } catch (NumberFormatException ex) {
+            System.out.println("Incorrect entry. Please try again.");
+        }
+        return choice;
     }
 }
