@@ -17,7 +17,7 @@ public class App {
     public static void main(String[] args) {
         System.out.print("Welcome! ");
         Scanner sc = new Scanner(System.in);
-        int choice = -1;
+        int choice;
         do {
             showMenu();
             String option = sc.nextLine();
