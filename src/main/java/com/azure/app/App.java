@@ -17,33 +17,30 @@ public class App {
     public static void main(String[] args) {
         System.out.print("Welcome! ");
         Scanner sc = new Scanner(System.in);
-
-        int choice;
+        int choice = -1;
         do {
             showMenu();
             String option = sc.nextLine();
             choice = checkOption(option);
             switch (choice) {
-                case 1: {
+                case 1:
                     listBooks();
                     break;
-                }
-                case 2: {
+                case 2:
                     addBook();
                     break;
-                }
-                case 3: {
+                case 3:
                     findBook();
                     break;
-                }
-                case 4: {
+                case 4:
                     deleteBook();
                     break;
-                }
+                default:
+                    System.out.println("Please try again.");
             }
         } while (choice != 5);
-    }
 
+    }
 
     private static void showMenu() {
         System.out.println("Select one of the options  below (1 - 5).");
@@ -74,16 +71,14 @@ public class App {
         int choice = -1;
         if (option.isEmpty()) {
             System.out.println("Please enter a value.");
-            return choice;
         }
         try {
             choice = Integer.parseInt(option);
-            if (choice > 5 || choice < 1) {
-                System.out.println("Incorrect entry. Please try again.");
-            }
         } catch (NumberFormatException ex) {
-            System.out.println("Incorrect entry. Please try again.");
+            System.out.print("Please enter a numerical value. ");
         }
         return choice;
     }
 }
+
+
