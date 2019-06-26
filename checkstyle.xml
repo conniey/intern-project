@@ -242,7 +242,6 @@ page at http://checkstyle.sourceforge.net/config.html -->
       <property name="packageAllowed" value="true"/>
     </module>
 
-
     <!-- Miscellaneous other checks.                   -->
     <!-- See http://checkstyle.sf.net/config_misc.html -->
     <module name="ArrayTypeStyle"/>
@@ -260,23 +259,5 @@ page at http://checkstyle.sourceforge.net/config.html -->
     <module name="JavadocMethod">
       <property name="scope" value="protected"/>
     </module>
-
-    <!-- Verifies that all throws in the public API have JavaDocs explaining why and when they are thrown. -->
-    <!-- The check verifies both checked (in the throws clause) and unchecked throws -->
-    <module name="com.azure.tools.checkstyle.checks.JavadocThrowsChecks"/>
-
-    <!-- CUSTOM CHECKS -->
-    <!-- Verifies that subclasses of ServiceClient meet a set of guidelines.
-    1) They cannot have public or protected constructors
-    2) They must implement a public static method named builder
-    -->
-    <module name="com.azure.tools.checkstyle.checks.ServiceClientChecks"/>
-
-    <!--CUSTOM CHECKS-->
-    <!--Checks for the public API that should
-     1) not return classes in the implementation package
-     2) no class of implementation package as method's parameters -->
-    <module name="com.azure.tools.checkstyle.checks.NoImplInPublicAPI"/>
-
   </module>
 </module>
