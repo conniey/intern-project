@@ -3,6 +3,7 @@
 
 package com.azure.app;
 
+import java.io.File;
 import java.util.Scanner;
 
 /**
@@ -35,6 +36,9 @@ public class App {
                 case 4:
                     deleteBook();
                     break;
+                case 5:
+                    System.out.println("Goodbye.");
+                    break;
                 default:
                     System.out.println("Please try again.");
             }
@@ -59,12 +63,32 @@ public class App {
         System.out.println("Please enter the following information:");
         String title;
         String author;
-        System.out.println("1. Title?");
-        title = sc.nextLine();
-        System.out.println("2. Author?");
-        author = sc.nextLine();
-        System.out.println("3. Cover image?");
-        System.out.println("4. Save? Enter 'Y' or 'N'.");
+        File path = null;
+        do {
+            System.out.println("1. Title?");
+            title = sc.nextLine();
+        } while (!validateString(title));
+        do {
+            System.out.println("2. Author?");
+            author = sc.nextLine();
+        } while (!validateString(author));
+        do {
+            System.out.println("3. Cover image?");
+            path = new File(sc.nextLine());
+
+        } while (!checkImage(path));
+        String choice;
+        do {
+            System.out.println("4. Save? Enter 'Y' or 'N'.");
+            choice = sc.nextLine();
+        } while (choice.contentEquals("Y") && choice.contentEquals("y")
+            && choice.contentEquals("N") && choice.contentEquals("n"));
+        Book newBook = new Book(title, author, path);
+        saveBook(newBook, choice);
+    }
+
+    private static void saveBook(Book book, String choice) {
+
     }
 
     private static void findBook() {
@@ -87,7 +111,29 @@ public class App {
         }
         return choice;
     }
+
+    private static boolean validateString(String input) {
+        if (input.isEmpty()) {
+            System.out.println("Please enter a value: ");
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean checkImage(File image) {
+        if (!image.isFile()) {
+            System.out.println("Please write out a valid image file path.");
+            return false;
+        }
+        String extension = image.getAbsolutePath();
+        extension = extension.substring(extension.lastIndexOf('.'));
+        if (extension.contentEquals(".jpg") ||
+            (extension.contentEquals(".png")) ||
+            (extension.contentEquals(".gif"))) {
+            return true;
+        }
+        System.out.println("Please pick an image file.");
+        return false;
+    }
 }
-
-
 

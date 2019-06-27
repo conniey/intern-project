@@ -1,14 +1,16 @@
 package com.azure.app;
 
+import java.io.File;
+
 public class Book {
     private String title;
     private String author;
-    private String cover;
+    private File cover;
 
     Book() {
     }
 
-    Book(String title, String author, String cover) {
+    Book(String title, String author, File cover) {
         setTitle(title);
         setAuthor(author);
         setCover(cover);
@@ -22,9 +24,6 @@ public class Book {
         return author;
     }
 
-    public String getCover() {
-        return cover;
-    }
 
     private void setTitle(String title) {
         this.title = title;
@@ -34,7 +33,7 @@ public class Book {
         this.author = author;
     }
 
-    private void setCover(String path) {
+    private void setCover(File path) {
         cover = path;
     }
 }
