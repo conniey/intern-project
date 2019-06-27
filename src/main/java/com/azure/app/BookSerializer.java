@@ -9,10 +9,12 @@ public class BookSerializer {
 
     public void writeJSON(Book book) {
         try {
-            File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\" + book.getAuthor());
+            File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\" + book.getLastName());
             dir.mkdir();
+            File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getFirstName());
+            dir2.mkdir();
             ObjectMapper mapper = new ObjectMapper();
-            mapper.writeValue(new File(dir.getAbsolutePath() + "\\" + book.getTitle() + ".json"), book);
+            mapper.writeValue(new File(dir2.getAbsolutePath() + "\\" + book.getTitle() + ".json"), book);
         } catch (IOException ex) {
             System.out.println("Error in File Handling. Did not save.");
         }
