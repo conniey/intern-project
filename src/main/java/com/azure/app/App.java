@@ -88,7 +88,10 @@ public class App {
     }
 
     private static void saveBook(Book book, String choice) {
-
+        if (choice.contentEquals("Y") || choice.contentEquals("y")) {
+            BookSerializer serializer = new BookSerializer();
+            serializer.writeJSON(book);
+        }
     }
 
     private static void findBook() {
@@ -105,6 +108,7 @@ public class App {
             System.out.println("Please enter a value.");
         }
         try {
+            //handles error if choice isn't number
             choice = Integer.parseInt(option);
         } catch (NumberFormatException ex) {
             System.out.print("Please enter a numerical value. ");
@@ -125,8 +129,10 @@ public class App {
             System.out.println("Please write out a valid image file path.");
             return false;
         }
+        //Parses the File to examine its extensions
         String extension = image.getAbsolutePath();
         extension = extension.substring(extension.lastIndexOf('.'));
+        //only returns true if it has the required extension
         if (extension.contentEquals(".jpg") ||
             (extension.contentEquals(".png")) ||
             (extension.contentEquals(".gif"))) {

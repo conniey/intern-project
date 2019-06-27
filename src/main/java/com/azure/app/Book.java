@@ -5,6 +5,7 @@ import java.io.File;
 public class Book {
     private String title;
     private String author;
+    private String url;
     private File cover;
 
     Book() {
@@ -13,7 +14,7 @@ public class Book {
     Book(String title, String author, File cover) {
         setTitle(title);
         setAuthor(author);
-        setCover(cover);
+        setImage(cover);
     }
 
     public String getTitle() {
@@ -24,6 +25,9 @@ public class Book {
         return author;
     }
 
+    public String getUrl() {
+        return url;
+    }
 
     private void setTitle(String title) {
         this.title = title;
@@ -33,7 +37,8 @@ public class Book {
         this.author = author;
     }
 
-    private void setCover(File path) {
+    private void setImage(File path) {
         cover = path;
+        url = path.getAbsolutePath();
     }
 }
