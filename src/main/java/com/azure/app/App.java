@@ -18,7 +18,6 @@ public class App {
         System.out.print("Welcome! ");
         Scanner sc = new Scanner(System.in);
         int choice;
-
         do {
             showMenu();
             String option = sc.nextLine();
@@ -66,7 +65,6 @@ public class App {
         author = sc.nextLine();
         System.out.println("3. Cover image?");
         System.out.println("4. Save? Enter 'Y' or 'N'.");
-
     }
 
     private static void findBook() {
@@ -91,23 +89,5 @@ public class App {
     }
 }
 
-class Book {
-    private String title;
-    private String author;
-
-    Book() {
-    }
-
-    ;
-
-    public String getTitle() {
-        return title;
-
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-}
 
 
