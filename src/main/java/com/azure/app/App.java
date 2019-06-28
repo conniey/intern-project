@@ -63,7 +63,7 @@ public class App {
         System.out.println("Please enter the following information:");
         String title;
         String author;
-        File path = null;
+        File path;
         do {
             System.out.println("1. Title?");
             title = sc.nextLine();
@@ -75,7 +75,6 @@ public class App {
         do {
             System.out.println("3. Cover image?");
             path = new File(sc.nextLine());
-
         } while (!checkImage(path));
         String choice;
         do {
@@ -83,14 +82,17 @@ public class App {
             choice = sc.nextLine();
         } while (choice.contentEquals("Y") && choice.contentEquals("y")
             && choice.contentEquals("N") && choice.contentEquals("n"));
-        Book newBook = new Book(title, author, path);
-        saveBook(newBook, choice);
+        saveBook(new Book(title, author, path), choice);
     }
 
     private static void saveBook(Book book, String choice) {
         if (choice.contentEquals("Y") || choice.contentEquals("y")) {
             BookSerializer serializer = new BookSerializer();
-            serializer.writeJSON(book);
+            if (serializer.writeJSON(book)) {
+                System.out.println("Book was successfully saved!");
+            } else {
+                System.out.println("Error. Book wasn't saved.");
+            }
         }
     }
 
@@ -103,17 +105,17 @@ public class App {
     }
 
     private static int checkOption(String option) {
-        int choice = -1;
         if (option.isEmpty()) {
             System.out.println("Please enter a value.");
         }
         try {
-            //handles error if choice isn't number
-            choice = Integer.parseInt(option);
+            //checks if choice is a number
+            return Integer.parseInt(option);
         } catch (NumberFormatException ex) {
             System.out.print("Please enter a numerical value. ");
         }
-        return choice;
+        // returns an arbitrary number otherwise
+        return -1;
     }
 
     private static boolean validateString(String input) {
@@ -129,13 +131,12 @@ public class App {
             System.out.println("Please write out a valid image file path.");
             return false;
         }
-        //Parses the File to examine its extensions
+        //Parses the File path to examine its extension
         String extension = image.getAbsolutePath();
         extension = extension.substring(extension.lastIndexOf('.'));
         //only returns true if it has the required extension
-        if (extension.contentEquals(".jpg") ||
-            (extension.contentEquals(".png")) ||
-            (extension.contentEquals(".gif"))) {
+        if (extension.contentEquals(".jpg") || (extension.contentEquals(".png"))
+            || (extension.contentEquals(".gif"))) {
             return true;
         }
         System.out.println("Please pick an image file.");

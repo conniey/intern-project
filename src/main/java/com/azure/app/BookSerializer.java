@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +11,13 @@ import java.io.IOException;
 
 public class BookSerializer {
 
-    public void writeJSON(Book book) {
+    /*
+     * Converts a Book object a json object and stores it in a file.
+     *
+     * @return  true if Book was successfully converted to Javadoc
+     *          false if Book wasn't successfully converted to Javadoc
+     */
+    public boolean writeJSON(Book book) {
         try {
             File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\" + book.getLastName());
             dir.mkdir();
@@ -17,9 +26,9 @@ public class BookSerializer {
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
             mapper.writeValue(new File(dir2.getAbsolutePath() + "\\" + book.getTitle() + ".json"), book);
+            return true;
         } catch (IOException ex) {
-            System.out.println("Error in File Handling. Did not save.");
+            return false;
         }
     }
-
 }
