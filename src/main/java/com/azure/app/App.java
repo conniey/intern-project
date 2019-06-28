@@ -3,6 +3,8 @@
 
 package com.azure.app;
 
+import reactor.core.publisher.Flux;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
@@ -55,10 +57,23 @@ public class App {
         System.out.println("5. Quit");
     }
 
-    private static void listBooks() {
+    protected static void listBooks() {
+        File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
+        Flux<Book> bookFlux = showFiles(files);
         System.out.println("Here are your list of books:");
-        BookDeserialize bd = new BookDeserialize();
-        bd.iterateThroughLibrary();
+    }
+
+    public static Flux<Book> showFiles(File[] files) {
+        for (File file : files) {
+            if (file.isDirectory()) {
+                showFiles((file.listFiles()));
+            } else {
+                BookDeserialize bd = new BookDeserialize();
+                Book book = bd.fromJSONtoBook(file);
+                return Flux.just(book);
+            }
+        }
+        return null;
     }
 
     private static void addBook() {
@@ -115,6 +130,24 @@ public class App {
 
     private static void findBook() {
         System.out.println("How would you like to find the book?");
+        Scanner sc = new Scanner(System.in);
+        int choice;
+        do {
+            System.out.println("1. Search by book title?");
+            System.out.println("2. Search by author?");
+            String option = sc.nextLine();
+            choice = checkOption(option);
+        } while (choice != -1);
+        switch (choice) {
+            case 1:
+                //by title
+                break;
+            case 2:
+                //by author
+                break;
+            default:
+                System.out.println("Please enter a number between 1 or 2.");
+        }
     }
 
     private static void deleteBook() {
@@ -131,7 +164,7 @@ public class App {
         } catch (NumberFormatException ex) {
             System.out.print("Please enter a numerical value. ");
         }
-        // returns an arbitrary number otherwise
+        // returns -1 otherwise
         return -1;
     }
 
