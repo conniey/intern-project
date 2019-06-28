@@ -19,9 +19,10 @@ public class BookSerializer {
      */
     public boolean writeJSON(Book book) {
         try {
-            File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\" + book.getLastName());
+            File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\" +
+                book.getAuthor().getLastName());
             dir.mkdir();
-            File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getFirstName());
+            File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getAuthor().getFirstName());
             dir2.mkdir();
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);

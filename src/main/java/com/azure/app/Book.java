@@ -7,7 +7,7 @@ import java.io.File;
 
 public class Book {
     private String title;
-    private String[] author;
+    private Author author;
     private File cover;
 
     Book(String title, String author, File cover) {
@@ -26,29 +26,29 @@ public class Book {
     }
 
     /*
-     * Returns the author's first name.
+     * Returns the author's name
      *
-     * @return  string with author's first name
+     * @return  Author object
      */
-    public String getFirstName() {
-        return author[0];
+    public Author getAuthor() {
+        return author;
     }
 
-    /*
-     * Returns the book's author's last name.
-     *
-     * @return string with author's last name.
-     */
-    public String getLastName() {
-        return author[1];
+    public File getCover() {
+        return cover;
     }
 
     private void setTitle(String title) {
         this.title = title;
     }
 
-    private void setAuthor(String author) {
-        this.author = author.split(" ");
+    private void setAuthor(String name) {
+        String[] authorName = name.split(" ");
+        String lastName = authorName[authorName.length - 1];
+        String firstName = authorName[0];
+        for (int i = 1; i < authorName.length - 1; i++)
+            firstName += " " + authorName[i];
+        author = new Author(lastName, firstName);
     }
 
     private void setImage(File path) {
@@ -61,6 +61,7 @@ public class Book {
      * @return string containing book info
      */
     public String toString() {
-        return getLastName() + ", " + getFirstName() + " - " + getTitle();
+        return author.getLastName() + ", " + author.getFirstName() + " - " + getTitle();
     }
 }
+
