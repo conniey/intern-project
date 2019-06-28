@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 public class Author {
@@ -9,10 +12,20 @@ public class Author {
         this.firstName = firstName;
     }
 
+    /*
+     * Returns the author's last name.
+     *
+     * @return  string with last name.
+     */
     public String getLastName() {
         return lastName;
     }
 
+    /*
+     * Returns the author's first name.
+     *
+     * @return string with first name.
+     */
     public String getFirstName() {
         return firstName;
     }

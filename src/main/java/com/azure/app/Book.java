@@ -46,8 +46,9 @@ public class Book {
         String[] authorName = name.split(" ");
         String lastName = authorName[authorName.length - 1];
         String firstName = authorName[0];
-        for (int i = 1; i < authorName.length - 1; i++)
+        for (int i = 1; i < authorName.length - 1; i++) {
             firstName += " " + authorName[i];
+        }
         author = new Author(lastName, firstName);
     }
 
