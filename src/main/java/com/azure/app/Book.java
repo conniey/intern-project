@@ -8,8 +8,7 @@ import java.io.File;
 public class Book {
     private String title;
     private String[] author;
-    private String cover;
-    private File coverLoc;
+    private File cover;
 
     Book(String title, String author, File cover) {
         setTitle(title);
@@ -44,15 +43,6 @@ public class Book {
         return author[1];
     }
 
-    /*
-     * Returns the book's image file path.
-     *
-     * @return string with file path.
-     */
-    public String getCover() {
-        return cover;
-    }
-
     private void setTitle(String title) {
         this.title = title;
     }
@@ -62,8 +52,7 @@ public class Book {
     }
 
     private void setImage(File path) {
-        coverLoc = path;
-        cover = path.getAbsolutePath();
+        cover = path;
     }
 
     /*
