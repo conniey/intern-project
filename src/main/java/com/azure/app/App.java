@@ -4,6 +4,7 @@
 package com.azure.app;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -56,6 +57,8 @@ public class App {
 
     private static void listBooks() {
         System.out.println("Here are your list of books:");
+        BookDeserialize bd = new BookDeserialize();
+        bd.iterateThroughLibrary();
     }
 
     private static void addBook() {
@@ -82,12 +85,26 @@ public class App {
             choice = sc.nextLine();
         } while (choice.contentEquals("Y") && choice.contentEquals("y")
             && choice.contentEquals("N") && choice.contentEquals("n"));
-        saveBook(new Book(title, author, path), choice);
+        saveBook(title, author, path, choice);
     }
 
-    private static void saveBook(Book book, String choice) {
+    private static void saveBook(String title, String author, File path, String choice) {
         if (choice.contentEquals("Y") || choice.contentEquals("y")) {
+            String[] authorName = author.split(" ");
+            String lastName = authorName[authorName.length - 1];
+            String firstName = authorName[0];
+            for (int i = 1; i < authorName.length - 1; i++) {
+                firstName += " " + authorName[i];
+            }
+            Author savedAuthor = new Author(lastName, firstName);
+            Book book = new Book(title, savedAuthor, path);
             BookSerializer serializer = new BookSerializer();
+            System.out.println("---------------------------");
+            try {
+                serializer.toJsonString(book);
+            } catch (IOException e) {
+                System.out.println("Uh -oh");
+            }
             if (serializer.writeJSON(book)) {
                 System.out.println("Book was successfully saved!");
             } else {

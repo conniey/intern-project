@@ -4,6 +4,7 @@
 package com.azure.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
@@ -31,5 +32,12 @@ public class BookSerializer {
         } catch (IOException ex) {
             return false;
         }
+    }
+
+    public void toJsonString(Book book) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+        String jsonString = writer.writeValueAsString(book);
+        System.out.println(jsonString);
     }
 }

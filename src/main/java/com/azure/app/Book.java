@@ -3,17 +3,25 @@
 
 package com.azure.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.File;
 
 public class Book {
+    @JsonProperty("title")
     private String title;
+    @JsonProperty("author")
     private Author author;
+    @JsonProperty("cover")
     private File cover;
 
-    Book(String title, String author, File cover) {
-        setTitle(title);
-        setAuthor(author);
-        setImage(cover);
+    Book() {
+    }
+
+    Book(String title, Author author, File cover) {
+        this.title = title;
+        this.author = author;
+        this.cover = cover;
     }
 
     /*
@@ -34,7 +42,7 @@ public class Book {
         return author;
     }
 
-    public File getCover() {
+    private File getCover() {
         return cover;
     }
 
@@ -42,15 +50,10 @@ public class Book {
         this.title = title;
     }
 
-    private void setAuthor(String name) {
-        String[] authorName = name.split(" ");
-        String lastName = authorName[authorName.length - 1];
-        String firstName = authorName[0];
-        for (int i = 1; i < authorName.length - 1; i++) {
-            firstName += " " + authorName[i];
-        }
-        author = new Author(lastName, firstName);
+    private void setAuthor(Author author) {
+        this.author = author;
     }
+
 
     private void setImage(File path) {
         cover = path;
@@ -62,7 +65,7 @@ public class Book {
      * @return string containing book info
      */
     public String toString() {
-        return author.getLastName() + ", " + author.getFirstName() + " - " + getTitle();
+        return author + " - " + getTitle();
     }
 }
 

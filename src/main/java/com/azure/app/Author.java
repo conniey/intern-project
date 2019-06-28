@@ -3,9 +3,16 @@
 
 package com.azure.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Author {
+    @JsonProperty("lastName")
     private String lastName;
+    @JsonProperty("firstName")
     private String firstName;
+
+    Author() {
+    }
 
     Author(String lastName, String firstName) {
         this.lastName = lastName;
@@ -28,5 +35,17 @@ public class Author {
      */
     public String getFirstName() {
         return firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String toString() {
+        return lastName + ", " + firstName;
     }
 }
