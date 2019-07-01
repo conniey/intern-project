@@ -25,14 +25,21 @@ public class FindBook {
         System.out.println("What is the book title?");
         String title = sc.nextLine();
         Flux<Book> sameTitle = findTitles(title);
-        System.out.println("Here are the matching books. Please enter the number you wish to view.");
-        sameTitle.subscribe(x -> System.out.println(increment() + ". " + x));
-        int choice;
-        do {
-            String option = sc.nextLine();
-            choice = checkOption(option);
-        } while (choice == -1);
-        sameTitle.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
+        sameTitle.hasElements().subscribe(notEmpty -> {
+            if (notEmpty) {
+                System.out.println("Here are the matching books. Please enter the number you wish to view.");
+                sameTitle.subscribe(x -> System.out.println(increment() + ". " + x));
+                int choice;
+                do {
+                    String option = sc.nextLine();
+                    choice = checkOption(option);
+                } while (choice == -1);
+                sameTitle.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
+
+            } else {
+                System.out.println("There are no books with that title.");
+            }
+        });
         numIndex = 1;
     }
 
@@ -46,14 +53,20 @@ public class FindBook {
             first += " " + authorName[i];
         String firstName = first;
         Flux<Book> sameAuthor = allBooks.filter(x -> checkAuthor(x, lastName, firstName));
-        System.out.println("Here are books by " + author + ". Please enter the number you wish to view.");
-        sameAuthor.subscribe(x -> System.out.println(increment() + ". " + x));
-        int choice;
-        do {
-            String option = sc.nextLine();
-            choice = checkOption(option);
-        } while (choice == -1);
-        sameAuthor.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
+        sameAuthor.hasElements().subscribe(notEmpty -> {
+            if (notEmpty) {
+                System.out.println("Here are books by " + author + ". Please enter the number you wish to view.");
+                sameAuthor.subscribe(x -> System.out.println(increment() + ". " + x));
+                int choice;
+                do {
+                    String option = sc.nextLine();
+                    choice = checkOption(option);
+                } while (choice == -1);
+                sameAuthor.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
+            } else {
+                System.out.println("There are no authors with that name.");
+            }
+        });
         numIndex = 1;
     }
 

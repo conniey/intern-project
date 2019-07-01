@@ -110,7 +110,7 @@ public class App {
         do {
             System.out.println("2. Author?");
             author = sc.nextLine();
-        } while (!validateString(author));
+        } while (!validateAuthor(author.split(" ")));
         do {
             System.out.println("3. Cover image?");
             path = new File(sc.nextLine());
@@ -143,6 +143,18 @@ public class App {
                 }
             });
         }
+    }
+
+    public static boolean validateAuthor(String[] author) {
+        if (author.length == 0) {
+            System.out.println("Please enter their name.");
+            return false;
+        }
+        if (author.length < 2) {
+            System.out.println("Please enter their first and last name");
+            return false;
+        }
+        return true;
     }
 
     private static void findBook() {
@@ -190,12 +202,13 @@ public class App {
             delete = sc.nextLine();
         } while (delete.contentEquals("Y") && delete.contentEquals("y")
             && delete.contentEquals("N") && delete.contentEquals("n"));
-        deleteBookFile(delete, deletedBook);
+        if (delete.contentEquals("Y") || delete.contentEquals("y"))
+            deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
+                deletedBook);
     }
 
     private static void deleteBookFile(String choice, Mono<Book> book) {
-        if (choice.contentEquals("Y") || choice.contentEquals("y"))
-            deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(), book);
+
     }
 
     private static void deleteFile(File[] files, Mono<Book> book) {
@@ -217,7 +230,7 @@ public class App {
     private static boolean checkFile(File f, Book b) {
         return f.getAbsolutePath().contains(b.getAuthor().getFirstName())
             && f.getAbsolutePath().contains(b.getAuthor().getLastName())
-            && f.getAbsolutePath().contains(b.getTitle());
+            && f.getAbsolutePath().contains(b.getTitle() + ".json");
     }
 
     private static int checkOption(String option) {
