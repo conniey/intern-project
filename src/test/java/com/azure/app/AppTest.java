@@ -34,4 +34,8 @@ public class AppTest extends TestCase {
         assertTrue(true);
     }
 
+    public static void testOptions() {
+
+    }
+
 }

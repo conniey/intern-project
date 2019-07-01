@@ -4,9 +4,9 @@
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -57,13 +57,13 @@ public class App {
         System.out.println("5. Quit");
     }
 
-    protected static void listBooks() {
+    private static void listBooks() {
         File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
         Flux<Book> bookFlux = showFiles(files);
         System.out.println("Here are your list of books:");
     }
 
-    public static Flux<Book> showFiles(File[] files) {
+    private static Flux<Book> showFiles(File[] files) {
         for (File file : files) {
             if (file.isDirectory()) {
                 showFiles((file.listFiles()));
@@ -112,13 +112,15 @@ public class App {
                 firstName += " " + authorName[i];
             }
             Author savedAuthor = new Author(lastName, firstName);
-            Book book = new Book(title, savedAuthor, path);
+            Mono<Book> book = Mono.just(new Book(title, savedAuthor, path));
             BookSerializer serializer = new BookSerializer();
-            if (serializer.writeJSON(book)) {
+            book.subscribe(x -> {
+                if (serializer.writeJSON(x)) {
                 System.out.println("Book was successfully saved!");
             } else {
                 System.out.println("Error. Book wasn't saved.");
-            }
+                }
+            });
         }
     }
 
