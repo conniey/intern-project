@@ -93,7 +93,7 @@ public class App {
         return savedBook;
     }
 
-    public static void addBook() {
+    private static void addBook() {
         Scanner sc = new Scanner(System.in);
         System.out.println("Please enter the following information:");
         String title;

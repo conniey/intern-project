@@ -4,7 +4,6 @@
 package com.azure.app;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
@@ -12,11 +11,12 @@ import java.io.IOException;
 
 public class BookSerializer {
 
-    /*
+    /**
      * Converts a Book object a json object and stores it in a file.
      *
-     * @return  true if Book was successfully converted to Javadoc
-     *          false if Book wasn't successfully converted to Javadoc
+     * @param book - the Book object that's going to be converted to a json file
+     * @return boolean - true if Book was successfully converted to Javadoc
+     *                    false if Book wasn't successfully converted to Javadoc
      */
     public boolean writeJSON(Book book) {
         try {
@@ -32,12 +32,5 @@ public class BookSerializer {
         } catch (IOException ex) {
             return false;
         }
-    }
-
-    public void toJsonString(Book book) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-        String jsonString = writer.writeValueAsString(book);
-        System.out.println(jsonString);
     }
 }

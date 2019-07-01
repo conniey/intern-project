@@ -24,7 +24,7 @@ public class Book {
         this.cover = cover;
     }
 
-    /*
+    /**
      * Returns the book's title.
      *
      * @return  string with book's title
@@ -33,7 +33,7 @@ public class Book {
         return title;
     }
 
-    /*
+    /**
      * Returns the author's name
      *
      * @return  Author object
@@ -59,13 +59,13 @@ public class Book {
         cover = path;
     }
 
-    /*
+    /**
      * Returns a string with the book information
      *
      * @return string containing book info
      */
     public String toString() {
-        return author + " - " + getTitle();
+        return author + " -" + " " + getTitle();
     }
 }
 

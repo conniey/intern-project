@@ -14,6 +14,12 @@ import java.io.IOException;
 
 public class BookDeserialize {
 
+    /**
+     * Converts a json file back to a Book object
+     *
+     * @param jsonFile - the json file to be converted
+     * @return Book - from the jsonFile
+     */
     public Book fromJSONtoBook(File jsonFile) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -28,21 +34,5 @@ public class BookDeserialize {
             System.out.println("Error.");
         }
         return null;
-    }
-
-    public void iterateThroughLibrary() {
-        File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
-        showFiles(files);
-    }
-
-    public void showFiles(File[] files) {
-        for (File file : files) {
-            if (file.isDirectory()) {
-                showFiles((file.listFiles()));
-            } else {
-                Book book = fromJSONtoBook(file);
-                System.out.println(book);
-            }
-        }
     }
 }

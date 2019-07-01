@@ -19,7 +19,7 @@ public class Author {
         this.firstName = firstName;
     }
 
-    /*
+    /**
      * Returns the author's last name.
      *
      * @return  string with last name.
@@ -28,7 +28,7 @@ public class Author {
         return lastName;
     }
 
-    /*
+    /**
      * Returns the author's first name.
      *
      * @return string with first name.
@@ -45,6 +45,11 @@ public class Author {
         this.firstName = firstName;
     }
 
+    /**
+     * Returns a String of the author's name in teh format "lastName, firstName"
+     *
+     * @return String with the correct format to print author's name
+     */
     public String toString() {
         return lastName + ", " + firstName;
     }
