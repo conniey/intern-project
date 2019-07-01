@@ -37,22 +37,29 @@ public class FindBook {
         System.out.println("What is the book title?");
         String title = sc.nextLine();
         Flux<Book> sameTitle = findTitles(title);
-        sameTitle.hasElements().subscribe(notEmpty -> {
-            if (notEmpty) {
-                System.out.println("Here are the matching books. Please enter the number you wish to view.");
-                sameTitle.subscribe(x -> System.out.println(increment() + ". " + x));
-                int choice;
-                do {
-                    String option = sc.nextLine();
-                    choice = checkOption(option);
-                } while (choice == -1);
-                sameTitle.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
-
+        sameTitle.count().subscribe(one -> {
+            if (one == 1) {
+                System.out.println("Here is a book titled " + title + ". Would you like to view it? Enter Y or N.");
+                onlyOneResult(sameTitle);
             } else {
-                System.out.println("There are no books with that title.");
+                sameTitle.hasElements().subscribe(notEmpty -> {
+                    if (notEmpty) {
+                        System.out.println("Here are books called " + title + ". Please enter the number you wish to view.");
+                        sameTitle.subscribe(x -> System.out.println(increment() + ". " + x));
+                        int choice;
+                        do {
+                            String option = sc.nextLine();
+                            choice = checkOption(option, numIndex - 1);
+                        } while (choice == -1);
+                        sameTitle.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
+
+                    } else {
+                        System.out.println("There are no books with that title.");
+                    }
+                });
+                numIndex = 1;
             }
         });
-        numIndex = 1;
     }
 
     /**
@@ -69,21 +76,44 @@ public class FindBook {
         }
         String firstName = first;
         Flux<Book> sameAuthor = allBooks.filter(x -> checkAuthor(x, lastName, firstName));
-        sameAuthor.hasElements().subscribe(notEmpty -> {
-            if (notEmpty) {
-                System.out.println("Here are books by " + author + ". Please enter the number you wish to view.");
-                sameAuthor.subscribe(x -> System.out.println(increment() + ". " + x));
-                int choice;
-                do {
-                    String option = sc.nextLine();
-                    choice = checkOption(option);
-                } while (choice == -1);
-                sameAuthor.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
+        sameAuthor.count().subscribe(one -> {
+            if (one == 1) {
+                System.out.println("Here is a book by " + author + ". Would you like to view it? Enter Y or N.");
+                onlyOneResult(sameAuthor);
             } else {
-                System.out.println("There are no authors with that name.");
+                sameAuthor.hasElements().subscribe(notEmpty -> {
+                    if (notEmpty) {
+                        System.out.println("Here are books by " + author + ". Please enter the number you wish to view.");
+                        sameAuthor.subscribe(x -> System.out.println(increment() + ". " + x));
+                        int choice;
+                        do {
+                            String option = sc.nextLine();
+                            choice = checkOption(option, numIndex - 1);
+                        } while (choice == -1);
+                        sameAuthor.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
+                    } else {
+                        System.out.println("There are no authors with that name.");
+                    }
+                });
+                numIndex = 1;
             }
         });
-        numIndex = 1;
+    }
+
+    public void onlyOneResult(Flux<Book> result) {
+        result.subscribe(x -> System.out.println(x));
+        String option;
+        do {
+            option = sc.nextLine();
+            if (!option.contentEquals("Y") && !option.contentEquals("y")
+                && !option.contentEquals("N") && !option.contentEquals("n")) {
+                System.out.println("Please enter Y or N");
+            }
+        } while (!option.contentEquals("Y") && !option.contentEquals("y")
+            && !option.contentEquals("N") && !option.contentEquals("n"));
+        if (option.contentEquals("Y") || option.contentEquals("y")) {
+            result.elementAt(0).subscribe(x -> displayBookInfo(x));
+        }
     }
 
     private String increment() {
@@ -99,13 +129,18 @@ public class FindBook {
             && b.getAuthor().getFirstName().contentEquals(firstName);
     }
 
-    private static int checkOption(String option) {
+    private static int checkOption(String option, int max) {
         if (option.isEmpty()) {
             System.out.println("Please enter a value.");
         }
         try {
             //checks if choice is a number
-            return Integer.parseInt(option);
+            int choice = Integer.parseInt(option);
+            if (choice > max || choice < 1) {
+                System.out.println("Please enter a number from 1-" + max + ".");
+            } else {
+                return choice;
+            }
         } catch (NumberFormatException ex) {
             System.out.print("Please enter a numerical value. ");
         }

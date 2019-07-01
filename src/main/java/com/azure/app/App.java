@@ -25,7 +25,7 @@ public class App {
         do {
             showMenu();
             String option = sc.nextLine();
-            choice = checkOption(option);
+            choice = checkOption(option, 5);
             switch (choice) {
                 case 1:
                     listBooks();
@@ -43,7 +43,7 @@ public class App {
                     System.out.println("Goodbye.");
                     break;
                 default:
-                    System.out.println("Please try again.");
+                    System.out.print("Please try again. ");
             }
         } while (choice != 5);
     }
@@ -166,7 +166,7 @@ public class App {
             System.out.println("1. Search by book title?");
             System.out.println("2. Search by author?");
             String option = sc.nextLine();
-            choice = checkOption(option);
+            choice = checkOption(option, 2);
         } while (choice == -1);
         switch (choice) {
             case 1:
@@ -178,7 +178,6 @@ public class App {
             default:
                 System.out.println("Please enter a number between 1 or 2.");
         }
-        numberIndex = 1;
     }
 
     private static void deleteBook() {
@@ -196,7 +195,7 @@ public class App {
                     int choice;
                     do {
                         String option = sc.nextLine();
-                        choice = checkOption(option);
+                        choice = checkOption(option, numberIndex);
                     } while (choice != 1);
                     deletedBook = booksToDelete.elementAt(choice - 1);
                     deletedBook.subscribe(x ->
@@ -236,15 +235,20 @@ public class App {
             && f.getAbsolutePath().contains(b.getTitle() + ".json");
     }
 
-    private static int checkOption(String option) {
+    private static int checkOption(String option, int max) {
         if (option.isEmpty()) {
-            System.out.println("Please enter a value.");
+            System.out.println("Enter a value.");
         }
         try {
             //checks if choice is a number
-            return Integer.parseInt(option);
+            int choice = Integer.parseInt(option);
+            if (choice > max || choice < 1) {
+                System.out.println("Enter a number from 1-" + max + ".");
+            } else {
+                return choice;
+            }
         } catch (NumberFormatException ex) {
-            System.out.print("Please enter a numerical value. ");
+            System.out.println("Enter a numerical value. ");
         }
         // returns -1 otherwise
         return -1;
