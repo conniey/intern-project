@@ -57,26 +57,43 @@ public class App {
         System.out.println("5. Quit");
     }
 
+    //static variable for creating lists in lamda expressions
+    private static int numberIndex = 1;
+
     private static void listBooks() {
-        File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
-        Flux<Book> bookFlux = showFiles(files);
-        System.out.println("Here are your list of books:");
+        Flux<Book> book = registerBooks();
+        System.out.println("Here are all the books you have: ");
+        try {
+            book.subscribe(x -> System.out.println(increment() + ". " + x));
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        numberIndex = 1;
     }
 
-    private static Flux<Book> showFiles(File[] files) {
-        for (File file : files) {
-            if (file.isDirectory()) {
-                showFiles((file.listFiles()));
-            } else {
-                BookDeserialize bd = new BookDeserialize();
-                Book book = bd.fromJSONtoBook(file);
-                return Flux.just(book);
+    private static String increment() {
+        return "" + numberIndex++;
+    }
+
+    private static Flux<Book> registerBooks() {
+        File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
+        Flux<Book> savedBook = Flux.empty();
+        for (int i = 0; i < files.length; i++) {
+            File[] file = files[i].listFiles();
+            File[] exploreFiles = files[i].listFiles();
+            for (File innerFile : file) {
+                if (innerFile.isDirectory()) {
+                    exploreFiles = innerFile.listFiles();
+                }
+                for (File readFile : exploreFiles) {
+                    savedBook = savedBook.concatWithValues(new BookDeserialize().fromJSONtoBook(readFile));
+                }
             }
         }
-        return null;
+        return savedBook;
     }
 
-    private static void addBook() {
+    public static void addBook() {
         Scanner sc = new Scanner(System.in);
         System.out.println("Please enter the following information:");
         String title;
@@ -116,9 +133,9 @@ public class App {
             BookSerializer serializer = new BookSerializer();
             book.subscribe(x -> {
                 if (serializer.writeJSON(x)) {
-                System.out.println("Book was successfully saved!");
-            } else {
-                System.out.println("Error. Book wasn't saved.");
+                    System.out.println("Book was successfully saved!");
+                } else {
+                    System.out.println("Error. Book wasn't saved.");
                 }
             });
         }
