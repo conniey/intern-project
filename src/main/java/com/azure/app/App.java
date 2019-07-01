@@ -114,12 +114,6 @@ public class App {
             Author savedAuthor = new Author(lastName, firstName);
             Book book = new Book(title, savedAuthor, path);
             BookSerializer serializer = new BookSerializer();
-            System.out.println("---------------------------");
-            try {
-                serializer.toJsonString(book);
-            } catch (IOException e) {
-                System.out.println("Uh -oh");
-            }
             if (serializer.writeJSON(book)) {
                 System.out.println("Book was successfully saved!");
             } else {
@@ -152,6 +146,8 @@ public class App {
 
     private static void deleteBook() {
         System.out.println("Enter the title of the book to delete: ");
+        Scanner sc = new Scanner(System.in);
+        String title = sc.nextLine();
     }
 
     private static int checkOption(String option) {
