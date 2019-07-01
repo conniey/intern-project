@@ -42,6 +42,11 @@ public class Book {
         return author;
     }
 
+    /**
+     * Returns the File to print out its path
+     *
+     * @return File of image
+     */
     public File getCover() {
         return cover;
     }

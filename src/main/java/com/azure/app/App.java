@@ -145,7 +145,7 @@ public class App {
         }
     }
 
-    public static boolean validateAuthor(String[] author) {
+    private static boolean validateAuthor(String[] author) {
         if (author.length == 0) {
             System.out.println("Please enter their name.");
             return false;
@@ -185,30 +185,33 @@ public class App {
         System.out.println("Enter the title of the book to delete: ");
         Scanner sc = new Scanner(System.in);
         Flux<Book> booksToDelete = new FindBook(registerBooks()).findTitles(sc.nextLine());
-        String delete;
-        Mono<Book> deletedBook;
-        do {
-            System.out.println("Here are matching books. Enter the number to delete: ");
-            booksToDelete.subscribe(x -> System.out.println(increment() + ". " + x));
-            numberIndex = 1;
-            int choice;
-            do {
-                String option = sc.nextLine();
-                choice = checkOption(option);
-            } while (choice != 1);
-            deletedBook = booksToDelete.elementAt(choice - 1);
-            deletedBook.subscribe(x ->
-                System.out.println("Delete \"" + x + "\"? Enter Y or N"));
-            delete = sc.nextLine();
-        } while (delete.contentEquals("Y") && delete.contentEquals("y")
-            && delete.contentEquals("N") && delete.contentEquals("n"));
-        if (delete.contentEquals("Y") || delete.contentEquals("y"))
-            deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
-                deletedBook);
-    }
-
-    private static void deleteBookFile(String choice, Mono<Book> book) {
-
+        booksToDelete.hasElements().subscribe(notEmpty -> {
+            if (notEmpty) {
+                String delete;
+                Mono<Book> deletedBook;
+                do {
+                    System.out.println("Here are matching books. Enter the number to delete: ");
+                    booksToDelete.subscribe(x -> System.out.println(increment() + ". " + x));
+                    numberIndex = 1;
+                    int choice;
+                    do {
+                        String option = sc.nextLine();
+                        choice = checkOption(option);
+                    } while (choice != 1);
+                    deletedBook = booksToDelete.elementAt(choice - 1);
+                    deletedBook.subscribe(x ->
+                        System.out.println("Delete \"" + x + "\"? Enter Y or N"));
+                    delete = sc.nextLine();
+                } while (delete.contentEquals("Y") && delete.contentEquals("y")
+                    && delete.contentEquals("N") && delete.contentEquals("n"));
+                if (delete.contentEquals("Y") || delete.contentEquals("y")) {
+                    deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
+                        deletedBook);
+                }
+            } else {
+                System.out.println("There are no books with that title.");
+            }
+        });
     }
 
     private static void deleteFile(File[] files, Mono<Book> book) {
@@ -270,10 +273,6 @@ public class App {
         }
         System.out.println("Please pick an image file.");
         return false;
-    }
-
-    private void getBookInfo(Book b) {
-
     }
 }
 

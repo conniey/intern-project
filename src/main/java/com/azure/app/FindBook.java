@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
@@ -15,12 +18,21 @@ public class FindBook {
         allBooks = book;
     }
 
+    /**
+     * Filters out all the Books based off their title.
+     *
+     * @param title - string of the book's title
+     * @return Flux containing all the books with the specified title
+     */
     public Flux<Book> findTitles(String title) {
 
         Flux<Book> sameTitle = allBooks.filter(x -> checkTitle(x, title));
         return sameTitle;
     }
 
+    /**
+     * Searches for a specific book by the title to relay information to user.
+     */
     public void searchByTitle() {
         System.out.println("What is the book title?");
         String title = sc.nextLine();
@@ -43,14 +55,18 @@ public class FindBook {
         numIndex = 1;
     }
 
+    /**
+     * Searches for a specific book by its author to relay the information to the user.
+     */
     public void searchByAuthor() {
         System.out.println("What is the author's name?");
         String author = sc.nextLine();
         String[] authorName = author.split(" ");
         String lastName = authorName[authorName.length - 1];
         String first = authorName[0];
-        for (int i = 1; i < authorName.length - 1; i++)
+        for (int i = 1; i < authorName.length - 1; i++) {
             first += " " + authorName[i];
+        }
         String firstName = first;
         Flux<Book> sameAuthor = allBooks.filter(x -> checkAuthor(x, lastName, firstName));
         sameAuthor.hasElements().subscribe(notEmpty -> {
