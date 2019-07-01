@@ -142,25 +142,27 @@ public class App {
     }
 
     private static void findBook() {
-        System.out.println("How would you like to find the book?");
         Scanner sc = new Scanner(System.in);
         int choice;
+        FindBook findBook = new FindBook(registerBooks());
+        System.out.println("How would you like to find the book?");
         do {
             System.out.println("1. Search by book title?");
             System.out.println("2. Search by author?");
             String option = sc.nextLine();
             choice = checkOption(option);
-        } while (choice != -1);
+        } while (choice == -1);
         switch (choice) {
             case 1:
-                //by title
+                findBook.searchByTitle();
                 break;
             case 2:
-                //by author
+                findBook.searchByAuthor();
                 break;
             default:
                 System.out.println("Please enter a number between 1 or 2.");
         }
+        numberIndex = 1;
     }
 
     private static void deleteBook() {
@@ -206,6 +208,10 @@ public class App {
         }
         System.out.println("Please pick an image file.");
         return false;
+    }
+
+    private void getBookInfo(Book b) {
+
     }
 }
 

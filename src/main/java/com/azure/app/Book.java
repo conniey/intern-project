@@ -42,7 +42,7 @@ public class Book {
         return author;
     }
 
-    private File getCover() {
+    public File getCover() {
         return cover;
     }
 
