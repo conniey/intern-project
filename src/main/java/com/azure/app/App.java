@@ -75,6 +75,10 @@ public class App {
         return "" + numberIndex++;
     }
 
+    /*
+     * Goes through all the JSON files and registers their information as Book objects
+     *
+     */
     private static Flux<Book> registerBooks() {
         File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
         Flux<Book> savedBook = Flux.empty();
@@ -168,7 +172,52 @@ public class App {
     private static void deleteBook() {
         System.out.println("Enter the title of the book to delete: ");
         Scanner sc = new Scanner(System.in);
-        String title = sc.nextLine();
+        Flux<Book> booksToDelete = new FindBook(registerBooks()).findTitles(sc.nextLine());
+        String delete;
+        Mono<Book> deletedBook;
+        do {
+            System.out.println("Here are matching books. Enter the number to delete: ");
+            booksToDelete.subscribe(x -> System.out.println(increment() + ". " + x));
+            numberIndex = 1;
+            int choice;
+            do {
+                String option = sc.nextLine();
+                choice = checkOption(option);
+            } while (choice != 1);
+            deletedBook = booksToDelete.elementAt(choice - 1);
+            deletedBook.subscribe(x ->
+                System.out.println("Delete \"" + x + "\"? Enter Y or N"));
+            delete = sc.nextLine();
+        } while (delete.contentEquals("Y") && delete.contentEquals("y")
+            && delete.contentEquals("N") && delete.contentEquals("n"));
+        deleteBookFile(delete, deletedBook);
+    }
+
+    private static void deleteBookFile(String choice, Mono<Book> book) {
+        if (choice.contentEquals("Y") || choice.contentEquals("y"))
+            deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(), book);
+    }
+
+    private static void deleteFile(File[] files, Mono<Book> book) {
+        for (File file : files) {
+            if (file.isDirectory()) {
+                deleteFile(file.listFiles(), book);
+            } else {
+                book.subscribe(x -> {
+                    if (checkFile(file, x)) {
+                        if (file.delete()) {
+                            System.out.println("Book is deleted.");
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    private static boolean checkFile(File f, Book b) {
+        return f.getAbsolutePath().contains(b.getAuthor().getFirstName())
+            && f.getAbsolutePath().contains(b.getAuthor().getLastName())
+            && f.getAbsolutePath().contains(b.getTitle());
     }
 
     private static int checkOption(String option) {

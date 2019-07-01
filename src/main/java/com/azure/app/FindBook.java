@@ -15,11 +15,17 @@ public class FindBook {
         allBooks = book;
     }
 
+    public Flux<Book> findTitles(String title) {
+
+        Flux<Book> sameTitle = allBooks.filter(x -> checkTitle(x, title));
+        return sameTitle;
+    }
+
     public void searchByTitle() {
         System.out.println("What is the book title?");
         String title = sc.nextLine();
-        Flux<Book> sameTitle = allBooks.filter(x -> checkTitle(x, title));
-        System.out.println("Here are the books named " + title + ". Please enter the number you wish to view.");
+        Flux<Book> sameTitle = findTitles(title);
+        System.out.println("Here are the matching books. Please enter the number you wish to view.");
         sameTitle.subscribe(x -> System.out.println(increment() + ". " + x));
         int choice;
         do {
