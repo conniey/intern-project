@@ -9,7 +9,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 
 import static org.junit.Assert.assertFalse;
@@ -65,13 +64,13 @@ public class AppTest {
 
     @Test
     public void testClearEmptyFiles() {
-        App.deleteEmptyDirectories();
+        new DeleteBook().deleteEmptyDirectories();
     }
 
     @Test
     public void testRegisterBooks() {
         try {
-            App.registerBooks();
+            new FileCollector().registerBooks();
             assertTrue(true);
         } catch (NullPointerException e) {
             Assert.fail("");
@@ -94,21 +93,7 @@ public class AppTest {
 
     @Test
     public void testAddBook() {
-        //Test with good infromation.
-        String goodInformation = "Good Book" + "\nDecent Author" +
-            "\nC:\\Users\\t-katami\\Documents\\Images\\Book.png" + "\nn";
-        System.setIn(new ByteArrayInputStream(goodInformation.getBytes()));
-        App.addBook();
-        //Test with bad author;
-        String goodInformation2 = "Good Book" + "\nDecent Author" +
-            "\nC:\\Users\\t-katami\\Documents\\Images\\Book.png" + "\nn";
-        System.setIn(new ByteArrayInputStream(goodInformation2.getBytes()));
-        App.addBook();
+
     }
 
 }
-/*
-System.setIn(new ByteArrayInputStream(data.getBytes()));
-        Scanner sc = new Scanner(System.in);
-        System.out.println("Do you work? " + sc.next());
- */

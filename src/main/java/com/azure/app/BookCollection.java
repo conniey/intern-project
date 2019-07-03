@@ -1,10 +1,26 @@
 package com.azure.app;
 
+import reactor.core.publisher.Flux;
+
+import java.io.File;
+
 interface BookCollection {
 
-    void add(Book b);
+    /**
+     * Reads all the JSON files and then saves their informations in new Book objects
+     *
+     * @return Flux<Book> the flux with all the book information </Book>
+     */
+    Flux<Book> registerBooks();
 
-    void delete();
+    /**
+     * Saves the book to a JSON file.
+     *
+     * @param title  - String with the title of the book
+     * @param author -String array with author's first and last name
+     * @param path   - the File path
+     * @param choice - String contianing y/n about whether the user wants to delete it or not
+     */
+    void saveBook(String title, Author author, File path, String choice);
 
-    void find();
 }

@@ -14,7 +14,7 @@ public class Author {
     Author() {
     }
 
-    Author(String lastName, String firstName) {
+    Author(String firstName, String lastName) {
         this.lastName = lastName;
         this.firstName = firstName;
     }

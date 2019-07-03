@@ -18,6 +18,7 @@ public class FindBook {
     private OptionChecker optionChecker = new OptionChecker();
     //Whether the search had 0 results, 1 result, or many results
     private int caseScenario;
+    private long size;
 
     FindBook(Flux<Book> book) {
         allBooks = book;
@@ -48,10 +49,14 @@ public class FindBook {
             } else {
                 setCaseScenario(2);
             }
+            setSize(size);
         });
         return caseScenario;
     }
 
+    public long getSize() {
+        return size;
+    }
 
     /**
      * Searches for a specific book by its author and relays the information to the user.
@@ -88,9 +93,24 @@ public class FindBook {
         }).then();
     }
 
-    public Mono<Void> manyResults() {
-
-
+    /**
+     * Under the condition where there are mutliple results, the user can select which one it wants to view.
+     *
+     * @param viewOption - 0 : prints out the list of results to the user.
+     *                   - any other integer: the selected item they wished to view from the list.
+     * @return A {@link Mono} that completes when the list has been read from.
+     */
+    public Mono<Void> manyResults(int viewOption) {
+        return results.collectList().map(list -> {
+            if (viewOption == 0) {
+                for (int i = 0; i < list.size(); i++) {
+                    System.out.println(i + 1 + ". " + list.get(i));
+                }
+            } else {
+                System.out.println(list.get(viewOption - 1).displayBookInfo());
+            }
+            return list;
+        }).then();
     }
 
     private boolean checkTitle(Book b, String title) {
@@ -102,8 +122,12 @@ public class FindBook {
             && b.getAuthor().getFirstName().contentEquals(firstName);
     }
 
-    private void setCaseScenario(int size) {
-        caseScenario = size;
+    private void setCaseScenario(int caseScenario) {
+        this.caseScenario = caseScenario;
+    }
+
+    private void setSize(long size) {
+        this.size = size;
     }
 
 }

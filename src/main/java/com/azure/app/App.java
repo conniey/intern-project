@@ -4,20 +4,14 @@
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 
 /**
  * A library application that keeps track of books using Azure services.
@@ -28,6 +22,7 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> arBooks = new AtomicReference<>();
     private static final OptionChecker optCheck = new OptionChecker();
+    private static final FileCollector fileC = new FileCollector();
 
     /**
      * Starting point for the library application.
@@ -75,7 +70,7 @@ public class App {
     }
 
     public static Mono<Void> listBooks() {
-        Flux<Book> book = registerBooks();
+        Flux<Book> book = fileC.registerBooks();
         return book.collectList().map(list -> {
             if (list == null) {
                 arBooks.set(Collections.emptyList());
@@ -92,35 +87,12 @@ public class App {
         }).then();
     }
 
-
     /**
      * Goes through all the JSON files and registers their information as Book objects before storing it in a Flux.
      *
      * @return Flux filled with all the books in the JSON files
      */
-    public static Flux<Book> registerBooks() {
-        Flux<Book> savedBook = Flux.empty();
-        try (Stream<Path> walk = Files.walk(Paths.get("C:\\Users\\t-katami\\Documents\\intern-project\\lib"))) {
-            List<String> result = walk.map(x -> x.toString()).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
-            if (result.isEmpty() || result == null) {
-                return Flux.empty();
-            }
-            savedBook = Flux.create(bookFluxSink ->
-            {
-                for (int i = 0; i < result.size(); i++) {
-                    bookFluxSink.next(new BookDeserialize().fromJSONtoBook(new File(result.get(i))));
-                }
-                bookFluxSink.complete();
-
-            }, FluxSink.OverflowStrategy.BUFFER);
-        } catch (
-            IOException e) {
-            e.printStackTrace();
-        }
-        return savedBook;
-    }
-
-    public static void addBook() {
+    private static void addBook() {
         System.out.println("Please enter the following information:");
         String title;
         String author;
@@ -133,6 +105,8 @@ public class App {
             System.out.println("2. Author?");
             author = SCANNER.nextLine();
         } while (!optCheck.validateAuthor(author.split(" ")));
+        String[] authorName = parseAuthorsName(author.split(" "));
+        Author newAuthor = new Author(authorName[0], authorName[1]);
         do {
             System.out.println("3. Cover image?");
             path = new File(SCANNER.nextLine());
@@ -142,28 +116,11 @@ public class App {
             System.out.println("4. Save? Enter 'Y' or 'N'.");
             choice = SCANNER.nextLine();
         } while (optCheck.checkYesOrNo(choice));
-        saveBook(title, author, path, choice);
-    }
-
-    private static void saveBook(String title, String author, File path, String choice) {
-        if (choice.equalsIgnoreCase("Y")) {
-            String[] name = parseAuthorsName(author.split(" "));
-            Author savedAuthor = new Author(name[0], name[1]);
-            Mono<Book> book = Mono.just(new Book(title, savedAuthor, path));
-            BookSerializer serializer = new BookSerializer();
-            book.subscribe(x -> {
-                if (serializer.writeJSON(x)) {
-                    System.out.println("Book was successfully saved!");
-                } else {
-                    System.out.println("Error. Book wasn't saved.");
-                }
-            });
-        }
+        fileC.saveBook(title, newAuthor, path, choice);
     }
 
     private static void findBook() {
         int choice;
-        FindBook findBook = new FindBook(registerBooks());
         System.out.println("How would you like to find the book?");
         do {
             System.out.println("1. Search by book title?");
@@ -173,61 +130,83 @@ public class App {
         } while (choice == INVALID);
         switch (choice) {
             case 1:
-                System.out.println("What is the book title?");
-                String title = SCANNER.nextLine();
-                int results = findBook.searchByTitle(title);
-                switch (results) {
-                    case 0:
-                        System.out.println("There are no books with that title.");
-                        break;
-                    case 1:
-                        System.out.println("Here is a book titled " + title);
-                        findBook.onlyOneResult(1).block();
-                        System.out.print("Would you like to view it? ");
-                        String yesOrNo = getYesOrNo();
-                        if (yesOrNo.equalsIgnoreCase("y")) {
-                            findBook.onlyOneResult(2).block();
-                        }
-                        break;
-                    case 2:
-                        System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view.");
-                        break;
-                }
+                findTitle();
                 break;
             case 2:
-                System.out.println("What is the author's full name?");
-                String author = SCANNER.nextLine();
-                String[] name = parseAuthorsName(author.split(" "));
-                int outcome = findBook.searchByAuthor(name[0], name[1]);
-                switch (outcome) {
-                    case 0:
-                        System.out.println("There are no books with that title.");
-                        break;
-                    case 1:
-                        System.out.println("Here is a book by " + author);
-                        findBook.onlyOneResult(1).block();
-                        System.out.print("Would you like to view it? ");
-                        String yesOrNo = getYesOrNo();
-                        if (yesOrNo.equalsIgnoreCase("y")) {
-                            findBook.onlyOneResult(2).block();
-                        }
-                        break;
-                    case 2:
-                        System.out.println("Here are the books by " + author + ". Please enter the number you wish to view.");
-
-                        break;
-                }
+                findAuthor();
                 break;
             default:
                 System.out.println("Please enter a number between 1 or 2.");
         }
     }
 
-    public static Mono<Void> deleteBook() {
+    private static void findTitle() {
+        FindBook findBook = new FindBook(fileC.registerBooks());
+        System.out.println("What is the book title?");
+        String title = SCANNER.nextLine();
+        int results = findBook.searchByTitle(title);
+        switch (results) {
+            case 0:
+                System.out.println("There are no books with that title.");
+                break;
+            case 1:
+                System.out.println("Here is a book titled " + title);
+                findBook.onlyOneResult(1).block();
+                System.out.print("Would you like to view it? ");
+                String yesOrNo = getYesOrNo();
+                if (yesOrNo.equalsIgnoreCase("y")) {
+                    findBook.onlyOneResult(2).block();
+                }
+                break;
+            case 2:
+                System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view.");
+                findBook.manyResults(0).block();
+                int choice;
+                do {
+                    String option = SCANNER.nextLine();
+                    choice = optCheck.checkOption(option, (int) findBook.getSize());
+                } while (choice == INVALID);
+                findBook.manyResults(choice).block();
+                break;
+        }
+    }
+
+    private static void findAuthor() {
+        FindBook findBook = new FindBook(fileC.registerBooks());
+        System.out.println("What is the author's full name?");
+        String author = SCANNER.nextLine();
+        String[] name = parseAuthorsName(author.split(" "));
+        int outcome = findBook.searchByAuthor(name[0], name[1]);
+        switch (outcome) {
+            case 0:
+                System.out.println("There are no books with that title.");
+                break;
+            case 1:
+                System.out.println("Here is a book by " + author);
+                findBook.onlyOneResult(1).block();
+                System.out.print("Would you like to view it? ");
+                String yesOrNo = getYesOrNo();
+                if (yesOrNo.equalsIgnoreCase("y")) {
+                    findBook.onlyOneResult(2).block();
+                }
+                break;
+            case 2:
+                System.out.println("Here are the books by " + author + ". Please enter the number you wish to view.");
+                findBook.manyResults(0);
+                int choice;
+                do {
+                    String option = SCANNER.nextLine();
+                    choice = optCheck.checkOption(option, (int) findBook.getSize() - 1);
+                } while (choice == INVALID);
+                findBook.manyResults(choice);
+                break;
+        }
+    }
+
+    private static Mono<Void> deleteBook() {
         DeleteBook deleteBook = new DeleteBook();
         System.out.println("Enter the title of the book to delete: ");
-        FindBook findBook = new FindBook(registerBooks());
-        Flux<Book> booksToDelete = findBook.findTitles(SCANNER.nextLine());
+        Flux<Book> booksToDelete = deleteBook.lookupTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
             if (list == null || list.isEmpty()) {
                 arBooks.set(Collections.emptyList());
@@ -238,27 +217,22 @@ public class App {
             if (list.size() == 1) {
                 System.out.println("Here is a matching book. Would you like to delete it? Enter Y or N.");
                 Book b = list.get(0);
-                System.out.println(b);
-            }
-            String delete;
-            int max = 1;
-            System.out.println("Here are matching books. Enter the number to delete: ");
-            for (int i = 0; i < list.size(); i++) {
-                System.out.println(i + 1 + ". " + list.get(i));
-                max++;
+                System.out.println("- " + b);
+            } else {
+                System.out.println("Here are matching books. Enter the number to delete: ");
+                deleteBook.displayResults().block();
             }
             int choice;
             do {
                 String option = SCANNER.nextLine();
-                choice = optCheck.checkOption(option, max);
+                choice = optCheck.checkOption(option, (int) deleteBook.getSize());
             } while (choice == INVALID);
             System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
-            delete = SCANNER.nextLine();
-            if (delete.contentEquals("Y") || delete.contentEquals("y")) {
+            String delete = SCANNER.nextLine();
+            if (delete.equalsIgnoreCase("y")) {
                 deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
                     list.get(choice - 1));
             }
-            list.remove(choice - 1);
             deleteBook.deleteEmptyDirectories();
             return list;
         }).then();
@@ -283,7 +257,5 @@ public class App {
     }
 }
 
-// Would you decompose App class more? Like break up deleteBook into its own class? --YES, break everything up...
-// Should I provide the users with an escape? (Like What if they don't want to find a book, can I add 0 head back?)
 // TODO: provide them some form of escape...
 // AZURE! Doesn't work. -- Working on it
