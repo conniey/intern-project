@@ -63,11 +63,14 @@ public class OptionChecker {
         }
         return f.getAbsolutePath().contains(b.getAuthor().getFirstName())
             && f.getAbsolutePath().contains(b.getAuthor().getLastName())
-            && f.getAbsolutePath().contains(b.getTitle() + ".json");
+            && f.getAbsolutePath().endsWith(".json");
     }
 
 
     public int checkOption(String option, int max) {
+        if (option.equalsIgnoreCase("q")) {
+            return 0;
+        }
         if (option.isEmpty()) {
             System.out.println("Enter a value.");
         } else {

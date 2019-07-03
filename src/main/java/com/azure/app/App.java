@@ -121,7 +121,7 @@ public class App {
 
     private static void findBook() {
         int choice;
-        System.out.println("How would you like to find the book?");
+        System.out.println("How would you like to find the book? (Enter \"Q\" to return to menu.)");
         do {
             System.out.println("1. Search by book title?");
             System.out.println("2. Search by author?");
@@ -129,6 +129,8 @@ public class App {
             choice = optCheck.checkOption(option, 2);
         } while (choice == INVALID);
         switch (choice) {
+            case 0:
+                break;
             case 1:
                 findTitle();
                 break;
@@ -159,14 +161,16 @@ public class App {
                 }
                 break;
             case 2:
-                System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view.");
+                System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
                 findBook.manyResults(0).block();
-                int choice;
+                int choice = 0;
                 do {
                     String option = SCANNER.nextLine();
                     choice = optCheck.checkOption(option, (int) findBook.getSize());
                 } while (choice == INVALID);
-                findBook.manyResults(choice).block();
+                if (choice != 0) {
+                    findBook.manyResults(choice).block();
+                }
                 break;
         }
     }
@@ -179,7 +183,7 @@ public class App {
         int outcome = findBook.searchByAuthor(name[0], name[1]);
         switch (outcome) {
             case 0:
-                System.out.println("There are no books with that title.");
+                System.out.println("There are no books by that author.");
                 break;
             case 1:
                 System.out.println("Here is a book by " + author);
@@ -191,14 +195,16 @@ public class App {
                 }
                 break;
             case 2:
-                System.out.println("Here are the books by " + author + ". Please enter the number you wish to view.");
+                System.out.println("Here are the books by " + author + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
                 findBook.manyResults(0);
                 int choice;
                 do {
                     String option = SCANNER.nextLine();
                     choice = optCheck.checkOption(option, (int) findBook.getSize() - 1);
                 } while (choice == INVALID);
-                findBook.manyResults(choice);
+                if (choice != 0) {
+                    findBook.manyResults(choice);
+                }
                 break;
         }
     }
@@ -219,7 +225,7 @@ public class App {
                 Book b = list.get(0);
                 System.out.println("- " + b);
             } else {
-                System.out.println("Here are matching books. Enter the number to delete: ");
+                System.out.println("Here are matching books. Enter the number to delete :  (Enter \"Q\" to return to menu.) ");
                 deleteBook.displayResults().block();
             }
             int choice;
@@ -227,15 +233,18 @@ public class App {
                 String option = SCANNER.nextLine();
                 choice = optCheck.checkOption(option, (int) deleteBook.getSize());
             } while (choice == INVALID);
-            System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
-            String delete = SCANNER.nextLine();
-            if (delete.equalsIgnoreCase("y")) {
-                deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
-                    list.get(choice - 1));
+            if (choice != 0) {
+                System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
+                String delete = SCANNER.nextLine();
+                if (delete.equalsIgnoreCase("y")) {
+                    deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
+                        list.get(choice - 1));
+                }
+                deleteBook.deleteEmptyDirectories();
             }
-            deleteBook.deleteEmptyDirectories();
             return list;
         }).then();
+
     }
 
     private static String getYesOrNo() {

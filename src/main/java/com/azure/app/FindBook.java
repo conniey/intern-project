@@ -71,6 +71,7 @@ public class FindBook {
             } else {
                 setCaseScenario(2);
             }
+            setSize(size);
         });
         return caseScenario;
     }
