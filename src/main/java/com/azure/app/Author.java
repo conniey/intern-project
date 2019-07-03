@@ -22,7 +22,7 @@ public class Author {
     /**
      * Returns the author's last name.
      *
-     * @return  string with last name.
+     * @return string with last name.
      */
     public String getLastName() {
         return lastName;

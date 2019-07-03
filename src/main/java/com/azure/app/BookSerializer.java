@@ -19,17 +19,22 @@ public class BookSerializer {
      *                    false if Book wasn't successfully converted to Javadoc
      */
     public boolean writeJSON(Book book) {
-        try {
-            File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\"
-                + book.getAuthor().getLastName());
-            dir.mkdir();
-            File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getAuthor().getFirstName());
-            dir2.mkdir();
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            mapper.writeValue(new File(dir2.getAbsolutePath() + "\\" + book.getTitle() + ".json"), book);
-            return true;
-        } catch (IOException ex) {
+        if (book.checkBook()) {
+            try {
+
+                File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\"
+                    + book.getAuthor().getLastName());
+                dir.mkdir();
+                File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getAuthor().getFirstName());
+                dir2.mkdir();
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.enable(SerializationFeature.INDENT_OUTPUT);
+                mapper.writeValue(new File(dir2.getAbsolutePath() + "\\" + book.getTitle() + ".json"), book);
+                return true;
+            } catch (IOException ex) {
+                return false;
+            }
+        } else {
             return false;
         }
     }

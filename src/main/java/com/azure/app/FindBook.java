@@ -4,15 +4,20 @@
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.Scanner;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FindBook {
 
     private Flux<Book> allBooks;
-    private static int numIndex = 1;
-    private Scanner sc = new Scanner(System.in);
+    private final AtomicReference<List<Book>> arBooks = new AtomicReference<>();
+    private Flux<Book> results;
 
+    private OptionChecker optionChecker = new OptionChecker();
+    //Whether the search had 0 results, 1 result, or many results
+    private int caseScenario;
 
     FindBook(Flux<Book> book) {
         allBooks = book;
@@ -25,99 +30,67 @@ public class FindBook {
      * @return Flux containing all the books with the specified title
      */
     public Flux<Book> findTitles(String title) {
-
-        Flux<Book> sameTitle = allBooks.filter(x -> checkTitle(x, title));
-        return sameTitle;
+        return allBooks.filter(x -> checkTitle(x, title));
     }
 
     /**
-     * Searches for a specific book by the title to relay information to user.
+     * Searches for the specified book by its title and relays that information to the user.
+     *
+     * @param title - String containing the title the user is searching for
      */
-    public void searchByTitle() {
-        System.out.println("What is the book title?");
-        String title = sc.nextLine();
-        Flux<Book> sameTitle = findTitles(title);
-        sameTitle.count().subscribe(one -> {
-            if (one == 1) {
-                System.out.println("Here is a book titled " + title + ". Would you like to view it? Enter Y or N.");
-                onlyOneResult(sameTitle);
+    public int searchByTitle(String title) {
+        results = findTitles(title);
+        results.count().subscribe(size -> {
+            if (size == 0 || size == null) {
+                setCaseScenario(0);
+            } else if (size == 1) {
+                setCaseScenario(1);
             } else {
-                sameTitle.hasElements().subscribe(notEmpty -> {
-                    if (notEmpty) {
-                        System.out.println("Here are books called " + title + ". Please enter the number you wish to view.");
-                        sameTitle.subscribe(x -> System.out.println(increment() + ". " + x));
-                        int choice;
-                        do {
-                            String option = sc.nextLine();
-                            choice = checkOption(option, numIndex - 1);
-                        } while (choice == -1);
-                        sameTitle.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
-
-                    } else {
-                        System.out.println("There are no books with that title.");
-                    }
-                });
-                numIndex = 1;
+                setCaseScenario(2);
             }
         });
+        return caseScenario;
+    }
+
+
+    /**
+     * Searches for a specific book by its author and relays the information to the user.
+     */
+    public int searchByAuthor(String firstName, String lastName) {
+        results = allBooks.filter(x -> checkAuthor(x, lastName, firstName));
+        results.count().subscribe(size -> {
+            if (size == 0 || size == null) {
+                setCaseScenario(0);
+            } else if (size == 1) {
+                setCaseScenario(1);
+            } else {
+                setCaseScenario(2);
+            }
+        });
+        return caseScenario;
     }
 
     /**
-     * Searches for a specific book by its author to relay the information to the user.
+     * Under the condition where only one book is in the list. the method will show the result to the user
+     * and then ask them if they wish to take a closer look at the book.
+     *
+     * @return boolean - true if they want to look into the book
+     * - false otherwise
      */
-    public void searchByAuthor() {
-        System.out.println("What is the author's name?");
-        String author = sc.nextLine();
-        String[] authorName = author.split(" ");
-        String lastName = authorName[authorName.length - 1];
-        String first = authorName[0];
-        for (int i = 1; i < authorName.length - 1; i++) {
-            first += " " + authorName[i];
-        }
-        String firstName = first;
-        Flux<Book> sameAuthor = allBooks.filter(x -> checkAuthor(x, lastName, firstName));
-        sameAuthor.count().subscribe(one -> {
-            if (one == 1) {
-                System.out.println("Here is a book by " + author + ". Would you like to view it? Enter Y or N.");
-                onlyOneResult(sameAuthor);
-            } else {
-                sameAuthor.hasElements().subscribe(notEmpty -> {
-                    if (notEmpty) {
-                        System.out.println("Here are books by " + author + ". Please enter the number you wish to view.");
-                        sameAuthor.subscribe(x -> System.out.println(increment() + ". " + x));
-                        int choice;
-                        do {
-                            String option = sc.nextLine();
-                            choice = checkOption(option, numIndex - 1);
-                        } while (choice == -1);
-                        sameAuthor.elementAt(choice - 1).subscribe(x -> displayBookInfo(x));
-                    } else {
-                        System.out.println("There are no authors with that name.");
-                    }
-                });
-                numIndex = 1;
+    public Mono<Void> onlyOneResult(int viewOption) {
+        return results.collectList().map(list -> {
+            if (viewOption == 1) {
+                System.out.println(list.get(0));
+            } else if (viewOption == 2) {
+                System.out.println(list.get(0).displayBookInfo());
             }
-        });
+            return list;
+        }).then();
     }
 
-    public void onlyOneResult(Flux<Book> result) {
-        result.subscribe(x -> System.out.println(x));
-        String option;
-        do {
-            option = sc.nextLine();
-            if (!option.contentEquals("Y") && !option.contentEquals("y")
-                && !option.contentEquals("N") && !option.contentEquals("n")) {
-                System.out.println("Please enter Y or N");
-            }
-        } while (!option.contentEquals("Y") && !option.contentEquals("y")
-            && !option.contentEquals("N") && !option.contentEquals("n"));
-        if (option.contentEquals("Y") || option.contentEquals("y")) {
-            result.elementAt(0).subscribe(x -> displayBookInfo(x));
-        }
-    }
+    public Mono<Void> manyResults() {
 
-    private String increment() {
-        return "" + numIndex++;
+
     }
 
     private boolean checkTitle(Book b, String title) {
@@ -129,30 +102,8 @@ public class FindBook {
             && b.getAuthor().getFirstName().contentEquals(firstName);
     }
 
-    private static int checkOption(String option, int max) {
-        if (option.isEmpty()) {
-            System.out.println("Please enter a value.");
-        }
-        try {
-            //checks if choice is a number
-            int choice = Integer.parseInt(option);
-            if (choice > max || choice < 1) {
-                System.out.println("Please enter a number from 1-" + max + ".");
-            } else {
-                return choice;
-            }
-        } catch (NumberFormatException ex) {
-            System.out.print("Please enter a numerical value. ");
-        }
-        // returns -1 otherwise
-        return -1;
+    private void setCaseScenario(int size) {
+        caseScenario = size;
     }
-
-    private void displayBookInfo(Book b) {
-        System.out.println("Title: " + b.getTitle());
-        System.out.println("Author: " + b.getAuthor());
-        System.out.println("Cover: " + b.getCover());
-    }
-
 
 }
