@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
@@ -14,7 +17,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class FileCollector implements BookCollection {
-    File[] mainPath;
 
     /**
      * Reads all the JSON files and then saves their informations in new Book objects
@@ -52,7 +54,6 @@ class FileCollector implements BookCollection {
      * @param path   - the File path
      * @param choice - String contianing y/n about whether the user wants to delete it or not
      */
-
     @Override
     public void saveBook(String title, Author author, File path, String choice) {
         if (choice.equalsIgnoreCase("Y")) {

@@ -20,9 +20,9 @@ public class App {
 
     private static final int INVALID = -1;
     private static final Scanner SCANNER = new Scanner(System.in);
-    private static final AtomicReference<List<Book>> arBooks = new AtomicReference<>();
-    private static final OptionChecker optCheck = new OptionChecker();
-    private static final FileCollector fileC = new FileCollector();
+    private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
+    private static final OptionChecker OPTION_CHECKER = new OptionChecker();
+    private static final FileCollector FILE_COLLECTOR = new FileCollector();
 
     /**
      * Starting point for the library application.
@@ -35,7 +35,7 @@ public class App {
         do {
             showMenu();
             String option = SCANNER.nextLine();
-            choice = optCheck.checkOption(option, 5);
+            choice = OPTION_CHECKER.checkOption(option, 5);
             switch (choice) {
                 case 1:
                     listBooks().block();
@@ -69,16 +69,16 @@ public class App {
         System.out.println("5. Quit");
     }
 
-    public static Mono<Void> listBooks() {
-        Flux<Book> book = fileC.registerBooks();
+    private static Mono<Void> listBooks() {
+        Flux<Book> book = FILE_COLLECTOR.registerBooks();
         return book.collectList().map(list -> {
             if (list == null) {
-                arBooks.set(Collections.emptyList());
+                AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books.");
                 return list;
             }
             System.out.println("Here are all the books you have: ");
-            arBooks.set(list);
+            AR_REFERENCE.set(list);
             for (int i = 0; i < list.size(); i++) {
                 Book book1 = list.get(i);
                 System.out.println(i + 1 + ". " + book1);
@@ -87,11 +87,6 @@ public class App {
         }).then();
     }
 
-    /**
-     * Goes through all the JSON files and registers their information as Book objects before storing it in a Flux.
-     *
-     * @return Flux filled with all the books in the JSON files
-     */
     private static void addBook() {
         System.out.println("Please enter the following information:");
         String title;
@@ -100,23 +95,23 @@ public class App {
         do {
             System.out.println("1. Title?");
             title = SCANNER.nextLine();
-        } while (!optCheck.validateString(title));
+        } while (!OPTION_CHECKER.validateString(title));
         do {
             System.out.println("2. Author?");
             author = SCANNER.nextLine();
-        } while (!optCheck.validateAuthor(author.split(" ")));
+        } while (!OPTION_CHECKER.validateAuthor(author.split(" ")));
         String[] authorName = parseAuthorsName(author.split(" "));
         Author newAuthor = new Author(authorName[0], authorName[1]);
         do {
             System.out.println("3. Cover image?");
             path = new File(SCANNER.nextLine());
-        } while (!optCheck.checkImage(path));
+        } while (!OPTION_CHECKER.checkImage(path));
         String choice;
         do {
             System.out.println("4. Save? Enter 'Y' or 'N'.");
             choice = SCANNER.nextLine();
-        } while (optCheck.checkYesOrNo(choice));
-        fileC.saveBook(title, newAuthor, path, choice);
+        } while (OPTION_CHECKER.checkYesOrNo(choice));
+        FILE_COLLECTOR.saveBook(title, newAuthor, path, choice);
     }
 
     private static void findBook() {
@@ -126,87 +121,90 @@ public class App {
             System.out.println("1. Search by book title?");
             System.out.println("2. Search by author?");
             String option = SCANNER.nextLine();
-            choice = optCheck.checkOption(option, 2);
+            choice = OPTION_CHECKER.checkOption(option, 2);
         } while (choice == INVALID);
         switch (choice) {
             case 0:
                 break;
             case 1:
-                findTitle();
+                findTitle().block();
                 break;
             case 2:
-                findAuthor();
+                findAuthor().block();
                 break;
             default:
                 System.out.println("Please enter a number between 1 or 2.");
         }
     }
 
-    private static void findTitle() {
-        FindBook findBook = new FindBook(fileC.registerBooks());
+    private static Mono<Void> findTitle() {
+        FilterBooks findBook = new FilterBooks(FILE_COLLECTOR.registerBooks());
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
-        int results = findBook.searchByTitle(title);
-        switch (results) {
-            case 0:
+        Flux<Book> booksToFind = findBook.findTitles(title);
+        return booksToFind.collectList().map(list -> {
+            if (list.size() == 0 || list == null) {
                 System.out.println("There are no books with that title.");
-                break;
-            case 1:
-                System.out.println("Here is a book titled " + title);
-                findBook.onlyOneResult(1).block();
-                System.out.print("Would you like to view it? ");
-                String yesOrNo = getYesOrNo();
-                if (yesOrNo.equalsIgnoreCase("y")) {
-                    findBook.onlyOneResult(2).block();
+            } else if (list.size() == 1) {
+                System.out.println("Here is a book titled " + title + ".");
+                System.out.println(" * " + list.get(0));
+                System.out.println("Would you like to view it?");
+                String choice = getYesOrNo();
+                if (choice.equalsIgnoreCase("y")) {
+                    System.out.println(list.get(0).displayBookInfo());
                 }
-                break;
-            case 2:
+            } else {
                 System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
-                findBook.manyResults(0).block();
-                int choice = 0;
-                do {
-                    String option = SCANNER.nextLine();
-                    choice = optCheck.checkOption(option, (int) findBook.getSize());
-                } while (choice == INVALID);
-                if (choice != 0) {
-                    findBook.manyResults(choice).block();
-                }
-                break;
-        }
-    }
-
-    private static void findAuthor() {
-        FindBook findBook = new FindBook(fileC.registerBooks());
-        System.out.println("What is the author's full name?");
-        String author = SCANNER.nextLine();
-        String[] name = parseAuthorsName(author.split(" "));
-        int outcome = findBook.searchByAuthor(name[0], name[1]);
-        switch (outcome) {
-            case 0:
-                System.out.println("There are no books by that author.");
-                break;
-            case 1:
-                System.out.println("Here is a book by " + author);
-                findBook.onlyOneResult(1).block();
-                System.out.print("Would you like to view it? ");
-                String yesOrNo = getYesOrNo();
-                if (yesOrNo.equalsIgnoreCase("y")) {
-                    findBook.onlyOneResult(2).block();
-                }
-                break;
-            case 2:
-                System.out.println("Here are the books by " + author + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
-                findBook.manyResults(0);
                 int choice;
                 do {
                     String option = SCANNER.nextLine();
-                    choice = optCheck.checkOption(option, (int) findBook.getSize() - 1);
+                    choice = OPTION_CHECKER.checkOption(option, list.size());
                 } while (choice == INVALID);
                 if (choice != 0) {
-                    findBook.manyResults(choice);
+                    System.out.println(list.get(choice - 1).displayBookInfo());
                 }
-                break;
-        }
+            }
+            return list;
+        }).then();
+    }
+
+    private static Mono<Void> findAuthor() {
+        FilterBooks findBook = new FilterBooks(FILE_COLLECTOR.registerBooks());
+        System.out.println("What is the author's full name?");
+        String author = SCANNER.nextLine();
+        String[] name = parseAuthorsName(author.split(" "));
+        Flux<Book> booksToFind = findBook.findAuthor(name[0], name[1]);
+        return booksToFind.collectList().map(list -> {
+            if (list == null || list.isEmpty()) {
+                AR_REFERENCE.set(Collections.emptyList());
+                System.out.println("There are no books by that author.");
+                return list;
+            }
+            AR_REFERENCE.set(list);
+            if (list.size() == 1) {
+                System.out.println("Here is a book by " + author + ".");
+                System.out.println(" * " + list.get(0));
+                System.out.println("Would you like to view it?");
+                String choice = getYesOrNo();
+                if (choice.equalsIgnoreCase("y")) {
+                    System.out.println(list.get(0).displayBookInfo());
+                }
+            } else {
+                System.out.println("Here are books by " + author + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
+                for (int i = 0; i < list.size(); i++) {
+                    System.out.println(i + 1 + ". " + list.get(i));
+                }
+                int choice;
+                do {
+                    String option = SCANNER.nextLine();
+                    choice = OPTION_CHECKER.checkOption(option, list.size());
+                } while (choice == INVALID);
+                if (choice != 0) {
+                    System.out.println(list.get(choice - 1).displayBookInfo());
+                }
+            }
+            return list;
+        }).then();
     }
 
     private static Mono<Void> deleteBook() {
@@ -215,36 +213,40 @@ public class App {
         Flux<Book> booksToDelete = deleteBook.lookupTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
             if (list == null || list.isEmpty()) {
-                arBooks.set(Collections.emptyList());
+                AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books with that title.");
                 return list;
             }
-            arBooks.set(list);
+            AR_REFERENCE.set(list);
             if (list.size() == 1) {
-                System.out.println("Here is a matching book. Would you like to delete it? Enter Y or N.");
-                Book b = list.get(0);
-                System.out.println("- " + b);
+                System.out.print("Here is a matching book. Would you like to delete it? ");
+                System.out.println(" * " + list.get(0));
+                String choice = getYesOrNo();
+                if (choice.equalsIgnoreCase("Y")) {
+                    deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
+                        list.get(0));
+                }
             } else {
                 System.out.println("Here are matching books. Enter the number to delete :  (Enter \"Q\" to return to menu.) ");
-                deleteBook.displayResults().block();
-            }
-            int choice;
-            do {
-                String option = SCANNER.nextLine();
-                choice = optCheck.checkOption(option, (int) deleteBook.getSize());
-            } while (choice == INVALID);
-            if (choice != 0) {
-                System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
-                String delete = SCANNER.nextLine();
-                if (delete.equalsIgnoreCase("y")) {
-                    deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
-                        list.get(choice - 1));
+                for (int i = 0; i < list.size(); i++) {
+                    System.out.println(i + 1 + ". " + list.get(i));
                 }
-                deleteBook.deleteEmptyDirectories();
+                int choice;
+                do {
+                    String option = SCANNER.nextLine();
+                    choice = OPTION_CHECKER.checkOption(option, list.size());
+                } while (choice == INVALID);
+                if (choice != 0) {
+                    System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
+                    String delete = SCANNER.nextLine();
+                    if (delete.equalsIgnoreCase("y")) {
+                        deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
+                            list.get(choice - 1));
+                    }
+                }
             }
             return list;
         }).then();
-
     }
 
     private static String getYesOrNo() {
@@ -252,11 +254,11 @@ public class App {
         String yesOrNo;
         do {
             yesOrNo = SCANNER.nextLine();
-        } while (optCheck.checkYesOrNo(yesOrNo));
+        } while (OPTION_CHECKER.checkYesOrNo(yesOrNo));
         return yesOrNo;
     }
 
-    private static String[] parseAuthorsName(String author[]) {
+    private static String[] parseAuthorsName(String[] author) {
         String lastName = author[author.length - 1];
         String firstName = author[0];
         for (int i = 1; i < author.length - 1; i++) {
@@ -265,6 +267,3 @@ public class App {
         return new String[]{firstName, lastName};
     }
 }
-
-// TODO: provide them some form of escape...
-// AZURE! Doesn't work. -- Working on it

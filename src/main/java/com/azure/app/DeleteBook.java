@@ -1,60 +1,54 @@
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.File;
 
 public class DeleteBook {
-    // TODO crate delete class by splitting up the function
-    // TODO create BookCollection
-    //
-    private FindBook findBook = new FindBook(new FileCollector().registerBooks());
-    private Flux<Book> results;
-    private long size;
 
+    private FilterBooks findBook = new FilterBooks(new FileCollector().registerBooks());
+
+    /**
+     * Searches for all the books with the specified title and then returns them.
+     *
+     * @param title - String with the title the user asked for
+     * @return - Flux<Book> contains the books with said title </Book>
+     */
     public Flux<Book> lookupTitle(String title) {
-        results = findBook.findTitles(title);
-        results.collectList().map(list -> {
-            if (list == null) {
-                size = 0;
-            } else {
-                size = list.size();
-            }
-            return list;
-        });
         return findBook.findTitles(title);
     }
 
-    public long getSize() {
-        return size;
-    }
-
-    public Mono<Void> displayResults() {
-        return results.collectList().map(list -> {
-            for (int i = 0; i < list.size(); i++) {
-                System.out.println(i + 1 + ". " + list.get(i));
-            }
-            return list;
-        }).then();
-    }
-
+    /**
+     * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
+     */
     public void deleteEmptyDirectories() {
         File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
         clearFiles(files);
     }
 
+    /**
+     * Assists the emptyDirectory method by traversing through the files. When it finds an empty directory without a
+     * JSON file, it deletes that file.
+     *
+     * @param files - the folder containing the other files in the library.
+     */
     public void clearFiles(File[] files) {
         for (File file : files) {
             if (file.isDirectory()) {
                 clearFiles(file.listFiles());
             }
-            if (file.length() == 0 && !file.getAbsolutePath().contains(".json")) {
+            if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
                 file.delete();
             }
         }
     }
 
+    /**
+     * Deletes the JSON file.
+     *
+     * @param files - the folder containing the other files in the library
+     * @param book  - Book object with the information about the file you want to delete
+     */
     public void deleteFile(File[] files, Book book) {
         for (File file : files) {
             if (file.isDirectory()) {
@@ -67,5 +61,6 @@ public class DeleteBook {
                 }
             }
         }
+        deleteEmptyDirectories();
     }
 }

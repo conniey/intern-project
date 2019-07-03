@@ -4,15 +4,19 @@
 package com.azure.app;
 
 
-import org.junit.Assert;
+//import org.junit.Assert;
+
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.TestName;
 
+//import org.junit.Test;
+
+/*
 import java.io.File;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+*/
 
 /**
  * Unit test for simple App.
@@ -29,7 +33,7 @@ public class AppTest {
 
     }
 
-    @Test
+   /* @Test
     public void testSerialization() {
         //Good book
         Book b = new Book("Wonder", new Author("Palacio", "R. J."),
@@ -94,6 +98,6 @@ public class AppTest {
     @Test
     public void testAddBook() {
 
-    }
+    }*/
 
 }

@@ -100,9 +100,9 @@ public class Book {
      * @return - String with the book information
      */
     public String displayBookInfo() {
-        return "Title: " + getTitle() + "\n" +
-            "Author: " + getAuthor() + "\n" +
-            "Cover: " + getCover();
+        return "Title: " + getTitle() + "\n"
+            + "Author: " + getAuthor() + "\n"
+            + "Cover: " + getCover();
     }
 }
 
