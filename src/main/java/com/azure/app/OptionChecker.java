@@ -34,7 +34,7 @@ public class OptionChecker {
      *
      * @param image - File with the supposed image
      * @return - boolean : true - if image path is correct
-     *                     false - otherwise.
+     * false - otherwise.
      */
     public boolean checkImage(File image) {
         if (!image.isFile()) {
@@ -55,9 +55,10 @@ public class OptionChecker {
 
     /**
      * Verifies the user's input to make sure its either y/n
+     *
      * @param choice - String containing a choice
      * @return - boolean : true - the String is either a y/n
-     *                     false - the String is neither
+     * false - the String is neither
      */
     public boolean checkYesOrNo(String choice) {
         if (!choice.contentEquals("Y") && !choice.contentEquals("y")
@@ -71,9 +72,10 @@ public class OptionChecker {
 
     /**
      * Verifies the author's name to make sure there's a first and last name.
+     *
      * @param author - String with the author's name
      * @return boolean : true - if String is valid
-     *                   false - if String isn't valid
+     * false - if String isn't valid
      */
     public boolean validateAuthor(String[] author) {
         if (author.length == 0) {
@@ -89,9 +91,11 @@ public class OptionChecker {
 
     /**
      * Checks the file to see if its contents match the book and that it's an actual json file.
+     *
      * @param f - File that needs to be checked
      * @param b - the Book object that it's being compared to
-     * @return
+     * @return boolean : true - if file is valid
+     * false - otherwise
      */
     public boolean checkFile(File f, Book b) {
         if (f == null) {
@@ -104,8 +108,9 @@ public class OptionChecker {
 
     /**
      * Checks the String option and parses it to an integer if it fits within the desired range or is actually a numeral
+     *
      * @param option - String that the user picked
-     * @param max - a long containing the maximum number of options
+     * @param max    - a long containing the maximum number of options
      * @return - valid integer option, or else -1 signifies that the choice was invalid
      */
     public int checkOption(String option, long max) {

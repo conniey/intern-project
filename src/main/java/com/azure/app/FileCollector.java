@@ -31,16 +31,14 @@ class FileCollector implements BookCollection {
             if (result.isEmpty() || result == null) {
                 return Flux.empty();
             }
-            savedBook = Flux.create(bookFluxSink ->
-            {
+            savedBook = Flux.create(bookFluxSink -> {
                 for (int i = 0; i < result.size(); i++) {
                     bookFluxSink.next(new BookDeserialize().fromJSONtoBook(new File(result.get(i))));
                 }
                 bookFluxSink.complete();
 
             }, FluxSink.OverflowStrategy.BUFFER);
-        } catch (
-            IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return savedBook;
