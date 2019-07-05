@@ -62,9 +62,7 @@ class FileCollector implements BookCollection {
         if (!choice.equalsIgnoreCase("Y")) {
             return Mono.just(false);
         }
-
         Mono<Book> book = Mono.just(new Book(title, author, path));
-
         return book.map(x -> {
             return serializer.writeJSON(x);
         });
