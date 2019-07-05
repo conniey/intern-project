@@ -15,7 +15,7 @@
 
     <!-- All the plugin and dependency versions. -->
     <checkstyle.version>8.18</checkstyle.version>
-    <junit.version>3.8.1</junit.version>
+    <junit.version>4.12</junit.version>
 
     <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
@@ -141,5 +141,34 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.9.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.9.9</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+      <version>3.2.10.RELEASE</version>
+    </dependency>
+
+
   </dependencies>
+
 </project>
+
+
