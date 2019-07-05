@@ -111,7 +111,11 @@ public class App {
             System.out.println("4. Save? Enter 'Y' or 'N'.");
             choice = SCANNER.nextLine();
         } while (OPTION_CHECKER.checkYesOrNo(choice));
-        FILE_COLLECTOR.saveBook(title, newAuthor, path, choice);
+        if (FILE_COLLECTOR.saveBook(title, newAuthor, path, choice).block() && choice.equalsIgnoreCase("y")) {
+            System.out.println("Book was successfully saved!");
+        } else if (choice.equalsIgnoreCase("y")) {
+            System.out.println("Error. Book wasn't saved");
+        }
     }
 
     private static void findBook() {
@@ -219,12 +223,12 @@ public class App {
             }
             AR_REFERENCE.set(list);
             if (list.size() == 1) {
-                System.out.print("Here is a matching book. Would you like to delete it? ");
+                System.out.println("Here is a matching book.");
                 System.out.println(" * " + list.get(0));
+                System.out.print("Would you like to delete it? ");
                 String choice = getYesOrNo();
                 if (choice.equalsIgnoreCase("Y")) {
-                    deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
-                        list.get(0));
+                    deleteBookHelper(list.get(0));
                 }
             } else {
                 System.out.println("Here are matching books. Enter the number to delete :  (Enter \"Q\" to return to menu.) ");
@@ -240,13 +244,22 @@ public class App {
                     System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
                     String delete = SCANNER.nextLine();
                     if (delete.equalsIgnoreCase("y")) {
-                        deleteBook.deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles(),
-                            list.get(choice - 1));
+                        deleteBookHelper(list.get(choice - 1));
                     }
                 }
             }
             return list;
         }).then();
+    }
+
+    private static void deleteBookHelper(Book b) {
+        if (new DeleteBook().deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib"),
+            b)) {
+            System.out.println("Book is deleted.");
+        } else {
+            System.out.println("Error. Book wasn't deleted.");
+        }
+
     }
 
     private static String getYesOrNo() {
@@ -267,3 +280,6 @@ public class App {
         return new String[]{firstName, lastName};
     }
 }
+
+// Does it matter if I changed it from int to long?
+// Using AtomicReference as a boolean signal?

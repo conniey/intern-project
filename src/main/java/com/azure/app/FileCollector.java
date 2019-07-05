@@ -17,6 +17,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class FileCollector implements BookCollection {
+    private final JsonHandler serializer;
+
+    FileCollector() {
+        serializer = new JsonHandler();
+    }
 
     /**
      * Reads all the JSON files and then saves their informations in new Book objects
@@ -33,7 +38,7 @@ class FileCollector implements BookCollection {
             }
             savedBook = Flux.create(bookFluxSink -> {
                 for (int i = 0; i < result.size(); i++) {
-                    bookFluxSink.next(new BookDeserialize().fromJSONtoBook(new File(result.get(i))));
+                    bookFluxSink.next(new JsonHandler().fromJSONtoBook(new File(result.get(i))));
                 }
                 bookFluxSink.complete();
 
@@ -48,24 +53,20 @@ class FileCollector implements BookCollection {
      * Saves the book to a JSON file.
      *
      * @param title  - String with the title of the book
-     * @param author -String array with author's first and last name
+     * @param author - Author of the book
      * @param path   - the File path
-     * @param choice - String contianing y/n about whether the user wants to delete it or not
+     * @param choice - String containing y/n about whether the user wants to save it or not
      */
     @Override
-    public void saveBook(String title, Author author, File path, String choice) {
-        if (choice.equalsIgnoreCase("Y")) {
-            Mono<Book> book = Mono.just(new Book(title, author, path));
-            BookSerializer serializer = new BookSerializer();
-            book.subscribe(x -> {
-                if (serializer.writeJSON(x)) {
-                    System.out.println("Book was successfully saved!");
-                } else {
-                    System.out.println("Error. Book wasn't saved.");
-                }
-            });
+    public Mono<Boolean> saveBook(String title, Author author, File path, String choice) {
+        if (!choice.equalsIgnoreCase("Y")) {
+            return Mono.just(false);
         }
+
+        Mono<Book> book = Mono.just(new Book(title, author, path));
+
+        return book.map(x -> {
+            return serializer.writeJSON(x);
+        });
     }
-
-
 }
