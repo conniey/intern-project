@@ -52,20 +52,12 @@ class FileCollector implements BookCollection {
     /**
      * Saves the book to a JSON file.
      *
-     * @param title  - String with the title of the book
-     * @param author - Author of the book
-     * @param path   - the File path
-     * @param choice - String containing y/n about whether the user wants to save it or not
+     * @param book - Book object that's going to be saved
      */
     @Override
-    public Mono<Boolean> saveBook(String title, Author author, File path, String choice) {
-        if (!choice.equalsIgnoreCase("Y")) {
-            return Mono.just(false);
-        }
-
-        Mono<Book> book = Mono.just(new Book(title, author, path));
-
-        return book.map(x -> {
+    public Mono<Boolean> saveBook(Book book) {
+        Mono<Book> newBook = Mono.just(book);
+        return newBook.map(x -> {
             return serializer.writeJSON(x);
         });
     }

@@ -111,10 +111,14 @@ public class App {
             System.out.println("4. Save? Enter 'Y' or 'N'.");
             choice = SCANNER.nextLine();
         } while (OPTION_CHECKER.checkYesOrNo(choice));
-        if (FILE_COLLECTOR.saveBook(title, newAuthor, path, choice).block() && choice.equalsIgnoreCase("y")) {
-            System.out.println("Book was successfully saved!");
-        } else if (choice.equalsIgnoreCase("y")) {
-            System.out.println("Error. Book wasn't saved");
+        if (choice.equalsIgnoreCase("y")) {
+            FILE_COLLECTOR.saveBook(new Book(title, newAuthor, path)).subscribe(x -> {
+                if (x) {
+                    System.out.println("Book was successfully saved!");
+                } else {
+                    System.out.println("Error. Book wasn't saved");
+                }
+            });
         }
     }
 
@@ -282,4 +286,3 @@ public class App {
 }
 
 // Does it matter if I changed it from int to long?
-// Using AtomicReference as a boolean signal?
