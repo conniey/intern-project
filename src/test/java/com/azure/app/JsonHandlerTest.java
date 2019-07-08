@@ -6,7 +6,14 @@ package com.azure.app;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +33,7 @@ public class JsonHandlerTest {
         assertTrue(jsonHandler.writeJSON(b));
         //Bad book (empty title)
         Book b2 = new Book("", new Author("RJ", "Palacio"),
-            new File(folder.getPath() + "\\Wonder.png")
+            new File(folder.getPath() + "\\Wonder1.png")
         );
         assertFalse(jsonHandler.writeJSON(b2));
         //Bad book (Invalid author)
@@ -42,7 +49,7 @@ public class JsonHandlerTest {
             new File(""));
         assertFalse(jsonHandler.writeJSON(b5));
         //Delete test book
-        new DeleteBook().deleteFile(new File(folder.getPath() + "\\Wonder.png"), b);
+        deleteJsonFile(new File("\\lib\\jsonFiles\\"), b);
     }
 
     /**
@@ -58,5 +65,25 @@ public class JsonHandlerTest {
         result = jsonHandler.fromJSONtoBook(new File(folder.getPath()
             + "//asdfasdf"));
         assertTrue(result == null);
+    }
+
+
+    /**
+     * For testing purposes only - To delete the json File but keep the image.
+     */
+    private void deleteJsonFile(File files, Book book) {
+        try (Stream<Path> walk = Files.walk(Paths.get(files.getAbsolutePath()))) {
+            List<String> result = walk.map(x -> x.toString()).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
+            for (String file : result) {
+                File newFile = new File(file);
+                if (new OptionChecker().checkFile(newFile, book)) {
+                    if (newFile.delete()) {
+                        new DeleteBook().deleteEmptyDirectories();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -7,7 +7,14 @@ import org.junit.Test;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertTrue;
 
@@ -23,7 +30,7 @@ public class FilterTester {
     @Test
     public void testFilterTitle() {
         lclCollector.saveBook("Existing", new Author("Mock", "Author"),
-            new File(file.getPath() + "\\GreatGatsby.gif")).block();
+            new File(file.getPath() + "\\GreatGatsby1.gif")).block();
         //Title that doesn't exist
         Flux<Book> books = filterBooks.findTitles("ASDF");
         books.collectList().map(list -> {
@@ -38,12 +45,15 @@ public class FilterTester {
         });
         //Multiple books have this title
         lclCollector.saveBook("Existing", new Author("Mock2", "Author"),
-            new File(file.getPath() + "\\GreatGatsby.gif")).block();
+            new File(file.getPath() + "\\GreatGatsby1.gif")).block();
         books = filterBooks.findTitles("Existing");
         books.collectList().map(list -> {
             assertTrue(list.size() > 1);
             return list;
         });
+        deleteJsonFile(new File("\\lib\\jsonFiles\\"),
+            new Book("Existing", new Author("Mock", "Author"),
+                new File(file.getPath() + "\\GreatGatsby1.gif")));
     }
 
     /**
@@ -52,7 +62,7 @@ public class FilterTester {
     @Test
     public void testFilterAuthor() {
         lclCollector.saveBook("Title", new Author("First", "Last"),
-            new File(file.getPath() + "\\Wonder.png")).block();
+            new File(file.getPath() + "\\Wonder1.png")).block();
         //No authors
         Flux<Book> authorSearch = filterBooks.findAuthor("Not_asdff", "Available_xcv");
         authorSearch.collectList().map(list -> {
@@ -66,11 +76,36 @@ public class FilterTester {
         });
         //Create another book from same author
         lclCollector.saveBook("Title2", new Author("First", "Last"),
-            new File(file.getPath() + "\\KK8.jpg")).block();
+            new File(file.getPath() + "\\KK81.jpg")).block();
         authorSearch = filterBooks.findAuthor("First", "Last");
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() > 1);
             return list;
         });
+        deleteJsonFile(new File("\\lib\\jsonFiles"),
+            new Book("Title", new Author("First", "Last"),
+                new File(file.getPath() + "\\Wonder1.png")));
+        deleteJsonFile(new File("\\lib\\jsonFiles"),
+            new Book("Title2", new Author("First", "Last"),
+                new File(file.getPath() + "\\KK81.jpg")));
+    }
+
+    /**
+     * For testing purposes only - To delete the json File but keep the image.
+     */
+    private void deleteJsonFile(File files, Book book) {
+        try (Stream<Path> walk = Files.walk(Paths.get(files.getAbsolutePath()))) {
+            List<String> result = walk.map(x -> x.toString()).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
+            for (String file : result) {
+                File newFile = new File(file);
+                if (new OptionChecker().checkFile(newFile, book)) {
+                    if (newFile.delete()) {
+                        new DeleteBook().deleteEmptyDirectories();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
