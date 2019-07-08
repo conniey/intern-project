@@ -76,4 +76,23 @@ public class OptionCheckerTest {
         result = optionChecker.checkOption(option, 5);
         assertTrue(result == 0);
     }
+
+    /**
+     * Tests to make sure the user enters y/n
+     */
+    @Test
+    public void testCheckYesOrNo() {
+        //Enter a valid yes (uppercase)
+        assertFalse(optionChecker.checkYesOrNo("Y"));
+        //Enter a valid yes (lowercase)
+        assertFalse(optionChecker.checkYesOrNo("y"));
+        //Enter a valid no (uppercase)
+        assertFalse(optionChecker.checkYesOrNo("N"));
+        //Enter a valid no (lowercase)
+        assertFalse(optionChecker.checkYesOrNo("n"));
+        //Enter invalid characters
+        assertTrue(optionChecker.checkYesOrNo("asdfasdfa"));
+        assertTrue(optionChecker.checkYesOrNo("No"));
+        assertTrue(optionChecker.checkYesOrNo("1"));
+    }
 }
