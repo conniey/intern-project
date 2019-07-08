@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 public class DeleteBook {
 
-    private FilterBooks findBook = new FilterBooks(new FileCollector().registerBooks());
+    private FilterBooks findBook = new FilterBooks(new LocalBookCollector().registerBooks());
 
     /**
      * Searches for all the books with the specified title and then returns them.

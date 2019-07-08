@@ -76,7 +76,7 @@ public class AppTest {
     @Test
     public void testRegisterBooks() {
         try {
-            new FileCollector().registerBooks();
+            new LocalBookCollector().registerBooks();
             assertTrue(true);
         } catch (NullPointerException e) {
             Assert.fail("");
@@ -115,8 +115,8 @@ public class AppTest {
     @Ignore("Needs update to use local paths")
     public void testSaveBooks() {
         try {
-            FileCollector fileCollector = new FileCollector();
-            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png"), "y").block());
+            LocalBookCollector fileCollector = new LocalBookCollector();
+            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png")).block());
         } catch (NullPointerException e) {
             Assert.fail("");
         }

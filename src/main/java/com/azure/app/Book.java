@@ -65,7 +65,7 @@ public class Book {
             || author.getFirstName() == null || author.getFirstName().isEmpty()) {
             return false;
         }
-        if (title.isEmpty() || title == null) {
+        if (title.isEmpty()) {
             return false;
         }
         return true;

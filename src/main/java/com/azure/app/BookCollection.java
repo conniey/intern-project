@@ -11,16 +11,21 @@ import java.io.File;
 interface BookCollection {
 
     /**
-     * Reads all the JSON files and then saves their informations in new Book objects
+     * Reads all the JSON files and then saves their information in new Book objects
      *
      * @return Flux<Book> the flux with all the book information </Book>
      */
     Flux<Book> registerBooks();
 
     /**
-     * Saves the book to a JSON file.
+     * Saves the book as a JSON file
      *
-     * @param book - Book object that's going to be saved
+     * @param title  - String containing the title of the book
+     * @param author - Author object of the book
+     * @param path   - File containing the cover image of the book
+     * @return Mono<Boolean> that determines whether the book got saved or not
+     * true - book was successfully saved
+     * false - book wasn't saved </Boolean>
      */
     Mono<Boolean> saveBook(String title, Author author, File path);
 

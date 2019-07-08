@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class FileCollector implements BookCollection {
+class LocalBookCollector implements BookCollection {
     private final JsonHandler serializer;
     private final String jsonPath = "\\lib\\jsonFiles\\";
     private final String imagePath = "\\lib\\images\\";
 
-    FileCollector() {
+    LocalBookCollector() {
         serializer = new JsonHandler();
         File directory = new File(imagePath);
         directory.mkdir();
@@ -90,14 +90,11 @@ class FileCollector implements BookCollection {
             String extension = imagePath.getName();
             File image = new File(directory + "\\" + extension);
             if (extension.endsWith(".png")) {
-                ImageIO.write(bufferedImage, "png", image);
-                return true;
+                return ImageIO.write(bufferedImage, "png", image);
             } else if (extension.endsWith(".jpg")) {
-                ImageIO.write(bufferedImage, "jpg", new File(directory + "\\" + imagePath.getName()));
-                return true;
+                return ImageIO.write(bufferedImage, "jpg", image);
             } else if (extension.endsWith(".gif")) {
-                ImageIO.write(bufferedImage, "gif", new File(directory + "\\" + imagePath.getName()));
-                return true;
+                return ImageIO.write(bufferedImage, "gif", image);
             }
         } catch (IOException ex) {
             return false;

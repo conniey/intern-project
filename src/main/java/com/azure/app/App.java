@@ -22,7 +22,7 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    private static final FileCollector FILE_COLLECTOR = new FileCollector();
+    private static final LocalBookCollector BOOK_COLLECTOR = new LocalBookCollector();
 
     /**
      * Starting point for the library application.
@@ -70,7 +70,7 @@ public class App {
     }
 
     private static Mono<Void> listBooks() {
-        Flux<Book> book = FILE_COLLECTOR.registerBooks();
+        Flux<Book> book = BOOK_COLLECTOR.registerBooks();
         return book.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -112,7 +112,7 @@ public class App {
             choice = SCANNER.nextLine();
         } while (OPTION_CHECKER.checkYesOrNo(choice));
         if (choice.equalsIgnoreCase("y")) {
-            FILE_COLLECTOR.saveBook(title, newAuthor, path).subscribe(x -> {
+            BOOK_COLLECTOR.saveBook(title, newAuthor, path).subscribe(x -> {
                 if (x) {
                     System.out.println("Book was successfully saved!");
                 } else {
@@ -146,12 +146,12 @@ public class App {
     }
 
     private static Mono<Void> findTitle() {
-        FilterBooks findBook = new FilterBooks(FILE_COLLECTOR.registerBooks());
+        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.registerBooks());
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
         Flux<Book> booksToFind = findBook.findTitles(title);
         return booksToFind.collectList().map(list -> {
-            if (list.size() == 0 || list == null) {
+            if (list.size() == 0) {
                 System.out.println("There are no books with that title.");
             } else if (list.size() == 1) {
                 System.out.println("Here is a book titled " + title + ".");
@@ -177,13 +177,13 @@ public class App {
     }
 
     private static Mono<Void> findAuthor() {
-        FilterBooks findBook = new FilterBooks(FILE_COLLECTOR.registerBooks());
+        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.registerBooks());
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));
         Flux<Book> booksToFind = findBook.findAuthor(name[0], name[1]);
         return booksToFind.collectList().map(list -> {
-            if (list == null || list.isEmpty()) {
+            if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books by that author.");
                 return list;
@@ -220,7 +220,7 @@ public class App {
         System.out.println("Enter the title of the book to delete: ");
         Flux<Book> booksToDelete = deleteBook.lookupTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
-            if (list == null || list.isEmpty()) {
+            if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books with that title.");
                 return list;
@@ -284,5 +284,3 @@ public class App {
         return new String[]{firstName, lastName};
     }
 }
-
-// Does it matter if I changed it from int to long?
