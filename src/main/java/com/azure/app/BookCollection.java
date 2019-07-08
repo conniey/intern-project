@@ -6,6 +6,8 @@ package com.azure.app;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
+
 interface BookCollection {
 
     /**
@@ -20,5 +22,7 @@ interface BookCollection {
      *
      * @param book - Book object that's going to be saved
      */
-    Mono<Boolean> saveBook(Book book);
+    Mono<Boolean> saveBook(String title, Author author, File path);
+
+
 }

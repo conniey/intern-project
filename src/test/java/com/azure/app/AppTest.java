@@ -112,7 +112,8 @@ public class AppTest {
     public void testSaveBooks() {
         try {
             FileCollector fileCollector = new FileCollector();
-            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png"), "y").block());
+            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"),
+                new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png")).block());
         } catch (NullPointerException e) {
             Assert.fail("");
         }

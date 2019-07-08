@@ -72,7 +72,7 @@ public class App {
     private static Mono<Void> listBooks() {
         Flux<Book> book = FILE_COLLECTOR.registerBooks();
         return book.collectList().map(list -> {
-            if (list == null) {
+            if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books.");
                 return list;
@@ -112,7 +112,7 @@ public class App {
             choice = SCANNER.nextLine();
         } while (OPTION_CHECKER.checkYesOrNo(choice));
         if (choice.equalsIgnoreCase("y")) {
-            FILE_COLLECTOR.saveBook(new Book(title, newAuthor, path)).subscribe(x -> {
+            FILE_COLLECTOR.saveBook(title, newAuthor, path).subscribe(x -> {
                 if (x) {
                     System.out.println("Book was successfully saved!");
                 } else {
@@ -257,7 +257,7 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (new DeleteBook().deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib"),
+        if (new DeleteBook().deleteFile(new File("\\lib\\jsonFiles"),
             b)) {
             System.out.println("Book is deleted.");
         } else {

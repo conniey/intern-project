@@ -32,8 +32,10 @@ public class DeleteBook {
      * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
      */
     public void deleteEmptyDirectories() {
-        File[] files = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib").listFiles();
+        File[] files = new File("\\lib\\jsonFiles\\").listFiles();
         clearFiles(files);
+        File[] imageFiles = new File("\\lib\\images\\").listFiles();
+        clearFiles(imageFiles);
     }
 
     /**
@@ -59,7 +61,7 @@ public class DeleteBook {
      * @param files - the folder containing the other files in the library
      * @param book  - Book object with the information about the file you want to delete
      * @return boolean - true if file was sucessfully deleted
-     * false - otherwise
+     *                   false - otherwise
      */
     public boolean deleteFile(File files, Book book) {
         try (Stream<Path> walk = Files.walk(Paths.get(files.getAbsolutePath()))) {
@@ -68,6 +70,7 @@ public class DeleteBook {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
                     if (newFile.delete()) {
+                        book.getCover().delete();
                         deleteEmptyDirectories();
                         return true;
                     }

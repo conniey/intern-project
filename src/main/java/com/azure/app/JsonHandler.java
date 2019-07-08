@@ -46,7 +46,7 @@ public class JsonHandler {
         if (book.checkBook()) {
             try {
 
-                File dir = new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\"
+                File dir = new File("\\lib\\jsonFiles\\"
                     + book.getAuthor().getLastName());
                 dir.mkdir();
                 File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getAuthor().getFirstName());

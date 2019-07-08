@@ -47,7 +47,7 @@ public class Book {
      *
      * @return File of image
      */
-    private File getCover() {
+    public File getCover() {
         return cover;
     }
 
