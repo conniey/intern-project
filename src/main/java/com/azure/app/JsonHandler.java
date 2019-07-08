@@ -45,7 +45,6 @@ public class JsonHandler {
     public boolean writeJSON(Book book) {
         if (book.checkBook()) {
             try {
-
                 File dir = new File("\\lib\\jsonFiles\\"
                     + book.getAuthor().getLastName());
                 dir.mkdir();
