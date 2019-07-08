@@ -14,6 +14,7 @@ import static org.junit.Assert.assertTrue;
 
 public class JsonHandlerTest {
     private JsonHandler jsonHandler = new JsonHandler();
+    private URL folder = AppTest.class.getClassLoader().getResource(".");
 
     /**
      * Tests the JsonHandler class
@@ -21,7 +22,6 @@ public class JsonHandlerTest {
     @Test
     @Ignore("Needs update to use local paths")
     public void testSerializationAndCheckBook() {
-        URL folder = AppTest.class.getClassLoader().getResource(".");
         //Good book
         Book b = new Book("Wonder", new Author("Palacio", "R. J."),
             new File(folder.getPath() + "\\Book.png"));
@@ -50,7 +50,6 @@ public class JsonHandlerTest {
      */
     @Test
     public void testFromJSONtoBook() {
-        URL folder = AppTest.class.getClassLoader().getResource(".");
         //Test with valid data
         Book result = jsonHandler.fromJSONtoBook(new File(folder.getPath()
             + "\\Kingdom Keepers VIII.json"));
