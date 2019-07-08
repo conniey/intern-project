@@ -4,6 +4,7 @@
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 
@@ -22,8 +23,7 @@ interface BookCollection {
      * @param title  - String with the title of the book
      * @param author -String array with author's first and last name
      * @param path   - the File path
-     * @param choice - String contianing y/n about whether the user wants to delete it or not
+     * @param choice - String containing y/n about whether the user wants to save it or not
      */
-    void saveBook(String title, Author author, File path, String choice);
-
+    Mono<Boolean> saveBook(String title, Author author, File path, String choice);
 }

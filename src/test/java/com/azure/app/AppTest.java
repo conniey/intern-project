@@ -4,19 +4,17 @@
 package com.azure.app;
 
 
-//import org.junit.Assert;
-
+import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
-//import org.junit.Test;
-
-/*
 import java.io.File;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-*/
+
 
 /**
  * Unit test for simple App.
@@ -33,12 +31,16 @@ public class AppTest {
 
     }
 
-   /* @Test
-    public void testSerialization() {
+    /**
+     * Tests the JsonHandler class
+     */
+    @Test
+    @Ignore("Needs update to use local paths")
+    public void testSerializationAndCheckBook() {
         //Good book
         Book b = new Book("Wonder", new Author("Palacio", "R. J."),
             new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png"));
-        BookSerializer bookSerializer = new BookSerializer();
+        JsonHandler bookSerializer = new JsonHandler();
         assertTrue(bookSerializer.writeJSON(b));
         //Bad book (empty title)
         Book b2 = new Book("", new Author("Palacio", "R. J."),
@@ -59,18 +61,18 @@ public class AppTest {
         assertFalse(bookSerializer.writeJSON(b5));
     }
 
-    public void testDeserialization() {
-        BookDeserialize bd = new BookDeserialize();
-        Book wonderBook = bd.fromJSONtoBook(
-            new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\Palacio\\R. J.\\Wonder.json"));
-        assertTrue(wonderBook.checkBook());
-    }
-
+    /**
+     * Tests to make sure the directives are cleared
+     */
     @Test
+    @Ignore("Needs update to use local paths")
     public void testClearEmptyFiles() {
         new DeleteBook().deleteEmptyDirectories();
     }
 
+    /**
+     * Tests to see if books can be registered
+     */
     @Test
     public void testRegisterBooks() {
         try {
@@ -78,26 +80,84 @@ public class AppTest {
             assertTrue(true);
         } catch (NullPointerException e) {
             Assert.fail("");
-            assertTrue(false);
         }
     }
 
-    public void testOptions() {
-
-    }
-
-    public void testListBooks() {
-        try {
-            App.listBooks();
-            assertTrue(true);
-        } catch (NullPointerException e) {
-            assertTrue(false);
-        }
-    }
-
+    /**
+     * Tests to make sure it takes in correct options
+     */
     @Test
-    public void testAddBook() {
+    public void testOptions() {
+        OptionChecker optionChecker = new OptionChecker();
+        int result;
+        String option = "2";
+        //Good option
+        result = optionChecker.checkOption(option, 5);
+        assertTrue(result != -1);
+        //Bad option - out of range
+        option = "6";
+        result = optionChecker.checkOption(option, 5);
+        assertTrue(result == -1);
+        //Flat out bad option
+        option = "asdfasdfasdf";
+        result = optionChecker.checkOption(option, 5);
+        assertTrue(result == -1);
+        //Quit option
+        option = "q";
+        result = optionChecker.checkOption(option, 5);
+        assertTrue(result == 0);
+    }
 
-    }*/
+    /**
+     * Makes sure that books can be saved properly.
+     */
+    @Test
+    @Ignore("Needs update to use local paths")
+    public void testSaveBooks() {
+        try {
+            FileCollector fileCollector = new FileCollector();
+            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png"), "y").block());
+        } catch (NullPointerException e) {
+            Assert.fail("");
+        }
+    }
+
+    /**
+     * Makes sure that the correct images are saved.
+     */
+    @Test
+    @Ignore("Needs update to use local paths")
+    public void testCheckImage() {
+        OptionChecker optionChecker = new OptionChecker();
+        //Good png picture
+        File fh = new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png");
+        assertTrue(optionChecker.checkImage(fh));
+        //Good jpg
+        fh = new File("C:\\Users\\t-katami\\Documents\\Images\\bookpic.jpg");
+        assertTrue(optionChecker.checkImage(fh));
+        //Good gif
+        fh = new File("C:\\Users\\t-katami\\Documents\\Images\\GreatGatsby.gif");
+        assertTrue(optionChecker.checkImage(fh));
+        //Random file
+        fh = new File("C:\\Users\\t-katami\\Documents\\Windows PowerShell.docx");
+        assertFalse(optionChecker.checkImage(fh));
+    }
+
+    /**
+     * Makes sure that the author's name contains at least a first and last name
+     */
+    @Test
+    public void testAuthorCheck() {
+        OptionChecker optionChecker = new OptionChecker();
+        //Author with only one name;
+        String name = "OnlyFirstName";
+        assertFalse(optionChecker.validateAuthor(name.split(" ")));
+        //Author with two name
+        name = "First Last";
+        assertTrue(optionChecker.validateAuthor(name.split(" ")));
+        //Author with multiple name
+        name = "First And Last";
+        assertTrue(optionChecker.validateAuthor(name.split(" ")));
+    }
 
 }

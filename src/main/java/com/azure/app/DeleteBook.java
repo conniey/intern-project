@@ -6,6 +6,13 @@ package com.azure.app;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DeleteBook {
 
@@ -51,19 +58,24 @@ public class DeleteBook {
      *
      * @param files - the folder containing the other files in the library
      * @param book  - Book object with the information about the file you want to delete
+     * @return boolean - true if file was sucessfully deleted
+     * false - otherwise
      */
-    public void deleteFile(File[] files, Book book) {
-        for (File file : files) {
-            if (file.isDirectory()) {
-                deleteFile(file.listFiles(), book);
-            } else {
-                if (new OptionChecker().checkFile(file, book)) {
-                    if (file.delete()) {
-                        System.out.println("Book is deleted.");
+    public boolean deleteFile(File files, Book book) {
+        try (Stream<Path> walk = Files.walk(Paths.get(files.getAbsolutePath()))) {
+            List<String> result = walk.map(x -> x.toString()).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
+            for (String file : result) {
+                File newFile = new File(file);
+                if (new OptionChecker().checkFile(newFile, book)) {
+                    if (newFile.delete()) {
+                        deleteEmptyDirectories();
+                        return true;
                     }
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        deleteEmptyDirectories();
+        return false;
     }
 }

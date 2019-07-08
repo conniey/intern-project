@@ -101,9 +101,15 @@ public class OptionChecker {
         if (f == null) {
             return false;
         }
-        return f.getAbsolutePath().contains(b.getAuthor().getFirstName())
-            && f.getAbsolutePath().contains(b.getAuthor().getLastName())
-            && f.getAbsolutePath().endsWith(".json");
+        if (b.getAuthor().getFirstName().endsWith(".")) {
+            return f.getAbsolutePath().contains(b.getAuthor().getFirstName().substring(0, b.getAuthor().getFirstName().lastIndexOf('.')))
+                && f.getAbsolutePath().contains(b.getAuthor().getLastName())
+                && f.getAbsolutePath().contains(b.getTitle() + ".json");
+        } else {
+            return f.getAbsolutePath().contains(b.getAuthor().getFirstName())
+                && f.getAbsolutePath().contains(b.getAuthor().getLastName())
+                && f.getAbsolutePath().contains(b.getTitle() + ".json");
+        }
     }
 
     /**
