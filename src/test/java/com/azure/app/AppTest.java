@@ -17,7 +17,7 @@ public class AppTest {
     public TestName name = new TestName();
 
     /**
-     * Rigourous Test :-)
+     * Rigorous Test :-)
      */
     @Test
     public void testApp() {
