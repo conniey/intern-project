@@ -3,7 +3,6 @@
 
 package com.azure.app;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -14,21 +13,20 @@ import static org.junit.Assert.assertTrue;
 
 public class JsonHandlerTest {
     private JsonHandler jsonHandler = new JsonHandler();
-    private URL folder = AppTest.class.getClassLoader().getResource(".");
+    private URL folder = FilterTester.class.getClassLoader().getResource(".");
 
     /**
      * Tests the JsonHandler class
      */
     @Test
-    @Ignore("Needs update to use local paths")
     public void testSerializationAndCheckBook() {
         //Good book
-        Book b = new Book("Wonder", new Author("Palacio", "R. J."),
-            new File(folder.getPath() + "\\Book.png"));
+        Book b = new Book("Wonder", new Author("RJ", "Palacio"),
+            new File(folder.getPath() + "\\Wonder.png"));
         assertTrue(jsonHandler.writeJSON(b));
         //Bad book (empty title)
-        Book b2 = new Book("", new Author("Palacio", "R. J."),
-            new File(folder.getPath() + "\\Book.png")
+        Book b2 = new Book("", new Author("RJ", "Palacio"),
+            new File(folder.getPath() + "\\Wonder.png")
         );
         assertFalse(jsonHandler.writeJSON(b2));
         //Bad book (Invalid author)
@@ -43,6 +41,8 @@ public class JsonHandlerTest {
         Book b5 = new Book(null, new Author(null, null),
             new File(""));
         assertFalse(jsonHandler.writeJSON(b5));
+        //Delete test book
+        new DeleteBook().deleteFile(new File(folder.getPath() + "\\Wonder.png"), b);
     }
 
     /**

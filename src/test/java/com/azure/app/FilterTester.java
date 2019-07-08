@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import org.junit.Test;
@@ -10,7 +13,7 @@ import static junit.framework.TestCase.assertTrue;
 
 public class FilterTester {
     private FilterBooks filterBooks = new FilterBooks(new LocalBookCollector().registerBooks());
-    private URL file = AppTest.class.getClassLoader().getResource(".");
+    private URL file = App.class.getClassLoader().getResource(".");
     LocalBookCollector lclCollector = new LocalBookCollector();
 
     /**
@@ -41,11 +44,6 @@ public class FilterTester {
             assertTrue(list.size() > 1);
             return list;
         });
-        //Deletes the test books
-        new DeleteBook().deleteFile(new File("\\lib\\jsonFiles"), new Book("Existing", new Author("Mock", "Author"),
-            new File(file.getPath() + "\\GreatGatsby.gif")));
-        new DeleteBook().deleteFile(new File("\\lib\\jsonFiles"), new Book("Existing", new Author("Mock2", "Author"),
-            new File(file.getPath() + "\\GreatGatsby.gif")));
     }
 
     /**
@@ -74,10 +72,5 @@ public class FilterTester {
             assertTrue(list.size() > 1);
             return list;
         });
-        //Delete test books
-        new DeleteBook().deleteFile(new File("\\lib\\jsonFiles"), new Book("Title",
-            new Author("First", "Last"), new File(file.getPath() + "\\Wonder.png")));
-        new DeleteBook().deleteFile(new File("\\lib\\jsonFiles"), new Book("Title2",
-            new Author("First", "Last"), new File(file.getPath() + "\\KK8.jpg")));
     }
 }

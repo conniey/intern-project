@@ -3,7 +3,6 @@
 
 package com.azure.app;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -19,10 +18,9 @@ public class OptionCheckerTest {
      * Makes sure that the correct images are saved.
      */
     @Test
-    @Ignore("Needs update to use local paths")
     public void testCheckImage() {
         //Good png picture
-        URL folder = AppTest.class.getClassLoader().getResource(".");
+        URL folder = App.class.getClassLoader().getResource(".");
         File path = new File(folder.getPath() + "\\Wonder.png");
         assertTrue(optionChecker.checkImage(path));
         //Good jpg
@@ -35,7 +33,6 @@ public class OptionCheckerTest {
         path = new File(folder.getPath() + "\\Test.docx");
         assertFalse(optionChecker.checkImage(path));
     }
-    //C:\Users\t-katami\Documents\intern-project\target\test-classes\Book.png
 
     /**
      * Makes sure that the author's name contains at least a first and last name

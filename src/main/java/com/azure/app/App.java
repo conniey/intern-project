@@ -141,7 +141,7 @@ public class App {
                 findAuthor().block();
                 break;
             default:
-                System.out.println("Please enter a number between 1 or 2.");
+                System.out.println("Please enter 1 or 2.");
         }
     }
 

@@ -21,7 +21,7 @@ public class LocalBookCollectorTests {
      */
     @Test
     public void testSaveBooks() {
-        URL folder = AppTest.class.getClassLoader().getResource(".");
+        URL folder = App.class.getClassLoader().getResource(".");
         try {
             //Good book data
             assertTrue(bookCollector.saveBook("Title", new Author("Good", "Author"),
@@ -30,8 +30,8 @@ public class LocalBookCollectorTests {
             assertFalse(bookCollector.saveBook("", new Author("Bad", ""),
                 new File(folder.getPath() + "\\Book.png")).block());
             //Bad data concerning the file name
-            assertFalse(bookCollector.saveBook("Title", new Author("The Good", "The Bad"), new File
-                ("The Ugly.png")).block());
+            assertFalse(bookCollector.saveBook("Title", new Author("The Good", "The Bad"),
+                new File("The Ugly.png")).block());
         } catch (NullPointerException e) {
             Assert.fail("");
         }
