@@ -58,6 +58,8 @@ public class DeleteBook {
      *
      * @param files - the folder containing the other files in the library
      * @param book  - Book object with the information about the file you want to delete
+     * @return boolean - true if file was sucessfully deleted
+     * false - otherwise
      */
     public boolean deleteFile(File files, Book book) {
         try (Stream<Path> walk = Files.walk(Paths.get(files.getAbsolutePath()))) {

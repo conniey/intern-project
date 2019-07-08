@@ -30,6 +30,9 @@ public class AppTest {
 
     }
 
+    /**
+     * Tests the JsonHandler class
+     */
     @Test
     public void testSerializationAndCheckBook() {
         //Good book
@@ -56,11 +59,17 @@ public class AppTest {
         assertFalse(bookSerializer.writeJSON(b5));
     }
 
+    /**
+     * Tests to make sure the directives are cleared
+     */
     @Test
     public void testClearEmptyFiles() {
         new DeleteBook().deleteEmptyDirectories();
     }
 
+    /**
+     * Tests to see if books can be registered
+     */
     @Test
     public void testRegisterBooks() {
         try {
@@ -71,6 +80,9 @@ public class AppTest {
         }
     }
 
+    /**
+     * Tests to make sure it takes in correct options
+     */
     @Test
     public void testOptions() {
         OptionChecker optionChecker = new OptionChecker();
@@ -93,16 +105,22 @@ public class AppTest {
         assertTrue(result == 0);
     }
 
+    /**
+     * Makes sure that books can be saved properly.
+     */
     @Test
     public void testSaveBooks() {
         try {
             FileCollector fileCollector = new FileCollector();
-            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png"), "y"));
+            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png"), "y").block());
         } catch (NullPointerException e) {
             Assert.fail("");
         }
     }
 
+    /**
+     * Makes sure that the correct images are saved.
+     */
     @Test
     public void testCheckImage() {
         OptionChecker optionChecker = new OptionChecker();
@@ -120,6 +138,9 @@ public class AppTest {
         assertFalse(optionChecker.checkImage(fh));
     }
 
+    /**
+     * Makes sure that the author's name contains at least a first and last name
+     */
     @Test
     public void testAuthorCheck() {
         OptionChecker optionChecker = new OptionChecker();
