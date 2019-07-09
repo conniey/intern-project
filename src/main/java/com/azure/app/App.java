@@ -151,7 +151,7 @@ public class App {
         String title = SCANNER.nextLine();
         Flux<Book> booksToFind = findBook.findTitles(title);
         return booksToFind.collectList().map(list -> {
-            if (list.size() == 0) {
+            if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
             } else if (list.size() == 1) {
                 System.out.println("Here is a book titled " + title + ".");
