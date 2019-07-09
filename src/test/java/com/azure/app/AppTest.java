@@ -14,6 +14,7 @@ import java.io.File;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 
 /**
@@ -67,7 +68,8 @@ public class AppTest {
     @Test
     @Ignore("Needs update to use local paths")
     public void testClearEmptyFiles() {
-        new DeleteBook().deleteEmptyDirectories();
+        BookCollection collection = mock(BookCollection.class);
+        new DeleteBook(collection).deleteEmptyDirectories();
     }
 
     /**
