@@ -10,7 +10,7 @@ public class OptionChecker {
     /**
      * Checks the user's string and makes sure its valid.
      *
-     * @param input - String the user enteredd
+     * @param input - String the user entered
      * @return -  boolean : true - the String is valid
      * false - the String isn't valid
      */
