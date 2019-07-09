@@ -6,7 +6,6 @@ package com.azure.app;
 import java.io.File;
 
 public class OptionChecker {
-
     /**
      * Checks the user's string and makes sure its valid.
      *
@@ -101,7 +100,9 @@ public class OptionChecker {
         if (f == null) {
             return false;
         }
-        //Handles the condition where the first name ends with a period (like initials) but the file doesn't register lagging periods.
+        String filePath = f.getAbsolutePath();
+        //Handles the condition where the first name ends with a period (like initials) but the file doesn't register
+        // lagging periods.
         String tempFirstName = b.getAuthor().getFirstName();
         if (tempFirstName.endsWith(".")) {
             tempFirstName = tempFirstName.substring(0, tempFirstName.lastIndexOf("."));
@@ -110,9 +111,9 @@ public class OptionChecker {
         if (tempLastName.endsWith(".")) {
             tempLastName = tempLastName.substring(0, tempLastName.lastIndexOf("."));
         }
-        return f.getAbsolutePath().contains(tempFirstName)
-            && f.getAbsolutePath().contains(tempLastName)
-                && f.getAbsolutePath().contains(b.getTitle() + ".json");
+        return filePath.contains(tempFirstName)
+            && filePath.contains(tempLastName)
+            && filePath.contains(b.getTitle() + ".json");
     }
 
     /**
@@ -144,5 +145,4 @@ public class OptionChecker {
         // returns -1 which corresponds as INVALID in the App main
         return -1;
     }
-
 }

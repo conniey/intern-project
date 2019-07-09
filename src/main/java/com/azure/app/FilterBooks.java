@@ -9,13 +9,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FilterBooks {
-
     private Flux<Book> allBooks;
     private final AtomicReference<List<Book>> arBooks = new AtomicReference<>();
     private OptionChecker optionChecker = new OptionChecker();
 
-    FilterBooks(Flux<Book> book) {
-        allBooks = book;
+    FilterBooks(BookCollection collection) {
+        allBooks = collection.registerBooks();
     }
 
     /**

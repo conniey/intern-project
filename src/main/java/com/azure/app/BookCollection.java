@@ -7,8 +7,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
+import java.util.List;
 
 interface BookCollection {
+    /**
+     * Traverse through the files in the class
+     */
+    List<File> traverseJsonFiles();
 
     /**
      * Reads all the JSON files and then saves their information in new Book objects
@@ -28,6 +33,4 @@ interface BookCollection {
      * false - book wasn't saved </Boolean>
      */
     Mono<Boolean> saveBook(String title, Author author, File path);
-
-
 }

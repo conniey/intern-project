@@ -3,6 +3,7 @@
 
 package com.azure.app;
 
+import org.apache.commons.io.FilenameUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -14,44 +15,39 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class LocalBookCollector implements BookCollection {
-    private final JsonHandler serializer;
-    private final String jsonPath = "\\lib\\jsonFiles\\";
-    private final String imagePath = "\\lib\\images\\";
+    private final Set<String> supportedImageFormats;
 
+    //Consider passing a string that's the root of the directory you want to add the things in
     LocalBookCollector() {
-        serializer = new JsonHandler();
-        File directory = new File(imagePath);
+        supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
+        File directory = new File(Constants.IMAGE_PATH);
         directory.mkdir();
-        File directoryJSON = new File(jsonPath);
+        File directoryJSON = new File(Constants.JSON_PATH);
         directoryJSON.mkdir();
     }
 
     /**
-     * Reads all the JSON files and then saves their informations in new Book objects
+     * Stores all the Book info from the JSON files into a Flux
+     * into a Flux object
      *
      * @return Flux<Book> the flux with all the book information </Book>
      */
     @Override
     public Flux<Book> registerBooks() {
         Flux<Book> savedBook = Flux.empty();
-        try (Stream<Path> walk = Files.walk(Paths.get("\\lib\\jsonFiles\\"))) {
-            List<String> result = walk.map(x -> x.toString()).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
-            if (result.isEmpty() || result == null) {
-                return Flux.empty();
-            }
+        List<File> result = traverseJsonFiles();
+        if (result != null) {
             savedBook = Flux.create(bookFluxSink -> {
                 for (int i = 0; i < result.size(); i++) {
-                    bookFluxSink.next(new JsonHandler().fromJSONtoBook(new File(result.get(i))));
+                    bookFluxSink.next(new JsonHandler().fromJSONtoBook(result.get(i)));
                 }
                 bookFluxSink.complete();
             }, FluxSink.OverflowStrategy.BUFFER);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return savedBook;
     }
@@ -68,7 +64,7 @@ class LocalBookCollector implements BookCollection {
      */
     @Override
     public Mono<Boolean> saveBook(String title, Author author, File path) {
-        File dir = new File(imagePath + "\\" + author.getLastName());
+        File dir = new File(Constants.IMAGE_PATH + "\\" + author.getLastName());
         dir.mkdir();
         File dir2 = new File(dir + "\\" + author.getFirstName());
         dir2.mkdir();
@@ -76,29 +72,36 @@ class LocalBookCollector implements BookCollection {
         saveImage(dir2, path);
         Book book = new Book(title, author, newPath);
         if (book.checkBook()) {
-            Mono<Book> newBook = Mono.just(book);
-            return newBook.map(x -> {
-                return serializer.writeJSON(x);
-            });
+            return Mono.just(Constants.SERIALIZER.writeJSON(book));
         }
         return Mono.just(false);
     }
 
     private boolean saveImage(File directory, File imagePath) {
+        String extension = FilenameUtils.getExtension(imagePath.getName());
+        if (!supportedImageFormats.contains(extension)) {
+            return false;
+        }
         try {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
-            String extension = imagePath.getName();
-            File image = new File(directory + "\\" + extension);
-            if (extension.endsWith(".png")) {
-                return ImageIO.write(bufferedImage, "png", image);
-            } else if (extension.endsWith(".jpg")) {
-                return ImageIO.write(bufferedImage, "jpg", image);
-            } else if (extension.endsWith(".gif")) {
-                return ImageIO.write(bufferedImage, "gif", image);
-            }
+            File image = new File(directory + "\\" + imagePath.getName());
+            return ImageIO.write(bufferedImage, extension, image);
         } catch (IOException ex) {
             return false;
         }
-        return false;
+    }
+
+    @Override
+    public List<File> traverseJsonFiles() {
+        List<File> result = null;
+        try (Stream<Path> walk = Files.walk(Paths.get(Constants.JSON_PATH))) {
+            result = walk.map(x -> x.toFile()).filter(f -> f.getAbsolutePath().endsWith(".json")).collect(Collectors.toList());
+            if (result.isEmpty()) {
+                return Collections.emptyList();
+            }
+        } catch (IOException e) {
+            System.err.println("Exception traversing through JSON files.");
+        }
+        return result;
     }
 }

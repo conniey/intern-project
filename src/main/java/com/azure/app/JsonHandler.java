@@ -12,12 +12,11 @@ import java.io.File;
 import java.io.IOException;
 
 public class JsonHandler {
-
     /**
      * Converts a json file back to a Book object
      *
-     * @param jsonFile - the json file to be converted
-     * @return Book - from the jsonFile
+     * @param jsonFile - the JSON file to be converted
+     * @return Book - created from the JSON file
      */
     public Book fromJSONtoBook(File jsonFile) {
         try {
@@ -26,11 +25,11 @@ public class JsonHandler {
             Book b = mapper.readValue(jsonFile, Book.class);
             return b;
         } catch (JsonGenerationException e) {
-            System.out.println("Couldn't generate.");
+            System.err.println("Exception generating JSON file.");
         } catch (JsonMappingException e) {
-            e.printStackTrace();
+            System.err.println("Exception allocating memory space for file.");
         } catch (IOException e) {
-            System.out.println("Error.");
+            System.out.println("Exception while writing JSON file.");
         }
         return null;
     }
@@ -45,8 +44,7 @@ public class JsonHandler {
     public boolean writeJSON(Book book) {
         if (book.checkBook()) {
             try {
-
-                File dir = new File("\\lib\\jsonFiles\\"
+                File dir = new File(Constants.JSON_PATH
                     + book.getAuthor().getLastName());
                 dir.mkdir();
                 File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getAuthor().getFirstName());

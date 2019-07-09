@@ -67,7 +67,7 @@ public class AppTest {
     @Test
     @Ignore("Needs update to use local paths")
     public void testClearEmptyFiles() {
-        new DeleteBook().deleteEmptyDirectories();
+        new DeleteBook(new LocalBookCollector()).deleteEmptyDirectories();
     }
 
     /**

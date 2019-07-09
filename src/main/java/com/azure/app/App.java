@@ -12,17 +12,15 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicReference;
 
-
 /**
  * A library application that keeps track of books using Azure services.
  */
 public class App {
-
     private static final int INVALID = -1;
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    private static final LocalBookCollector BOOK_COLLECTOR = new LocalBookCollector();
+    private static final BookCollection BOOK_COLLECTOR = new LocalBookCollector();
 
     /**
      * Starting point for the library application.
@@ -146,7 +144,7 @@ public class App {
     }
 
     private static Mono<Void> findTitle() {
-        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.registerBooks());
+        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR);
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
         Flux<Book> booksToFind = findBook.findTitles(title);
@@ -177,7 +175,7 @@ public class App {
     }
 
     private static Mono<Void> findAuthor() {
-        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.registerBooks());
+        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR);
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));
@@ -216,7 +214,7 @@ public class App {
     }
 
     private static Mono<Void> deleteBook() {
-        DeleteBook deleteBook = new DeleteBook();
+        DeleteBook deleteBook = new DeleteBook(BOOK_COLLECTOR);
         System.out.println("Enter the title of the book to delete: ");
         Flux<Book> booksToDelete = deleteBook.lookupTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
@@ -257,13 +255,11 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (new DeleteBook().deleteFile(new File("\\lib\\jsonFiles"),
-            b)) {
+        if (new DeleteBook(BOOK_COLLECTOR).deleteFile(b)) {
             System.out.println("Book is deleted.");
         } else {
             System.out.println("Error. Book wasn't deleted.");
         }
-
     }
 
     private static String getYesOrNo() {
