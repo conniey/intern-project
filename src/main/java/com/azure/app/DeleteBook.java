@@ -16,13 +16,10 @@ import java.util.stream.Stream;
 
 class DeleteBook {
     private final FilterBooks findBook;
-    private final BookCollection collection;
 
     DeleteBook(BookCollection collection) {
-        this.collection = collection;
         this.findBook = new FilterBooks(collection.getBooks());
     }
-
 
     /**
      * Searches for all the books with the specified title and then returns them.
