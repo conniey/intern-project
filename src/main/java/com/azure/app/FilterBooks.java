@@ -5,14 +5,8 @@ package com.azure.app;
 
 import reactor.core.publisher.Flux;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
-
-public class FilterBooks {
-
-    private Flux<Book> allBooks;
-    private final AtomicReference<List<Book>> arBooks = new AtomicReference<>();
-    private OptionChecker optionChecker = new OptionChecker();
+class FilterBooks {
+    private final Flux<Book> allBooks;
 
     FilterBooks(Flux<Book> book) {
         allBooks = book;
@@ -24,7 +18,7 @@ public class FilterBooks {
      * @param title - string of the book's title
      * @return Flux containing all the books with the specified title
      */
-    public Flux<Book> findTitles(String title) {
+    Flux<Book> findTitles(String title) {
         return allBooks.filter(x -> checkTitle(x, title));
     }
 
@@ -35,7 +29,7 @@ public class FilterBooks {
      * @param lastName  - String containing author's last name
      * @return Flux<Book> with all the books from specified author
      */
-    public Flux<Book> findAuthor(String firstName, String lastName) {
+    Flux<Book> findAuthor(String firstName, String lastName) {
         return allBooks.filter(x -> checkAuthor(x, lastName, firstName));
     }
 
@@ -47,5 +41,4 @@ public class FilterBooks {
         return b.getAuthor().getLastName().contentEquals(lastName)
             && b.getAuthor().getFirstName().contentEquals(firstName);
     }
-
 }
