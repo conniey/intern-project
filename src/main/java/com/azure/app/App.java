@@ -216,7 +216,7 @@ public class App {
     }
 
     private static Mono<Void> deleteBook() {
-        DeleteBook deleteBook = new DeleteBook();
+        DeleteBook deleteBook = new DeleteBook(BOOK_COLLECTOR);
         System.out.println("Enter the title of the book to delete: ");
         Flux<Book> booksToDelete = deleteBook.lookupTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
@@ -257,13 +257,12 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (new DeleteBook().deleteFile(new File("\\lib\\jsonFiles"),
+        if (new DeleteBook(BOOK_COLLECTOR).deleteFile(new File("\\lib\\jsonFiles"),
             b)) {
             System.out.println("Book is deleted.");
         } else {
             System.out.println("Error. Book wasn't deleted.");
         }
-
     }
 
     private static String getYesOrNo() {
