@@ -70,7 +70,7 @@ public class App {
     }
 
     private static Mono<Void> listBooks() {
-        Flux<Book> book = BOOK_COLLECTOR.registerBooks();
+        Flux<Book> book = BOOK_COLLECTOR.getBooks();
         return book.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -146,7 +146,7 @@ public class App {
     }
 
     private static Mono<Void> findTitle() {
-        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.registerBooks());
+        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.getBooks());
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
         Flux<Book> booksToFind = findBook.findTitles(title);
@@ -177,7 +177,7 @@ public class App {
     }
 
     private static Mono<Void> findAuthor() {
-        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.registerBooks());
+        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR.getBooks());
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));

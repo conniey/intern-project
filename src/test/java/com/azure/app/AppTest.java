@@ -76,7 +76,7 @@ public class AppTest {
     @Test
     public void testRegisterBooks() {
         try {
-            new LocalBookCollector().registerBooks();
+            new LocalBookCollector().getBooks();
             assertTrue(true);
         } catch (NullPointerException e) {
             Assert.fail("");
