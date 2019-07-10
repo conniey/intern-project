@@ -217,7 +217,6 @@ public class App {
     }
 
     private static Mono<Void> deleteBook() {
-
         System.out.println("Enter the title of the book to delete: ");
         Flux<Book> booksToDelete = bookCollector.findBookTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
