@@ -71,6 +71,18 @@ public class Book {
         return true;
     }
 
+    private void setTitle(String title) {
+        this.title = title;
+    }
+
+    private void setAuthor(Author author) {
+        this.author = author;
+    }
+
+    private void setImage(File path) {
+        cover = path;
+    }
+
     /**
      * Returns a string with the book's author and title.
      *

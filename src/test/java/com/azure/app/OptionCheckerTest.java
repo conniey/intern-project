@@ -21,16 +21,16 @@ public class OptionCheckerTest {
     public void testCheckImage() {
         //Good png picture
         URL folder = App.class.getClassLoader().getResource(".");
-        File path = new File(folder.getPath() + "\\Wonder.png");
+        File path = new File(folder.getPath() + "Wonder.png");
         assertTrue(optionChecker.checkImage(path));
         //Good jpg
-        path = new File(folder.getPath() + "\\KK8.jpg");
+        path = new File(folder.getPath() + "KK8.jpg");
         assertTrue(optionChecker.checkImage(path));
         //Good gif
-        path = new File(folder.getPath() + "\\GreatGatsby.gif");
+        path = new File(folder.getPath() + "GreatGatsby.gif");
         assertTrue(optionChecker.checkImage(path));
         //Random file
-        path = new File(folder.getPath() + "\\Test.docx");
+        path = new File(folder.getPath() + "Test.docx");
         assertFalse(optionChecker.checkImage(path));
     }
 
