@@ -62,27 +62,6 @@ public class AppTest {
     }
 
     /**
-     * Tests to make sure the directives are cleared
-     */
-    @Test
-    @Ignore("Needs update to use local paths")
-    public void testClearEmptyFiles() {
-    }
-
-    /**
-     * Tests to see if books can be registered
-     */
-    @Test
-    public void testRegisterBooks() {
-        try {
-            new LocalBookCollector().getBooks();
-            assertTrue(true);
-        } catch (NullPointerException e) {
-            Assert.fail("");
-        }
-    }
-
-    /**
      * Tests to make sure it takes in correct options
      */
     @Test
