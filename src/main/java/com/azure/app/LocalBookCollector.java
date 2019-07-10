@@ -25,8 +25,8 @@ import java.util.stream.Stream;
 class LocalBookCollector implements BookCollection {
     private final Set<String> supportedImageFormats;
     private Flux<Book> jsonBooks;
-    private final OptionChecker OPTION_CHECKER = new OptionChecker();
     private List<File> jsonFiles;
+    private final OptionChecker optionChecker = new OptionChecker();
 
     LocalBookCollector() {
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
@@ -79,7 +79,7 @@ class LocalBookCollector implements BookCollection {
     public Mono<Boolean> saveBook(String title, Author author, File path) {
         final Path fullImagePath = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), path.getName());
         File imageFile = fullImagePath.toFile();
-        if (!imageFile.exists() && !imageFile.mkdirs()) {
+        if (!imageFile.getParentFile().exists() && !imageFile.mkdirs()) {
             System.err.println("Could not create directories for: " + fullImagePath.toString());
         }
         Book book = new Book(title, author, imageFile);
@@ -109,8 +109,9 @@ class LocalBookCollector implements BookCollection {
 
     @Override
     public boolean deleteBook(Book bookToCompare) {
-        boolean delete = jsonFiles.removeIf(x -> OPTION_CHECKER.checkFile(x, bookToCompare));
+        boolean delete = jsonFiles.removeIf(x -> optionChecker.checkFile(x, bookToCompare));
         if (delete) {
+            bookToCompare.getCover().delete();
             deleteEmptyDirectories();
             jsonBooks = initializeBooks().cache();
             return true;

@@ -48,7 +48,7 @@ class JsonHandler {
             final Path fullBookPath = Paths.get(Constants.JSON_PATH, book.getAuthor().getLastName(),
                 book.getAuthor().getFirstName());
             final File bookFile = fullBookPath.toFile();
-            if (!bookFile.mkdirs()) {
+            if (!bookFile.getParentFile().exists() && !bookFile.mkdirs()) {
                 System.err.println("Could not create directories for: " + fullBookPath.toString());
             }
             try {
