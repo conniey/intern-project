@@ -47,7 +47,7 @@ public class Book {
      *
      * @return File of image
      */
-    private File getCover() {
+    public File getCover() {
         return cover;
     }
 
@@ -65,22 +65,10 @@ public class Book {
             || author.getFirstName() == null || author.getFirstName().isEmpty()) {
             return false;
         }
-        if (title.isEmpty() || title == null) {
+        if (title.isEmpty()) {
             return false;
         }
         return true;
-    }
-
-    private void setTitle(String title) {
-        this.title = title;
-    }
-
-    private void setAuthor(Author author) {
-        this.author = author;
-    }
-
-    private void setImage(File path) {
-        cover = path;
     }
 
     /**
@@ -105,4 +93,3 @@ public class Book {
             + "Cover: " + getCover();
     }
 }
-

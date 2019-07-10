@@ -6,7 +6,6 @@ package com.azure.app;
 import java.io.File;
 
 public class OptionChecker {
-
     /**
      * Checks the user's string and makes sure its valid.
      *
@@ -97,19 +96,28 @@ public class OptionChecker {
      * @return boolean : true - if file is valid
      * false - otherwise
      */
-    public boolean checkFile(File f, Book b) {
+    boolean checkFile(File f, Book b) {
         if (f == null) {
             return false;
         }
-        if (b.getAuthor().getFirstName().endsWith(".")) {
-            return f.getAbsolutePath().contains(b.getAuthor().getFirstName().substring(0, b.getAuthor().getFirstName().lastIndexOf('.')))
-                && f.getAbsolutePath().contains(b.getAuthor().getLastName())
-                && f.getAbsolutePath().contains(b.getTitle() + ".json");
-        } else {
-            return f.getAbsolutePath().contains(b.getAuthor().getFirstName())
-                && f.getAbsolutePath().contains(b.getAuthor().getLastName())
-                && f.getAbsolutePath().contains(b.getTitle() + ".json");
+        String filePath = f.getAbsolutePath();
+        //Handles the condition where the first name ends with a period (like initials) but the file doesn't register
+        // lagging periods.
+        String tempFirstName = b.getAuthor().getFirstName();
+        if (tempFirstName.endsWith(".")) {
+            tempFirstName = tempFirstName.substring(0, tempFirstName.lastIndexOf("."));
         }
+        String tempLastName = b.getAuthor().getLastName();
+        if (tempLastName.endsWith(".")) {
+            tempLastName = tempLastName.substring(0, tempLastName.lastIndexOf("."));
+        }
+        boolean check = filePath.contains(tempFirstName)
+            && filePath.contains(tempLastName)
+            && filePath.contains(b.getTitle() + ".json");
+        if (check) {
+            return f.delete();
+        }
+        return false;
     }
 
     /**
@@ -141,5 +149,4 @@ public class OptionChecker {
         // returns -1 which corresponds as INVALID in the App main
         return -1;
     }
-
 }

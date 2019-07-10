@@ -62,28 +62,6 @@ public class AppTest {
     }
 
     /**
-     * Tests to make sure the directives are cleared
-     */
-    @Test
-    @Ignore("Needs update to use local paths")
-    public void testClearEmptyFiles() {
-        new DeleteBook().deleteEmptyDirectories();
-    }
-
-    /**
-     * Tests to see if books can be registered
-     */
-    @Test
-    public void testRegisterBooks() {
-        try {
-            new FileCollector().registerBooks();
-            assertTrue(true);
-        } catch (NullPointerException e) {
-            Assert.fail("");
-        }
-    }
-
-    /**
      * Tests to make sure it takes in correct options
      */
     @Test
@@ -115,8 +93,8 @@ public class AppTest {
     @Ignore("Needs update to use local paths")
     public void testSaveBooks() {
         try {
-            FileCollector fileCollector = new FileCollector();
-            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png"), "y").block());
+            LocalBookCollector fileCollector = new LocalBookCollector();
+            assertTrue(fileCollector.saveBook("Title", new Author("Good", "Author"), new File("C:\\Users\\t-katami\\Documents\\Images\\Book.png")).block());
         } catch (NullPointerException e) {
             Assert.fail("");
         }

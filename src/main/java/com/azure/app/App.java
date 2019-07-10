@@ -12,17 +12,16 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicReference;
 
-
 /**
  * A library application that keeps track of books using Azure services.
  */
 public class App {
-
     private static final int INVALID = -1;
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    private static final FileCollector FILE_COLLECTOR = new FileCollector();
+    //For now, book_Collector pointed at the local one because Cosmos is unavailable
+    private static BookCollection bookCollector = new LocalBookCollector();
 
     /**
      * Starting point for the library application.
@@ -61,7 +60,7 @@ public class App {
     }
 
     private static void showMenu() {
-        System.out.println("Select one of the options  below (1 - 5).");
+        System.out.println("Select one of the options below (1 - 5).");
         System.out.println("1. List books");
         System.out.println("2. Add a book");
         System.out.println("3. Find a book");
@@ -70,9 +69,9 @@ public class App {
     }
 
     private static Mono<Void> listBooks() {
-        Flux<Book> book = FILE_COLLECTOR.registerBooks();
+        Flux<Book> book = bookCollector.getBooks();
         return book.collectList().map(list -> {
-            if (list == null) {
+            if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books.");
                 return list;
@@ -111,10 +110,14 @@ public class App {
             System.out.println("4. Save? Enter 'Y' or 'N'.");
             choice = SCANNER.nextLine();
         } while (OPTION_CHECKER.checkYesOrNo(choice));
-        if (FILE_COLLECTOR.saveBook(title, newAuthor, path, choice).block() && choice.equalsIgnoreCase("y")) {
-            System.out.println("Book was successfully saved!");
-        } else if (choice.equalsIgnoreCase("y")) {
-            System.out.println("Error. Book wasn't saved");
+        if (choice.equalsIgnoreCase("y")) {
+            bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
+                if (x) {
+                    System.out.println("Book was successfully saved!");
+                } else {
+                    System.out.println("Error. Book wasn't saved");
+                }
+            });
         }
     }
 
@@ -142,12 +145,11 @@ public class App {
     }
 
     private static Mono<Void> findTitle() {
-        FilterBooks findBook = new FilterBooks(FILE_COLLECTOR.registerBooks());
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
-        Flux<Book> booksToFind = findBook.findTitles(title);
+        Flux<Book> booksToFind = bookCollector.findBookTitle(title);
         return booksToFind.collectList().map(list -> {
-            if (list.size() == 0 || list == null) {
+            if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
             } else if (list.size() == 1) {
                 System.out.println("Here is a book titled " + title + ".");
@@ -159,6 +161,10 @@ public class App {
                 }
             } else {
                 System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
+                for (int i = 0; i < list.size(); i++) {
+                    Book book1 = list.get(i);
+                    System.out.println(i + 1 + ". " + book1);
+                }
                 int choice;
                 do {
                     String option = SCANNER.nextLine();
@@ -173,13 +179,12 @@ public class App {
     }
 
     private static Mono<Void> findAuthor() {
-        FilterBooks findBook = new FilterBooks(FILE_COLLECTOR.registerBooks());
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));
-        Flux<Book> booksToFind = findBook.findAuthor(name[0], name[1]);
+        Flux<Book> booksToFind = bookCollector.findBookAuthor(new Author(name[0], name[1]));
         return booksToFind.collectList().map(list -> {
-            if (list == null || list.isEmpty()) {
+            if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books by that author.");
                 return list;
@@ -212,11 +217,10 @@ public class App {
     }
 
     private static Mono<Void> deleteBook() {
-        DeleteBook deleteBook = new DeleteBook();
         System.out.println("Enter the title of the book to delete: ");
-        Flux<Book> booksToDelete = deleteBook.lookupTitle(SCANNER.nextLine());
+        Flux<Book> booksToDelete = bookCollector.findBookTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
-            if (list == null || list.isEmpty()) {
+            if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books with that title.");
                 return list;
@@ -253,13 +257,11 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (new DeleteBook().deleteFile(new File("C:\\Users\\t-katami\\Documents\\intern-project\\lib"),
-            b)) {
+        if (bookCollector.deleteBook(b)) {
             System.out.println("Book is deleted.");
         } else {
             System.out.println("Error. Book wasn't deleted.");
         }
-
     }
 
     private static String getYesOrNo() {
@@ -280,6 +282,3 @@ public class App {
         return new String[]{firstName, lastName};
     }
 }
-
-// Does it matter if I changed it from int to long?
-// Using AtomicReference as a boolean signal?
