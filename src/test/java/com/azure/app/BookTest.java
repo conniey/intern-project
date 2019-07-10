@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import org.junit.Test;
@@ -9,6 +12,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class BookTest {
+
+    /**
+     * Verifies that the correct information was passed to the Book object
+     */
     @Test
     public void testBookChecker() {
         URL folder = BookTest.class.getClassLoader().getResource(".");

@@ -58,14 +58,14 @@ public class Book {
      * - false otherwise
      */
     public boolean checkBook() {
-        if (!cover.isFile() || cover == null) {
+        if (cover == null || !new OptionChecker().checkImage(cover)) {
             return false;
         }
         if (author.getLastName() == null || author.getLastName().isEmpty()
             || author.getFirstName() == null || author.getFirstName().isEmpty()) {
             return false;
         }
-        if (title.isEmpty()) {
+        if (title == null || title.isEmpty()) {
             return false;
         }
         return true;

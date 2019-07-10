@@ -14,7 +14,8 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class BookCollectionTest {
     private BookCollection collector = mock(BookCollection.class);
@@ -28,7 +29,7 @@ public class BookCollectionTest {
         File picFile = new File(folder.getPath() + "Gingerbread.jpg");
         Book expectedBook = new Book("Santa's Helper", new Author("Gingerbread", "Man"), picFile);
         boolean saved = when(collector.saveBook("Santa's Helper", new Author("Gingerbread", "Man"), picFile))
-            .thenReturn(true).equals(false);
+            .thenReturn(Mono.just(true)).equals(false);
         if (saved) {
             when(collector.getBooks()).thenReturn(Flux.just(expectedBook));
             StepVerifier.create(collector.getBooks())
@@ -119,8 +120,7 @@ public class BookCollectionTest {
             .expectComplete()
             .verify();
         boolean deleted = when(collector.deleteBook(book))
-            .thenReturn(true)
-            .equals(Mono.just(false));
+            .thenReturn(true).equals(false);
         if (deleted) {
             when(collector.getBooks()).thenReturn(Flux.empty());
             if (collector.deleteBook(book)) {

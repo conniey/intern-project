@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 public class JsonHandlerTest {
     private JsonHandler jsonHandler = new JsonHandler();
-    private URL folder = FilterTester.class.getClassLoader().getResource(".");
+    private URL folder = JsonHandler.class.getClassLoader().getResource(".");
 
     /**
      * Tests the JsonHandler class
@@ -29,16 +29,16 @@ public class JsonHandlerTest {
     public void testSerializationAndCheckBook() {
         //Good book
         Book b = new Book("Wonder", new Author("RJ", "Palacio"),
-            new File(folder.getPath() + "\\Wonder.png"));
+            new File(folder.getPath() + "Wonder.png"));
         assertTrue(jsonHandler.writeJSON(b));
         //Bad book (empty title)
         Book b2 = new Book("", new Author("RJ", "Palacio"),
-            new File(folder.getPath() + "\\Wonder1.png")
+            new File(folder.getPath() + "Wonder1.png")
         );
         assertFalse(jsonHandler.writeJSON(b2));
         //Bad book (Invalid author)
         Book b3 = new Book("Wonder", new Author("", null),
-            new File(folder.getPath() + "\\Book.png"));
+            new File(folder.getPath() + "Book.png"));
         assertFalse(jsonHandler.writeJSON(b3));
         //Bad book (Wrong file path)
         Book b4 = new Book("Wonder", new Author("Palacio", "R. J."),
@@ -49,7 +49,7 @@ public class JsonHandlerTest {
             new File(""));
         assertFalse(jsonHandler.writeJSON(b5));
         //Delete test book
-        deleteJsonFile(new File("\\lib\\jsonFiles\\"), b);
+        deleteJsonFile(new File(Constants.JSON_PATH), b);
     }
 
     /**
@@ -59,14 +59,13 @@ public class JsonHandlerTest {
     public void testFromJSONtoBook() {
         //Test with valid data
         Book result = jsonHandler.fromJSONtoBook(new File(folder.getPath()
-            + "\\Kingdom Keepers VIII.json"));
+            + "Kingdom Keepers VIII.json"));
         assertTrue(result != null);
         //Test with invalid data
         result = jsonHandler.fromJSONtoBook(new File(folder.getPath()
-            + "//asdfasdf"));
+            + "asdfasdf"));
         assertTrue(result == null);
     }
-
 
     /**
      * For testing purposes only - To delete the json File but keep the image.
@@ -78,6 +77,7 @@ public class JsonHandlerTest {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
                     if (newFile.delete()) {
+                        deleteEmptyDirectories();
                     }
                 }
             }
@@ -85,4 +85,32 @@ public class JsonHandlerTest {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
+     */
+    private void deleteEmptyDirectories() {
+        File[] files = new File(Constants.JSON_PATH).listFiles();
+        clearFiles(files);
+        File[] imageFiles = new File(Constants.IMAGE_PATH).listFiles();
+        clearFiles(imageFiles);
+    }
+
+    /**
+     * Assists the emptyDirectory method by traversing through the files. When it finds an empty directory without a
+     * JSON file, it deletes that file.
+     *
+     * @param files - the folder containing the other files in the library.
+     */
+    private void clearFiles(File[] files) {
+        for (File file : files) {
+            if (file.isDirectory()) {
+                clearFiles(file.listFiles());
+            }
+            if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
+                file.delete();
+            }
+        }
+    }
+
 }

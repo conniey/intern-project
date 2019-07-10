@@ -3,6 +3,8 @@
 
 package com.azure.app;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -22,6 +24,8 @@ public class App {
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     //For now, book_Collector pointed at the local one because Cosmos is unavailable
     private static BookCollection bookCollector = new LocalBookCollector();
+    private static Logger logger = LoggerFactory.getLogger(App.class);
+    private static boolean empty = true;
 
     /**
      * Starting point for the library application.
@@ -29,7 +33,7 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        System.out.print("Welcome! ");
+        logger.debug("Welcome! ");
         int choice;
         do {
             showMenu();
@@ -43,10 +47,19 @@ public class App {
                     addBook();
                     break;
                 case 3:
-                    findBook();
+                    if (bookCollector.hasBooks()) {
+                        findBook();
+                    } else {
+                        System.out.println("There are no books to find.");
+                    }
                     break;
                 case 4:
-                    deleteBook().block();
+                    if (bookCollector.hasBooks()) {
+                        deleteBook().block();
+                    } else {
+                        System.out.println("There are no books to delete.");
+
+                    }
                     break;
                 case 5:
                     System.out.println("Goodbye.");
@@ -74,6 +87,7 @@ public class App {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books.");
+                empty = true;
                 return list;
             }
             System.out.println("Here are all the books you have: ");
@@ -82,6 +96,7 @@ public class App {
                 Book book1 = list.get(i);
                 System.out.println(i + 1 + ". " + book1);
             }
+            empty = false;
             return list;
         }).then();
     }

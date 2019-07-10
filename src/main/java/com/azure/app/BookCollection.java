@@ -54,4 +54,12 @@ interface BookCollection {
      * @return - Flux of Book objects by that author
      */
     Flux<Book> findBook(Author author);
+
+    /**
+     * Determines whether the collection has books or not.
+     *
+     * @return boolean - true if there are books
+     * false - if there are no books
+     */
+    boolean hasBooks();
 }

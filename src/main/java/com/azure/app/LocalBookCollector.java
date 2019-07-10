@@ -179,4 +179,14 @@ class LocalBookCollector implements BookCollection {
             && book.getAuthor().getLastName().contentEquals(author.getLastName()));
     }
 
+    /**
+     * Determines whether the Flux is empty or not
+     */
+    public boolean hasBooks() {
+        if (jsonBooks.count().block() == null) {
+            return false;
+        }
+        return jsonBooks.count().block() > 0;
+    }
+
 }

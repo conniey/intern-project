@@ -66,7 +66,6 @@ public class OptionCheckerTest {
         assertTrue(result == -1);
         //Bad optoin - out of range (too small)
         option = "-100";
-        result = optionChecker.checkOption(option, 5);
         assertTrue(optionChecker.checkOption(option, 5) == -1);
         //Flat out bad option
         option = "asdfasdfasdf";
