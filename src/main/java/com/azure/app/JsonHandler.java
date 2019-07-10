@@ -10,15 +10,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class JsonHandler {
+class JsonHandler {
     /**
      * Converts a json file back to a Book object
      *
      * @param jsonFile - the JSON file to be converted
      * @return Book - created from the JSON file
      */
-    public Book fromJSONtoBook(File jsonFile) {
+    Book fromJSONtoBook(File jsonFile) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -41,17 +43,18 @@ public class JsonHandler {
      * @return boolean - true if Book was successfully converted to Javadoc
      * false if Book wasn't successfully converted to Javadoc
      */
-    public boolean writeJSON(Book book) {
+    boolean writeJSON(Book book) {
         if (book.checkBook()) {
+            final Path fullBookPath = Paths.get(Constants.JSON_PATH, book.getAuthor().getLastName(),
+                book.getAuthor().getFirstName());
+            final File bookFile = fullBookPath.toFile();
+            if (!bookFile.mkdirs()) {
+                System.err.println("Could not create directories for: " + fullBookPath.toString());
+            }
             try {
-                File dir = new File(Constants.JSON_PATH
-                    + book.getAuthor().getLastName());
-                dir.mkdir();
-                File dir2 = new File(dir.getAbsolutePath() + "\\" + book.getAuthor().getFirstName());
-                dir2.mkdir();
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                mapper.writeValue(new File(dir2.getAbsolutePath() + "\\" + book.getTitle() + ".json"), book);
+                mapper.writeValue(Paths.get(bookFile.getAbsolutePath(), book.getTitle() + ".json").toFile(), book);
                 return true;
             } catch (IOException ex) {
                 return false;

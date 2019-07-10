@@ -20,7 +20,8 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    private static final BookCollection BOOK_COLLECTOR = new LocalBookCollector();
+    //For now, book_Collector pointed at the local one because Cosmos is unavailable
+    private static BookCollection bookCollector = new LocalBookCollector();
 
     /**
      * Starting point for the library application.
@@ -59,7 +60,7 @@ public class App {
     }
 
     private static void showMenu() {
-        System.out.println("Select one of the options  below (1 - 5).");
+        System.out.println("Select one of the options below (1 - 5).");
         System.out.println("1. List books");
         System.out.println("2. Add a book");
         System.out.println("3. Find a book");
@@ -68,7 +69,7 @@ public class App {
     }
 
     private static Mono<Void> listBooks() {
-        Flux<Book> book = BOOK_COLLECTOR.registerBooks();
+        Flux<Book> book = bookCollector.getBooks();
         return book.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -110,7 +111,7 @@ public class App {
             choice = SCANNER.nextLine();
         } while (OPTION_CHECKER.checkYesOrNo(choice));
         if (choice.equalsIgnoreCase("y")) {
-            BOOK_COLLECTOR.saveBook(title, newAuthor, path).subscribe(x -> {
+            bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
                 if (x) {
                     System.out.println("Book was successfully saved!");
                 } else {
@@ -144,10 +145,9 @@ public class App {
     }
 
     private static Mono<Void> findTitle() {
-        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR);
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
-        Flux<Book> booksToFind = findBook.findTitles(title);
+        Flux<Book> booksToFind = bookCollector.findBookTitle(title);
         return booksToFind.collectList().map(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
@@ -175,11 +175,10 @@ public class App {
     }
 
     private static Mono<Void> findAuthor() {
-        FilterBooks findBook = new FilterBooks(BOOK_COLLECTOR);
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));
-        Flux<Book> booksToFind = findBook.findAuthor(name[0], name[1]);
+        Flux<Book> booksToFind = bookCollector.findBookAuthor(new Author(name[0], name[1]));
         return booksToFind.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -214,9 +213,9 @@ public class App {
     }
 
     private static Mono<Void> deleteBook() {
-        DeleteBook deleteBook = new DeleteBook(BOOK_COLLECTOR);
+
         System.out.println("Enter the title of the book to delete: ");
-        Flux<Book> booksToDelete = deleteBook.lookupTitle(SCANNER.nextLine());
+        Flux<Book> booksToDelete = bookCollector.findBookTitle(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -255,7 +254,7 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (new DeleteBook(BOOK_COLLECTOR).deleteFile(b)) {
+        if (bookCollector.deleteBook(b)) {
             System.out.println("Book is deleted.");
         } else {
             System.out.println("Error. Book wasn't deleted.");

@@ -96,7 +96,7 @@ public class OptionChecker {
      * @return boolean : true - if file is valid
      * false - otherwise
      */
-    public boolean checkFile(File f, Book b) {
+    boolean checkFile(File f, Book b) {
         if (f == null) {
             return false;
         }
@@ -111,9 +111,13 @@ public class OptionChecker {
         if (tempLastName.endsWith(".")) {
             tempLastName = tempLastName.substring(0, tempLastName.lastIndexOf("."));
         }
-        return filePath.contains(tempFirstName)
+        boolean check = filePath.contains(tempFirstName)
             && filePath.contains(tempLastName)
             && filePath.contains(b.getTitle() + ".json");
+        if (check) {
+            return f.delete();
+        }
+        return false;
     }
 
     /**
