@@ -147,7 +147,7 @@ public class App {
     private static Mono<Void> findTitle() {
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
-        Flux<Book> booksToFind = bookCollector.findBookTitle(title);
+        Flux<Book> booksToFind = bookCollector.findBook(title);
         return booksToFind.collectList().map(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
@@ -182,7 +182,7 @@ public class App {
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));
-        Flux<Book> booksToFind = bookCollector.findBookAuthor(new Author(name[0], name[1]));
+        Flux<Book> booksToFind = bookCollector.findBook(new Author(name[0], name[1]));
         return booksToFind.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -218,7 +218,7 @@ public class App {
 
     private static Mono<Void> deleteBook() {
         System.out.println("Enter the title of the book to delete: ");
-        Flux<Book> booksToDelete = bookCollector.findBookTitle(SCANNER.nextLine());
+        Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());

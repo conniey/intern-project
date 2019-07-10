@@ -45,7 +45,7 @@ interface BookCollection {
      * @param title - String of the book title the user is looking for
      * @return - Flux of Book objects with that title
      */
-    Flux<Book> findBookTitle(String title);
+    Flux<Book> findBook(String title);
 
     /**
      * Filters out the books based on the specified author.
@@ -53,5 +53,5 @@ interface BookCollection {
      * @param author - Contains the name of the author the user is looking for
      * @return - Flux of Book objects by that author
      */
-    Flux<Book> findBookAuthor(Author author);
+    Flux<Book> findBook(Author author);
 }

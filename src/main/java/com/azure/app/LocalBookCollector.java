@@ -163,7 +163,7 @@ class LocalBookCollector implements BookCollection {
      * @return - {@link Flux} of {@link Book} with specified title in the collection
      */
     @Override
-    public Flux<Book> findBookTitle(String title) {
+    public Flux<Book> findBook(String title) {
         return jsonBooks.filter(book -> title.contentEquals(book.getTitle()));
     }
 
@@ -174,7 +174,7 @@ class LocalBookCollector implements BookCollection {
      * @return - {@link Flux} of {@link Book} by specified author in the collection
      */
     @Override
-    public Flux<Book> findBookAuthor(Author author) {
+    public Flux<Book> findBook(Author author) {
         return jsonBooks.filter(book -> author.getFirstName().contentEquals(book.getAuthor().getFirstName())
             && book.getAuthor().getLastName().contentEquals(author.getLastName()));
     }

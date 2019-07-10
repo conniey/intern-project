@@ -78,7 +78,6 @@ public class JsonHandlerTest {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
                     if (newFile.delete()) {
-                        new DeleteBook().deleteEmptyDirectories();
                     }
                 }
             }
