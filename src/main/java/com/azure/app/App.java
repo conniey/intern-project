@@ -161,6 +161,10 @@ public class App {
                 }
             } else {
                 System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
+                for (int i = 0; i < list.size(); i++) {
+                    Book book1 = list.get(i);
+                    System.out.println(i + 1 + ". " + book1);
+                }
                 int choice;
                 do {
                     String option = SCANNER.nextLine();
