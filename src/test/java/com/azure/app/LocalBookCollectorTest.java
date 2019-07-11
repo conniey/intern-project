@@ -50,6 +50,10 @@ public class LocalBookCollectorTest {
             assertTrue(list.size() > 1);
             return list;
         }).block();
+        deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
+            new File(file.getPath() + "GreatGatsby.gif")));
+        deleteJsonFile(new Book("Existing", new Author("Mock2", "Author"),
+            new File(file.getPath() + "GreatGatsby.gif")));
     }
 
     /**
@@ -58,35 +62,39 @@ public class LocalBookCollectorTest {
      */
     @Test
     public void findAuthorsTest() {
-        lclCollector.saveBook("Title", new Author("First", "Last"),
-            new File(file.getPath() + "Wonder1.png")).block();
+        Author author = new Author("First", "Last");
+        lclCollector.saveBook("Title", author,
+            new File(file.getPath() + "Wonder.png")).block();
         //No authors
         Flux<Book> authorSearch = lclCollector.findBook(new Author("Not_asdff", "Available_xcv"));
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() == 0);
             return list;
         });
-        authorSearch = lclCollector.findBook(new Author("First", "Last"));
+        authorSearch = lclCollector.findBook(author);
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() == 1);
             return list;
         });
         //Create another book from same author
-        lclCollector.saveBook("Title2", new Author("First", "Last"),
-            new File(file.getPath() + "KK81.jpg"));
+        lclCollector.saveBook("Title2", author,
+            new File(file.getPath() + "KK8.jpg"));
         authorSearch = lclCollector.findBook(new Author("First", "Last"));
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() > 1);
             return list;
-        });
-        new File(Constants.IMAGE_PATH, Paths.get("Last", "First", "Wonder1.png").toString()).delete();
+        }).block();
+        deleteJsonFile(new Book("Title", new Author("First", "Last"),
+            new File(file.getPath() + "Wonder.png")));
+        deleteJsonFile(new Book("Title2", author,
+            new File(file.getPath() + "KK8.jpg")));
     }
 
     /**
      * For testing purposes only - To delete the json File but keep the image.
      */
-    private void deleteJsonFile(File files, Book book) {
-        try (Stream<Path> walk = Files.walk(Paths.get(files.getAbsolutePath()))) {
+    private void deleteJsonFile(Book book) {
+        try (Stream<Path> walk = Files.walk(Paths.get(Constants.JSON_PATH))) {
             List<String> result = walk.map(Path::toString).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
             for (String file : result) {
                 File newFile = new File(file);

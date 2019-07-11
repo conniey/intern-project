@@ -100,7 +100,9 @@ class OptionChecker {
         if (f == null) {
             return false;
         }
-        String filePath = f.getAbsolutePath();
+        String filePath = f.getName();
+        String fileFirstName = f.getParentFile().getName();
+        String fileLastName = f.getParentFile().getParentFile().getName();
         //Handles the condition where the first name ends with a period (like initials) but the file doesn't register
         // lagging periods.
         String tempFirstName = b.getAuthor().getFirstName();
@@ -111,9 +113,9 @@ class OptionChecker {
         if (tempLastName.endsWith(".")) {
             tempLastName = tempLastName.substring(0, tempLastName.lastIndexOf("."));
         }
-        return filePath.contains(tempFirstName)
-            && filePath.contains(tempLastName)
-            && filePath.contains(b.getTitle() + ".json");
+        return fileLastName.contentEquals(tempLastName)
+            && fileFirstName.contentEquals(tempFirstName)
+            && filePath.contentEquals(b.getTitle() + ".json");
     }
 
     /**
