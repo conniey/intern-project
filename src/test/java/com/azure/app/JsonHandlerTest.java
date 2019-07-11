@@ -25,6 +25,9 @@ public class JsonHandlerTest {
     private JsonHandler jsonHandler = new JsonHandler();
     private String root;
 
+    /**
+     * Sets up the root so the Json handler knows where to store/find the JSON files
+     */
     @Before
     public void setUp() {
         try {
@@ -113,8 +116,8 @@ public class JsonHandlerTest {
     @Test
     public void testFromJSONtoBookValid() {
         //Arrange and Act
-        Book result = jsonHandler.fromJSONtoBook(new File(root
-            + "Kingdom Keepers VIII.json"));
+        Book result = jsonHandler.fromJSONtoBook(new File(Paths.get(root,
+            "Kingdom Keepers VIII.json").toString()));
         //Assert
         assertTrue(result != null);
     }

@@ -24,6 +24,9 @@ public class LocalBookCollectorTest {
     private LocalBookCollector localCollector;
     private String root;
 
+    /**
+     * Initializes the LocalBookCollector and determines the root path to store all the files.
+     */
     @Before
     public void setUp() {
         try {
@@ -111,8 +114,8 @@ public class LocalBookCollectorTest {
     }
 
     /**
-     * Verifies the implementation of the findBook(Author author) in the
-     * LocalBookCollector object
+     * Tests the implementation of the finding the books by a specified author.
+     * This test checks the condition where there are no books by that author.
      */
     @Test
     public void testFindAuthorsNoResult() {
@@ -131,6 +134,10 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "Wonder.png").toString())));
     }
 
+    /**
+     * Tests the implementation of the finding the books by a specified author.
+     * This checks the condition where there's only one book by that author.
+     */
     @Test
     public void testFindAuthorsOneResult() {
         //Arrange
@@ -152,6 +159,10 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "Wonder.png").toString())));
     }
 
+    /**
+     * Tests the implementation of the finding the books by a specified author.
+     * This checks the condition where there are multiple books by that author.
+     */
     @Test
     public void testFindAuthorsMultipleResults() {
         //Arrange

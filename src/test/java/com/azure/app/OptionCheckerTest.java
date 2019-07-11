@@ -194,11 +194,11 @@ public class OptionCheckerTest {
     @Test
     public void testYesOption() {
         //Arrange
-        String Y = "Y";
-        String y = "y";
+        String entryY = "Y";
+        String entryLittleY = "y";
         //Act
-        boolean acceptY = optionChecker.checkYesOrNo(Y);
-        boolean acceptLittleY = optionChecker.checkYesOrNo(y);
+        boolean acceptY = optionChecker.checkYesOrNo(entryY);
+        boolean acceptLittleY = optionChecker.checkYesOrNo(entryLittleY);
         //Assert
         assertFalse(acceptY);
         assertFalse(acceptLittleY);
@@ -211,11 +211,11 @@ public class OptionCheckerTest {
     @Test
     public void testNoOption() {
         //Arrange
-        String N = "N";
-        String n = "n";
+        String entryN = "N";
+        String entryLittleN = "n";
         //Act
-        boolean acceptN = optionChecker.checkYesOrNo(N);
-        boolean acceptLittleN = optionChecker.checkYesOrNo(n);
+        boolean acceptN = optionChecker.checkYesOrNo(entryN);
+        boolean acceptLittleN = optionChecker.checkYesOrNo(entryLittleN);
         //Assert
         assertFalse(acceptN);
         assertFalse(acceptLittleN);
