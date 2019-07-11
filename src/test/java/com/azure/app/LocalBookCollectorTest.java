@@ -62,7 +62,7 @@ public class LocalBookCollectorTest {
     @Test
     public void findAuthorsTest() {
         lclCollector.saveBook("Title", new Author("First", "Last"),
-            new File(file.getPath() + "\\Wonder1.png")).block();
+            new File(file.getPath() + "Wonder1.png")).block();
         //No authors
         Flux<Book> authorSearch = lclCollector.findBook(new Author("Not_asdff", "Available_xcv"));
         authorSearch.collectList().map(list -> {
@@ -76,18 +76,18 @@ public class LocalBookCollectorTest {
         });
         //Create another book from same author
         lclCollector.saveBook("Title2", new Author("First", "Last"),
-            new File(file.getPath() + "\\KK81.jpg"));
+            new File(file.getPath() + "KK81.jpg"));
         authorSearch = lclCollector.findBook(new Author("First", "Last"));
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() > 1);
             return list;
         });
-        deleteJsonFile(new File("\\lib\\jsonFiles"),
+        deleteJsonFile(new File(Constants.JSON_PATH),
             new Book("Title", new Author("First", "Last"),
-                new File(file.getPath() + "\\Wonder1.png")));
-        deleteJsonFile(new File("\\lib\\jsonFiles"),
+                new File(file.getPath() + "Wonder1.png")));
+        deleteJsonFile(new File(Constants.JSON_PATH),
             new Book("Title2", new Author("First", "Last"),
-                new File(file.getPath() + "\\KK81.jpg")));
+                new File(file.getPath() + "KK81.jpg")));
     }
 
     /**

@@ -5,7 +5,7 @@ package com.azure.app;
 
 import java.io.File;
 
-public class OptionChecker {
+class OptionChecker {
     /**
      * Checks the user's string and makes sure its valid.
      *
@@ -13,7 +13,7 @@ public class OptionChecker {
      * @return -  boolean : true - the String is valid
      * false - the String isn't valid
      */
-    public boolean validateString(String input) {
+    boolean validateString(String input) {
         if (input.isEmpty()) {
             System.out.println("Please enter a value: ");
             return false;
@@ -35,7 +35,7 @@ public class OptionChecker {
      * @return - boolean : true - if image path is correct
      * false - otherwise.
      */
-    public boolean checkImage(File image) {
+    boolean checkImage(File image) {
         if (!image.isFile()) {
             System.out.println("Please write out a valid image file path.");
             return false;
@@ -59,7 +59,7 @@ public class OptionChecker {
      * @return - boolean : true - the String is either a y/n
      * false - the String is neither
      */
-    public boolean checkYesOrNo(String choice) {
+    boolean checkYesOrNo(String choice) {
         if (!choice.contentEquals("Y") && !choice.contentEquals("y")
             && !choice.contentEquals("N") && !choice.contentEquals("n")) {
             System.out.println("Please enter Y or N.");
@@ -76,7 +76,7 @@ public class OptionChecker {
      * @return boolean : true - if String is valid
      * false - if String isn't valid
      */
-    public boolean validateAuthor(String[] author) {
+    boolean validateAuthor(String[] author) {
         if (author.length == 0) {
             System.out.println("Please enter their name.");
             return false;
@@ -111,13 +111,9 @@ public class OptionChecker {
         if (tempLastName.endsWith(".")) {
             tempLastName = tempLastName.substring(0, tempLastName.lastIndexOf("."));
         }
-        boolean check = filePath.contains(tempFirstName)
+        return filePath.contains(tempFirstName)
             && filePath.contains(tempLastName)
             && filePath.contains(b.getTitle() + ".json");
-        if (check) {
-            return f.delete();
-        }
-        return false;
     }
 
     /**
@@ -127,7 +123,7 @@ public class OptionChecker {
      * @param max    - a long containing the maximum number of options
      * @return - valid integer option, or else -1 signifies that the choice was invalid
      */
-    public int checkOption(String option, long max) {
+    int checkOption(String option, long max) {
         if (option.equalsIgnoreCase("q")) {
             return 0;
         }

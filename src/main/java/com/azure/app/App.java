@@ -272,7 +272,7 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (bookCollector.deleteBook(b)) {
+        if (b.checkBook() && bookCollector.deleteBook(b)) {
             System.out.println("Book is deleted.");
         } else {
             System.out.println("Error. Book wasn't deleted.");

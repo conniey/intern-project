@@ -34,7 +34,7 @@ public class BookCollectionTest {
             when(collector.getBooks()).thenReturn(Flux.just(expectedBook));
             StepVerifier.create(collector.getBooks())
                 .expectNext(expectedBook)
-                // There should only be 2 matching books, so this Flux should complete after the two books are received.
+                //Since the Flux was empty, the only book at this point should be expectedBook
                 .expectComplete()
                 .verify();
         }

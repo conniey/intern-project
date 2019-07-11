@@ -109,7 +109,13 @@ class LocalBookCollector implements BookCollection {
 
     @Override
     public boolean deleteBook(Book bookToCompare) {
-        boolean delete = jsonFiles.removeIf(x -> optionChecker.checkFile(x, bookToCompare));
+        boolean delete = jsonFiles.removeIf(x -> {
+            boolean result = optionChecker.checkFile(x, bookToCompare);
+            if (result) {
+                x.delete();
+            }
+            return result;
+        });
         if (delete) {
             bookToCompare.getCover().delete();
             deleteEmptyDirectories();

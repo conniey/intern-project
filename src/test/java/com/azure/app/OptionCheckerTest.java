@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -94,5 +95,26 @@ public class OptionCheckerTest {
         assertTrue(optionChecker.checkYesOrNo("asdfasdfa"));
         assertTrue(optionChecker.checkYesOrNo("No"));
         assertTrue(optionChecker.checkYesOrNo("1"));
+    }
+
+    /**
+     * Tests to make sure a file and a book can be compared.
+     */
+    @Test
+    public void testCheckFile() {
+        URL folder = OptionCheckerTest.class.getClassLoader().getResource(".");
+        //Corresponding book and title
+        Book book = new Book("Wonder", new Author("RJ", "Palacio"), new File("image.png"));
+        File file = new File(folder.getPath() + Paths.get("Palacio", "RJ", "Wonder.json"));
+        assertTrue(optionChecker.checkFile(file, book));
+        //Title doesn't correspond with book
+        file = new File(folder.getPath() + Paths.get("Fitzgerald", "Scott", "The Great Gatsby.json"));
+        assertFalse(optionChecker.checkFile(file, book));
+        //Book doesn't correspond with title
+        book = new Book("ABC", new Author("CDE", "FGH"), new File("image.gif"));
+        assertFalse(optionChecker.checkFile(file, book));
+        //Book and title match again
+        book = new Book("The Great Gatsby", new Author("Scott", "Fitzgerald"), new File("GreatGatsby.png"));
+        assertTrue(optionChecker.checkFile(file, book));
     }
 }
