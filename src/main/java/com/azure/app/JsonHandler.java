@@ -48,13 +48,13 @@ class JsonHandler {
             final Path fullBookPath = Paths.get(Constants.JSON_PATH, book.getAuthor().getLastName(),
                 book.getAuthor().getFirstName());
             final File bookFile = fullBookPath.toFile();
-            if (!bookFile.getParentFile().exists() && !bookFile.mkdirs()) {
+            if (!bookFile.exists() && !bookFile.mkdirs()) {
                 System.err.println("Could not create directories for: " + fullBookPath.toString());
             }
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                mapper.writeValue(Paths.get(bookFile.getAbsolutePath(), book.getTitle() + ".json").toFile(), book);
+                mapper.writeValue(Paths.get(bookFile.getPath(), book.getTitle() + ".json").toFile(), book);
                 return true;
             } catch (IOException ex) {
                 return false;

@@ -29,19 +29,19 @@ public class LocalBookCollectorTest {
     @Test
     public void findTitlesTest() {
         lclCollector.saveBook("Existing", new Author("Mock", "Author"),
-            new File(file.getPath() + "GreatGatsby.gif"));
+            new File(file.getPath() + "GreatGatsby.gif")).block();
         //Title that doesn't exist
         Flux<Book> books = lclCollector.findBook("ASDF");
         books.collectList().map(list -> {
             assertTrue(list.size() == 0);
             return list;
-        });
+        }).block();
         //Only one book has this title
         books = lclCollector.findBook("Existing");
         books.collectList().map(list -> {
             assertTrue(list.size() == 1);
             return list;
-        });
+        }).block();
         //Multiple books have this title
         lclCollector.saveBook("Existing", new Author("Mock2", "Author"),
             new File(file.getPath() + "GreatGatsby.gif")).block();
@@ -49,10 +49,7 @@ public class LocalBookCollectorTest {
         books.collectList().map(list -> {
             assertTrue(list.size() > 1);
             return list;
-        });
-        deleteJsonFile(new File(Constants.JSON_PATH),
-            new Book("Existing", new Author("Mock", "Author"),
-                new File(file.getPath() + "GreatGatsby1.gif")));
+        }).block();
     }
 
     /**
@@ -82,12 +79,7 @@ public class LocalBookCollectorTest {
             assertTrue(list.size() > 1);
             return list;
         });
-        deleteJsonFile(new File(Constants.JSON_PATH),
-            new Book("Title", new Author("First", "Last"),
-                new File(file.getPath() + "Wonder1.png")));
-        deleteJsonFile(new File(Constants.JSON_PATH),
-            new Book("Title2", new Author("First", "Last"),
-                new File(file.getPath() + "KK81.jpg")));
+        new File(Constants.IMAGE_PATH, Paths.get("Last", "First", "Wonder1.png").toString()).delete();
     }
 
     /**
@@ -100,6 +92,8 @@ public class LocalBookCollectorTest {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
                     if (newFile.delete()) {
+                        new File(Paths.get(Constants.IMAGE_PATH, book.getAuthor().getLastName(),
+                            book.getAuthor().getFirstName(), book.getCover().getName()).toString()).delete();
                         deleteEmptyDirectories();
                     }
                 }
