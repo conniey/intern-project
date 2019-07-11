@@ -7,6 +7,6 @@ import java.nio.file.Paths;
 
 public class Constants {
     static final JsonHandler SERIALIZER = new JsonHandler();
-    static final String JSON_PATH = Paths.get(System.getProperty("user.dir"), "lib", "jsonFiles").toString();
-    static final String IMAGE_PATH = Paths.get(System.getProperty("user.dir"), "lib", "images").toString();
+    static final String JSON_PATH = Paths.get("lib", "jsonFiles").toString();
+    static final String IMAGE_PATH = Paths.get("lib", "images").toString();
 }

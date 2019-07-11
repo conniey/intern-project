@@ -18,26 +18,25 @@ public class BookTest {
      */
     @Test
     public void testBookChecker() {
+        //Arrange
         URL folder = BookTest.class.getClassLoader().getResource(".");
-        //Good book
         Book book = new Book("Title", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg"));
+        Book badTitle = new Book("", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg"));
+        Book badAuthorLastName = new Book("Title", new Author("Good", ""), new File(folder.getPath() + "KK8.jpg"));
+        Book badAuthorFirstName = new Book("Title", new Author("", "Bad"), new File(folder.getPath() + "KK8.jpg"));
+        Book badAuthorCompletely = new Book("Title", new Author("", ""), new File(folder.getPath() + "KK8.jpg"));
+        Book emptyFile = new Book("Title", new Author("Good", "Author"), new File(""));
+        Book badFile = new Book("Title", new Author("Good", "Author"), null);
+        Book notPicture = new Book("Title", new Author("Good", "Author"), new File(folder.getPath() + "Test.docx"));
+
+        //Act and Assert
         assertTrue(book.checkBook());
-        // TITLE
-        book = new Book("", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg"));
-        assertFalse(book.checkBook());
-        // AUTHOR
-        book = new Book("Title", new Author("Good", ""), new File(folder.getPath() + "KK8.jpg"));
-        assertFalse(book.checkBook());
-        book = new Book("Title", new Author("", "Bad"), new File(folder.getPath() + "KK8.jpg"));
-        assertFalse(book.checkBook());
-        book = new Book("Title", new Author("", ""), new File(folder.getPath() + "KK8.jpg"));
-        assertFalse(book.checkBook());
-        //FILE
-        book = new Book("Title", new Author("Good", "Author"), new File(""));
-        assertFalse(book.checkBook());
-        book = new Book("Title", new Author("Good", "Author"), null);
-        assertFalse(book.checkBook());
-        book = new Book("Title", new Author("Good", "Author"), new File(folder.getPath() + "Test.docx"));
-        assertFalse(book.checkBook());
+        assertFalse(badTitle.checkBook());
+        assertFalse(badAuthorLastName.checkBook());
+        assertFalse(badAuthorFirstName.checkBook());
+        assertFalse(badAuthorCompletely.checkBook());
+        assertFalse(emptyFile.checkBook());
+        assertFalse(badFile.checkBook());
+        assertFalse(notPicture.checkBook());
     }
 }

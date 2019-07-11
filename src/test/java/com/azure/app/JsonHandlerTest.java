@@ -3,11 +3,14 @@
 
 package com.azure.app;
 
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,50 +23,111 @@ import static org.junit.Assert.assertTrue;
 
 public class JsonHandlerTest {
     private JsonHandler jsonHandler = new JsonHandler();
-    private URL folder = JsonHandler.class.getClassLoader().getResource(".");
+    private String root;
+
+    @Before
+    public void setUp() {
+        try {
+            URI folder = LocalBookCollector.class.getClassLoader().getResource(".").toURI();
+            root = Paths.get(folder).toString();
+        } catch (URISyntaxException e) {
+            Assert.fail("");
+        }
+    }
 
     /**
-     * Tests the JsonHandler class
+     * Tests serialization of a valid book.
      */
     @Test
-    public void testSerializationAndCheckBook() {
-        //Good book
+    public void testSerializingGoodBook() {
+        //Arrange
         Book b = new Book("Wonder", new Author("RJ", "Palacio"),
-            new File(folder.getPath() + "Wonder.png"));
-        assertTrue(jsonHandler.writeJSON(b));
-        //Bad book (empty title)
-        Book b2 = new Book("", new Author("RJ", "Palacio"),
-            new File(folder.getPath() + "Wonder1.png")
-        );
-        assertFalse(jsonHandler.writeJSON(b2));
-        //Bad book (Invalid author)
-        Book b3 = new Book("Wonder", new Author("", null),
-            new File(folder.getPath() + "Book.png"));
-        assertFalse(jsonHandler.writeJSON(b3));
-        //Bad book (Wrong file path)
-        Book b4 = new Book("Wonder", new Author("Palacio", "R. J."),
-            new File(""));
-        assertFalse(jsonHandler.writeJSON(b4));
-        //Completely bad book (wrong on all aspects)
-        Book b5 = new Book(null, new Author(null, null),
-            new File(""));
-        assertFalse(jsonHandler.writeJSON(b5));
-        //Delete test book
+            new File(Paths.get(root, "Wonder.png").toString()));
+        //Act
+        boolean result = jsonHandler.writeJSON(b, root);
+        //Assert
+        assertTrue(result);
+        //Cleanup
         deleteJsonFile(new File(Constants.JSON_PATH), b);
+    }
+
+    /**
+     * Tests serialization of a book with an invalid title.
+     */
+    @Test
+    public void testSerializingBadTitle() {
+        //Arrange
+        Book b = new Book("", new Author("RJ", "Palacio"),
+            new File(Paths.get(root, "Wonder.png").toString()));
+        //Act
+        boolean result = jsonHandler.writeJSON(b, root);
+        //Assert
+        assertFalse(result);
+    }
+
+    /**
+     * Tests serialization of a book with an invalid author.
+     */
+    @Test
+    public void testSerializingBadAuthor() {
+        //Arrange
+        Book b = new Book("Wonder", new Author("", null),
+            new File(Paths.get(root, "Wonder.png").toString()));
+        //Act
+        boolean result = jsonHandler.writeJSON(b, root);
+        //Assert
+        assertFalse(result);
+    }
+
+    /**
+     * Tests serialization of a book with an invalid image file..
+     */
+    @Test
+    public void testSerializingBadFile() {
+        //Arrange
+        Book b = new Book("Wonder", new Author("Palacio", "R. J."), //invalid file #3
+            new File(""));
+        //Act
+        boolean result = jsonHandler.writeJSON(b, root);
+        //Assert
+        assertFalse(result);
+    }
+
+    /**
+     * Tests serialization of a completely invalid book
+     */
+    @Test
+    public void testSerializingBadBook() {
+        //Arrange
+        Book b = new Book(null, new Author(null, null), //completely invalid #4
+            new File(""));
+        //Act
+        boolean result = jsonHandler.writeJSON(b, root);
+        //Assert
+        assertFalse(result);
     }
 
     /**
      * Tests the deserialization of a JSON file to a book
      */
     @Test
-    public void testFromJSONtoBook() {
-        //Test with valid data
-        Book result = jsonHandler.fromJSONtoBook(new File(folder.getPath()
+    public void testFromJSONtoBookValid() {
+        //Arrange and Act
+        Book result = jsonHandler.fromJSONtoBook(new File(root
             + "Kingdom Keepers VIII.json"));
+        //Assert
         assertTrue(result != null);
-        //Test with invalid data
-        result = jsonHandler.fromJSONtoBook(new File(folder.getPath()
+    }
+
+    /**
+     * Tests the deserialization of a bad JSON file.
+     */
+    @Test
+    public void testFromJSONtoBookInvalid() {
+        //Arrange and Act
+        Book result = jsonHandler.fromJSONtoBook(new File(root
             + "asdfasdf"));
+        //Assert
         assertTrue(result == null);
     }
 

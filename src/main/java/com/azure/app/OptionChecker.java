@@ -60,8 +60,8 @@ class OptionChecker {
      * false - the String is neither
      */
     boolean checkYesOrNo(String choice) {
-        if (!choice.contentEquals("Y") && !choice.contentEquals("y")
-            && !choice.contentEquals("N") && !choice.contentEquals("n")) {
+        if (!choice.equalsIgnoreCase("y")
+            && !choice.equalsIgnoreCase("n")) {
             System.out.println("Please enter Y or N.");
             return true;
         } else {

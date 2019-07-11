@@ -3,12 +3,16 @@
 
 package com.azure.app;
 
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,44 +20,94 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.assertTrue;
-
 public class LocalBookCollectorTest {
-    private URL file = App.class.getClassLoader().getResource(".");
-    private LocalBookCollector localCollector = new LocalBookCollector();
+    private LocalBookCollector localCollector;
+    private String root;
+
+    @Before
+    public void setUp() {
+        try {
+            URI folder = LocalBookCollector.class.getClassLoader().getResource(".").toURI();
+            root = Paths.get(folder).toString();
+        } catch (URISyntaxException e) {
+            Assert.fail("");
+        }
+        localCollector = new LocalBookCollector(root);
+    }
+
+    /**
+     * Verifies the implementation of findBook when the title doesn't exist.
+     */
+    @Test
+    public void testFindBookNoTitles() {
+        //Arrange
+        String expected = "AsOKalsdjfkal";
+        //Act
+        localCollector.saveBook("Existing", new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.json").toString())).block();
+        Flux<Book> noTitles = localCollector.findBook(expected);
+        //Assert
+        StepVerifier.create(noTitles)
+            //Assert that it's empty
+            .expectComplete()
+            .verify();
+        //Cleanup
+        deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString())));
+    }
 
     /**
      * Verifies the implementation of the findBook(String title) in the
-     * LocalBookCollector object
+     * LocalBookCollector object for one object.
      */
     @Test
-    public void findTitlesTest() {
-        localCollector.saveBook("Existing", new Author("Mock", "Author"),
-            new File(file.getPath() + "GreatGatsby.gif")).block();
-        //Title that doesn't exist
-        Flux<Book> books = localCollector.findBook("ASDF");
-        books.collectList().map(list -> {
-            assertTrue(list.size() == 0);
-            return list;
-        }).block();
-        //Only one book has this title
-        books = localCollector.findBook("Existing");
-        books.collectList().map(list -> {
-            assertTrue(list.size() == 1);
-            return list;
-        }).block();
-        //Multiple books have this title
-        localCollector.saveBook("Existing", new Author("Mock2", "Author"),
-            new File(file.getPath() + "GreatGatsby.gif")).block();
-        books = localCollector.findBook("Existing");
-        books.collectList().map(list -> {
-            assertTrue(list.size() > 1);
-            return list;
-        }).block();
+    public void testFindBookOneTitle() {
+        //Arrange
+        String expected = "Existing";
+        //Act
+        localCollector.saveBook(expected, new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString())).block();
+        Flux<Book> oneBook = localCollector.findBook(expected);
+        //Assert
+        StepVerifier.create(oneBook)
+            .assertNext(book -> {
+                Assert.assertEquals(expected, book.getTitle());
+            })
+            .expectComplete()
+            .verify();
+        //Cleanup
         deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
-            new File(file.getPath() + "GreatGatsby.gif")));
-        deleteJsonFile(new Book("Existing", new Author("Mock2", "Author"),
-            new File(file.getPath() + "GreatGatsby.gif")));
+            new File(Paths.get(root, "GreatGatsby.gif").toString())));
+    }
+
+    /**
+     * Verifies the implementation of the findBook when there's multiple results
+     */
+    @Test
+    public void testFindBookManyTitles() {
+        //Arrange
+        String expected = "Existing";
+        //Act
+        localCollector.saveBook(expected, new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString())).block();
+        localCollector.saveBook(expected, new Author("Mock2", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString())).block();
+        Flux<Book> manyBooks = localCollector.findBook(expected);
+        //Assert
+        StepVerifier.create(manyBooks)
+            .assertNext(book -> {
+                Assert.assertEquals(expected, book.getTitle());
+            })
+            .assertNext(book -> {
+                Assert.assertEquals(expected, book.getTitle());
+            })
+            .expectComplete()
+            .verify();
+        //Cleanup
+        deleteJsonFile(new Book(expected, new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString())));
+        deleteJsonFile(new Book(expected, new Author("Mock2", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString())));
     }
 
     /**
@@ -61,46 +115,91 @@ public class LocalBookCollectorTest {
      * LocalBookCollector object
      */
     @Test
-    public void findAuthorsTest() {
+    public void testFindAuthorsNoResult() {
+        //Arrange
         Author author = new Author("First", "Last");
+        //Act
         localCollector.saveBook("Title", author,
-            new File(file.getPath() + "Wonder.png")).block();
-        //No authors
-        Flux<Book> authorSearch = localCollector.findBook(new Author("Not_asdff", "Available_xcv"));
-        authorSearch.collectList().map(list -> {
-            assertTrue(list.size() == 0);
-            return list;
-        });
-        authorSearch = localCollector.findBook(author);
-        authorSearch.collectList().map(list -> {
-            assertTrue(list.size() == 1);
-            return list;
-        });
-        //Create another book from same author
-        localCollector.saveBook("Title2", author,
-            new File(file.getPath() + "KK8.jpg"));
-        authorSearch = localCollector.findBook(new Author("First", "Last"));
-        authorSearch.collectList().map(list -> {
-            assertTrue(list.size() > 1);
-            return list;
-        }).block();
-        deleteJsonFile(new Book("Title", new Author("First", "Last"),
-            new File(file.getPath() + "Wonder.png")));
-        deleteJsonFile(new Book("Title2", author,
-            new File(file.getPath() + "KK8.jpg")));
+            new File(Paths.get(root, "Wonder.png").toString())).block();
+        Flux<Book> noAuthors = localCollector.findBook(new Author("Not_asdff", "Available_xcv"));
+        //Assert
+        StepVerifier.create(noAuthors)
+            .expectComplete()
+            .verify();
+        //Cleanup
+        deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
+            new File(Paths.get(root, "Wonder.png").toString())));
+    }
+
+    @Test
+    public void testFindAuthorsOneResult() {
+        //Arrange
+        Author author = new Author("First", "Last");
+        //Act
+        localCollector.saveBook("Title", author,
+            new File(Paths.get(root, "Wonder.png").toString())).block();
+        Flux<Book> oneAuthor = localCollector.findBook(author);
+        //Assert
+        StepVerifier.create(oneAuthor)
+            .assertNext(book -> {
+                Assert.assertEquals(author.getLastName(), book.getAuthor().getLastName());
+                Assert.assertEquals(author.getFirstName(), book.getAuthor().getFirstName());
+            })
+            .expectComplete()
+            .verify();
+        //Cleanup
+        deleteJsonFile(new Book("Title", author,
+            new File(Paths.get(root, "Wonder.png").toString())));
+    }
+
+    @Test
+    public void testFindAuthorsMultipleResults() {
+        //Arrange
+        Author author = new Author("First", "Last");
+        //Act
+        localCollector.saveBook("Title", author,
+            new File(Paths.get(root, "Wonder.png").toString())).block();
+        localCollector.saveBook("Wishful", author,
+            new File(Paths.get(root, "Wonder.png").toString())).block();
+        localCollector.saveBook("Winter", author,
+            new File(Paths.get(root, "Wonder.png").toString())).block();
+        Flux<Book> manyAuthors = localCollector.findBook(author);
+        //Assert
+        StepVerifier.create(manyAuthors)
+            .assertNext(book -> {
+                Assert.assertEquals(author.getLastName(), book.getAuthor().getLastName());
+                Assert.assertEquals(author.getFirstName(), book.getAuthor().getFirstName());
+            })
+            .assertNext(book -> {
+                Assert.assertEquals(author.getLastName(), book.getAuthor().getLastName());
+                Assert.assertEquals(author.getFirstName(), book.getAuthor().getFirstName());
+            })
+            .assertNext(book -> {
+                Assert.assertEquals(author.getLastName(), book.getAuthor().getLastName());
+                Assert.assertEquals(author.getFirstName(), book.getAuthor().getFirstName());
+            })
+            .expectComplete()
+            .verify();
+        //Cleanup
+        deleteJsonFile(new Book("Title", author,
+            new File(Paths.get(root, "Wonder.png").toString())));
+        deleteJsonFile(new Book("Wishful", author,
+            new File(Paths.get(root, "Wonder.png").toString())));
+        deleteJsonFile(new Book("Winter", author,
+            new File(Paths.get(root, "Wonder.png").toString())));
     }
 
     /**
      * For testing purposes only - To delete the json File but keep the image.
      */
     private void deleteJsonFile(Book book) {
-        try (Stream<Path> walk = Files.walk(Paths.get(Constants.JSON_PATH))) {
+        try (Stream<Path> walk = Files.walk(Paths.get(root, Constants.JSON_PATH))) {
             List<String> result = walk.map(Path::toString).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
             for (String file : result) {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
                     if (newFile.delete()) {
-                        new File(Paths.get(Constants.IMAGE_PATH, book.getAuthor().getLastName(),
+                        new File(Paths.get(root, Constants.IMAGE_PATH, book.getAuthor().getLastName(),
                             book.getAuthor().getFirstName(), book.getCover().getName()).toString()).delete();
                         deleteEmptyDirectories();
                     }
@@ -115,9 +214,9 @@ public class LocalBookCollectorTest {
      * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
      */
     private void deleteEmptyDirectories() {
-        File[] files = new File(Constants.JSON_PATH).listFiles();
+        File[] files = new File(Paths.get(root, Constants.JSON_PATH).toString()).listFiles();
         clearFiles(files);
-        File[] imageFiles = new File(Constants.IMAGE_PATH).listFiles();
+        File[] imageFiles = new File(Paths.get(root, Constants.IMAGE_PATH).toString()).listFiles();
         clearFiles(imageFiles);
     }
 

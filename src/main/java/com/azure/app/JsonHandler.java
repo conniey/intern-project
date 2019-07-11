@@ -43,9 +43,9 @@ class JsonHandler {
      * @return boolean - true if Book was successfully converted to Javadoc
      * false if Book wasn't successfully converted to Javadoc
      */
-    boolean writeJSON(Book book) {
+    boolean writeJSON(Book book, String root) {
         if (book.checkBook()) {
-            final Path fullBookPath = Paths.get(Constants.JSON_PATH, book.getAuthor().getLastName(),
+            final Path fullBookPath = Paths.get(root, Constants.JSON_PATH, book.getAuthor().getLastName(),
                 book.getAuthor().getFirstName());
             final File bookFile = fullBookPath.toFile();
             if (!bookFile.exists() && !bookFile.mkdirs()) {

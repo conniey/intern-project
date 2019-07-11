@@ -23,9 +23,8 @@ public class App {
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     //For now, book_Collector pointed at the local one because Cosmos is unavailable
-    private static BookCollection bookCollector = new LocalBookCollector();
+    private static BookCollection bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
     private static Logger logger = LoggerFactory.getLogger(App.class);
-    private static boolean empty = true;
 
     /**
      * Starting point for the library application.
@@ -33,7 +32,7 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        logger.debug("Welcome! ");
+        System.out.print("Welcome! ");
         int choice;
         do {
             showMenu();
@@ -86,7 +85,6 @@ public class App {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books.");
-                empty = true;
                 return list;
             }
             System.out.println("Here are all the books you have: ");
@@ -95,7 +93,6 @@ public class App {
                 Book book1 = list.get(i);
                 System.out.println(i + 1 + ". " + book1);
             }
-            empty = false;
             return list;
         }).then();
     }

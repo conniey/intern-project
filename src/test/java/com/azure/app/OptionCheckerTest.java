@@ -14,107 +14,261 @@ import static org.junit.Assert.assertTrue;
 
 public class OptionCheckerTest {
     private OptionChecker optionChecker = new OptionChecker();
+    URL folder = OptionCheckerTest.class.getClassLoader().getResource(".");
 
     /**
-     * Makes sure that the correct images are saved.
+     * Verifies that a png image can be read
      */
     @Test
-    public void testCheckImage() {
-        //Good png picture
-        URL folder = App.class.getClassLoader().getResource(".");
-        File path = new File(folder.getPath() + "Wonder.png");
-        assertTrue(optionChecker.checkImage(path));
-        //Good jpg
-        path = new File(folder.getPath() + "KK8.jpg");
-        assertTrue(optionChecker.checkImage(path));
-        //Good gif
-        path = new File(folder.getPath() + "GreatGatsby.gif");
-        assertTrue(optionChecker.checkImage(path));
-        //Random file
-        path = new File(folder.getPath() + "Test.docx");
-        assertFalse(optionChecker.checkImage(path));
+    public void testPngImage() {
+        //Arrange
+        File pngPath = new File(folder.getPath() + "Wonder.png");
+        //Act
+        boolean pngCheck = optionChecker.checkImage(pngPath);
+        //Assert
+        assertTrue(pngCheck);
     }
 
     /**
-     * Makes sure that the author's name contains at least a first and last name
+     * Verifies that a jpg image can be read
      */
     @Test
-    public void testAuthorCheck() {
-        //Author with only one name;
+    public void testJpgImage() {
+        //Arrange
+        File jpgPath = new File(folder.getPath() + "KK8.jpg");
+        //Act
+        boolean jpgCheck = optionChecker.checkImage(jpgPath);
+        //Assert
+        assertTrue(jpgCheck);
+    }
+
+    /**
+     * Verifies that a gif image can be read
+     */
+    @Test
+    public void testGifImage() {
+        //Arrange
+        File gifPath = new File(folder.getPath() + "GreatGatsby.gif");
+        //Act
+        boolean gifCheck = optionChecker.checkImage(gifPath);
+        //Assert
+        assertTrue(gifCheck);
+    }
+
+    /**
+     * Verifies that any file that's not in the *.gif,.png,.jpg is not allowed
+     */
+    @Test
+    public void testNonImageFile() {
+        //Arrange
+        File randomPath = new File(folder.getPath() + "Test.docx");
+        //Act
+        boolean check = optionChecker.checkImage(randomPath);
+        //Assert
+        assertFalse(check);
+    }
+
+    /**
+     * Verifies that an author without a last name or only one name can't be entered
+     */
+    @Test
+    public void testValidateAuthorInvalid() {
+        //Arrange
         String name = "OnlyFirstName";
-        assertFalse(optionChecker.validateAuthor(name.split(" ")));
-        //Author with two name
-        name = "First Last";
-        assertTrue(optionChecker.validateAuthor(name.split(" ")));
-        //Author with multiple name
-        name = "First And Last";
-        assertTrue(optionChecker.validateAuthor(name.split(" ")));
+        //Act
+        boolean check = optionChecker.validateAuthor(name.split(" "));
+        //Assert
+        assertFalse(check);
+    }
+
+
+    /**
+     * Verifies that an author with at least a first and last name can be entered
+     */
+    @Test
+    public void testValidateAuthorValid() {
+        //Arrange
+        String name = "First Last";
+        //Act
+        boolean check = optionChecker.validateAuthor(name.split(" "));
+        //Assert
+        assertTrue(check);
+    }
+
+
+    /**
+     * Verifies that an author with a middle name/two last names, etc. can be entered
+     */
+    @Test
+    public void testValidateAuthorValidMultiName() {
+        //Arrange
+        String name = "First and Last";
+        //Act
+        boolean check = optionChecker.validateAuthor(name.split(" "));
+        //Assert
+        assertTrue(check);
     }
 
     /**
-     * Tests to make sure it takes in correct options
+     * Verifies that a valid option will register
+     * In this test, the conditions will have a max of 5.
+     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
      */
     @Test
-    public void testOptions() {
+    public void testOptionsValid() {
+        //Arrange
         int result;
-        String option = "2";
-        //Good option
-        result = optionChecker.checkOption(option, 5);
+        //Act
+        result = optionChecker.checkOption("2", 5);
+        //Assert
         assertTrue(result != -1);
-        //Bad option - out of range (too big)
-        option = "6";
-        result = optionChecker.checkOption(option, 5);
-        assertTrue(result == -1);
-        //Bad optoin - out of range (too small)
-        option = "-100";
-        assertTrue(optionChecker.checkOption(option, 5) == -1);
-        //Flat out bad option
-        option = "asdfasdfasdf";
-        result = optionChecker.checkOption(option, 5);
-        assertTrue(result == -1);
-        //Quit option
-        option = "q";
-        result = optionChecker.checkOption(option, 5);
-        assertTrue(result == 0);
     }
 
     /**
-     * Tests to make sure the user enters y/n
+     * Verifies that an option that's too big/out of range will not register
+     * In this test, the conditions will have a max of 5.
+     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
      */
     @Test
-    public void testCheckYesOrNo() {
-        //Enter a valid yes (uppercase)
-        assertFalse(optionChecker.checkYesOrNo("Y"));
-        //Enter a valid yes (lowercase)
-        assertFalse(optionChecker.checkYesOrNo("y"));
-        //Enter a valid no (uppercase)
-        assertFalse(optionChecker.checkYesOrNo("N"));
-        //Enter a valid no (lowercase)
-        assertFalse(optionChecker.checkYesOrNo("n"));
-        //Enter invalid characters
-        assertTrue(optionChecker.checkYesOrNo("asdfasdfa"));
-        assertTrue(optionChecker.checkYesOrNo("No"));
-        assertTrue(optionChecker.checkYesOrNo("1"));
+    public void testOptionsOutOfRangeBig() {
+        //Arrange
+        int result;
+        //Act
+        result = optionChecker.checkOption("6", 5);
+        //Assert
+        assertTrue(result == -1);
+    }
+
+    /**
+     * Verifies that an option that's too small/out of range will not register
+     * In this test, the conditions will have a max of 5.
+     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+     */
+    @Test
+    public void testOptionsOutOfRangeSmall() {
+        //Arrange
+        int result;
+        //Act
+        result = optionChecker.checkOption("-100", 5);
+        //Assert
+        assertTrue(result == -1);
+    }
+
+    /**
+     * Verifies that an option that's not a number won't be accepted
+     * In this test, the conditions will have a max of 5.
+     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+     */
+    @Test
+    public void testOptionsInvalidEntry() {
+        //Arrange
+        int result;
+        //Act
+        result = optionChecker.checkOption("asdf asdf", 5);
+        //Assert
+        assertTrue(result == -1);
+    }
+
+    /**
+     * Verifies that if the user enter 'q' or "Q", their option will be accepted and they'll return to the menu
+     * In this test, the conditions will have a max of 5.
+     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+     */
+    @Test
+    public void testOptionsQuit() {
+        //Arrange
+        int result;
+        int result2;
+        //Act
+        result = optionChecker.checkOption("q", 5);
+        result2 = optionChecker.checkOption("Q", 5);
+        //Assert
+        assertTrue(result == 0); //Since 0 is also not an option that the user can otherwise pick, it indicates return to menu
+        assertTrue(result2 == 0);
+    }
+
+    /**
+     * Verifies that if the user enters "y" or 'Y", their option will be accepted and thus they won't be prompted again
+     * Which is why the user returns a false value if their value is correct to alert the system not to ask them continuously.
+     */
+    @Test
+    public void testYesOption() {
+        //Arrange
+        String Y = "Y";
+        String y = "y";
+        //Act
+        boolean acceptY = optionChecker.checkYesOrNo(Y);
+        boolean acceptLittleY = optionChecker.checkYesOrNo(y);
+        //Assert
+        assertFalse(acceptY);
+        assertFalse(acceptLittleY);
+    }
+
+    /**
+     * Verifies that if the user enters "y" or 'Y", their option will be accepted and thus they won't be prompted again
+     * Which is why the user returns a false value if their value is correct to alert the system not to ask them continuously.
+     */
+    @Test
+    public void testNoOption() {
+        //Arrange
+        String N = "N";
+        String n = "n";
+        //Act
+        boolean acceptN = optionChecker.checkYesOrNo(N);
+        boolean acceptLittleN = optionChecker.checkYesOrNo(n);
+        //Assert
+        assertFalse(acceptN);
+        assertFalse(acceptLittleN);
+    }
+
+    /**
+     * Tests various invalid entries that shouldn't be accepted if user is prompted to
+     * enter Y/N, thus the value should return true to alert the system to keep asking
+     */
+    @Test
+    public void testCheckYesOrNoInvalid() {
+        //Arrange
+        String badEntry1 = "asdfasdfa";
+        String badEntry2 = "No";
+        String badEntry3 = "1";
+        //Act
+        boolean badResult1 = optionChecker.checkYesOrNo(badEntry1);
+        boolean badResult2 = optionChecker.checkYesOrNo(badEntry2);
+        boolean badResult3 = optionChecker.checkYesOrNo(badEntry3);
+        //Assert
+        assertTrue(badResult1);
+        assertTrue(badResult2);
+        assertTrue(badResult3);
     }
 
     /**
      * Tests to make sure a file and a book can be compared.
+     * In this test, the file and book aren't similar thus verifying a false value
+     */
+    @Test
+    public void testCheckFileNotMatching() {
+        //Arrange
+        Book book = new Book("Wonder", new Author("RJ", "Palacio"), new File("image.png"));
+        File file = new File(folder.getPath() + Paths.get("Fitzgerald", "Scott", "The Great Gatsby.json"));
+        assertFalse(optionChecker.checkFile(file, book));
+        //Act
+        boolean result = optionChecker.checkFile(file, book);
+        //Assert
+        assertFalse(result);
+    }
+
+    /**
+     * Tests to make sure a file and a book can be compared.
+     * In this test, the file and book are corresponding thus verifying a true value
      */
     @Test
     public void testCheckFile() {
-        URL folder = OptionCheckerTest.class.getClassLoader().getResource(".");
-        //Corresponding book and title
+        //Arrange - corresponding book and file
         Book book = new Book("Wonder", new Author("RJ", "Palacio"), new File("image.png"));
         File file = new File(folder.getPath() + Paths.get("Palacio", "RJ", "Wonder.json"));
-        assertTrue(optionChecker.checkFile(file, book));
-        //Title doesn't correspond with book
-        file = new File(folder.getPath() + Paths.get("Fitzgerald", "Scott", "The Great Gatsby.json"));
-        assertFalse(optionChecker.checkFile(file, book));
-        //Book doesn't correspond with title
-        book = new Book("ABC", new Author("CDE", "FGH"), new File("image.gif"));
-        assertFalse(optionChecker.checkFile(file, book));
-        //Book and title match again
-        book = new Book("The Great Gatsby", new Author("Scott", "Fitzgerald"), new File("GreatGatsby.png"));
-        assertTrue(optionChecker.checkFile(file, book));
+        //Act
+        boolean result = optionChecker.checkFile(file, book);
+        //Assert
+        assertTrue(result);
     }
 }

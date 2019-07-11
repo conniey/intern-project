@@ -26,17 +26,19 @@ class LocalBookCollector implements BookCollection {
     private final Set<String> supportedImageFormats;
     private Flux<Book> jsonBooks;
     private List<File> jsonFiles;
+    private String root;
     private final OptionChecker optionChecker = new OptionChecker();
 
-    LocalBookCollector() {
+    LocalBookCollector(String root) {
+        this.root = root;
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
-        File directory = new File(Constants.IMAGE_PATH);
-        if (!directory.exists() && !directory.mkdir()) {
+        File directory = new File(Paths.get(root, Constants.IMAGE_PATH).toString());
+        if (!directory.exists() && !directory.mkdirs()) {
             throw new IllegalStateException("Couldn't create non-existent JSON directory: "
                 + directory.getAbsolutePath());
         }
         File directoryJSON = new File(Constants.JSON_PATH);
-        if (!directoryJSON.exists() && !directoryJSON.mkdir()) {
+        if (!directoryJSON.exists() && !directoryJSON.mkdirs()) {
             throw new IllegalStateException("Couldn't create non-existent JSON directory: "
                 + directoryJSON.getAbsolutePath());
         }
@@ -57,7 +59,7 @@ class LocalBookCollector implements BookCollection {
      */
     private Flux<Book> initializeBooks() {
         try {
-            return Flux.fromStream(Files.walk(Paths.get(Constants.JSON_PATH)))
+            return Flux.fromStream(Files.walk(Paths.get(root, Constants.JSON_PATH)))
                 .filter(f -> f.toFile().getName().endsWith(".json"))
                 .map(path -> Constants.SERIALIZER.fromJSONtoBook(new File(path.toString())));
         } catch (IOException e) {
@@ -77,14 +79,14 @@ class LocalBookCollector implements BookCollection {
      */
     @Override
     public Mono<Boolean> saveBook(String title, Author author, File path) {
-        final Path fullImagePath = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), path.getName());
+        final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), path.getName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.getParentFile().exists() && !imageFile.mkdirs()) {
             System.err.println("Could not create directories for: " + fullImagePath.toString());
         }
         Book book = new Book(title, author, imageFile);
         if (saveImage(imageFile.getParentFile(), path) && book.checkBook()) {
-            boolean bookSaved = Constants.SERIALIZER.writeJSON(book);
+            boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
             return Mono.just(bookSaved);
