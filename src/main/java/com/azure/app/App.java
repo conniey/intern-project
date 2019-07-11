@@ -58,7 +58,6 @@ public class App {
                         deleteBook().block();
                     } else {
                         System.out.println("There are no books to delete.");
-
                     }
                     break;
                 case 5:
