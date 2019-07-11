@@ -20,7 +20,7 @@ import static junit.framework.TestCase.assertTrue;
 
 public class LocalBookCollectorTest {
     private URL file = App.class.getClassLoader().getResource(".");
-    private LocalBookCollector lclCollector = new LocalBookCollector();
+    private LocalBookCollector localCollector = new LocalBookCollector();
 
     /**
      * Verifies the implementation of the findBook(String title) in the
@@ -28,24 +28,24 @@ public class LocalBookCollectorTest {
      */
     @Test
     public void findTitlesTest() {
-        lclCollector.saveBook("Existing", new Author("Mock", "Author"),
+        localCollector.saveBook("Existing", new Author("Mock", "Author"),
             new File(file.getPath() + "GreatGatsby.gif")).block();
         //Title that doesn't exist
-        Flux<Book> books = lclCollector.findBook("ASDF");
+        Flux<Book> books = localCollector.findBook("ASDF");
         books.collectList().map(list -> {
             assertTrue(list.size() == 0);
             return list;
         }).block();
         //Only one book has this title
-        books = lclCollector.findBook("Existing");
+        books = localCollector.findBook("Existing");
         books.collectList().map(list -> {
             assertTrue(list.size() == 1);
             return list;
         }).block();
         //Multiple books have this title
-        lclCollector.saveBook("Existing", new Author("Mock2", "Author"),
+        localCollector.saveBook("Existing", new Author("Mock2", "Author"),
             new File(file.getPath() + "GreatGatsby.gif")).block();
-        books = lclCollector.findBook("Existing");
+        books = localCollector.findBook("Existing");
         books.collectList().map(list -> {
             assertTrue(list.size() > 1);
             return list;
@@ -63,23 +63,23 @@ public class LocalBookCollectorTest {
     @Test
     public void findAuthorsTest() {
         Author author = new Author("First", "Last");
-        lclCollector.saveBook("Title", author,
+        localCollector.saveBook("Title", author,
             new File(file.getPath() + "Wonder.png")).block();
         //No authors
-        Flux<Book> authorSearch = lclCollector.findBook(new Author("Not_asdff", "Available_xcv"));
+        Flux<Book> authorSearch = localCollector.findBook(new Author("Not_asdff", "Available_xcv"));
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() == 0);
             return list;
         });
-        authorSearch = lclCollector.findBook(author);
+        authorSearch = localCollector.findBook(author);
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() == 1);
             return list;
         });
         //Create another book from same author
-        lclCollector.saveBook("Title2", author,
+        localCollector.saveBook("Title2", author,
             new File(file.getPath() + "KK8.jpg"));
-        authorSearch = lclCollector.findBook(new Author("First", "Last"));
+        authorSearch = localCollector.findBook(new Author("First", "Last"));
         authorSearch.collectList().map(list -> {
             assertTrue(list.size() > 1);
             return list;
