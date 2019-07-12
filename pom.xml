@@ -144,6 +144,7 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- JSON Files -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
@@ -162,6 +163,7 @@
       <version>2.9.9</version>
     </dependency>
 
+    <!-- Reactive Programming - Mono/Flux -->
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>
@@ -174,17 +176,26 @@
       <version>1.3.2</version>
     </dependency>
 
+    <!-- SL4J Logger -->
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
+      <artifactId>slf4j-log4j12</artifactId>
       <version>1.7.26</version>
     </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
+    </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.26</version>
     </dependency>
 
+    <!-- Mockito -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>

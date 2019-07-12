@@ -128,8 +128,7 @@ public class JsonHandlerTest {
     @Test
     public void testFromJSONtoBookInvalid() {
         //Arrange and Act
-        Book result = jsonHandler.fromJSONtoBook(new File(root
-            + "asdfasdf"));
+        Book result = jsonHandler.fromJSONtoBook(new File(Paths.get(root, "asdfasdf").toString()));
         //Assert
         assertTrue(result == null);
     }
