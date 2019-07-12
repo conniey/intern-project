@@ -7,6 +7,8 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class JsonHandler {
+    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+
     /**
      * Converts a json file back to a Book object
      *
@@ -27,11 +31,11 @@ class JsonHandler {
             Book b = mapper.readValue(jsonFile, Book.class);
             return b;
         } catch (JsonGenerationException e) {
-            System.err.println("Exception generating JSON file.");
+            logger.error("Error generating JSON file: ", e);
         } catch (JsonMappingException e) {
-            System.err.println("Exception allocating memory space for file.");
+            logger.error("Error mapping JSON file: ", e);
         } catch (IOException e) {
-            System.out.println("Exception while writing JSON file.");
+            logger.error("Error while writing JSON file: ", e);
         }
         return null;
     }
@@ -49,7 +53,7 @@ class JsonHandler {
                 book.getAuthor().getFirstName());
             final File bookFile = fullBookPath.toFile();
             if (!bookFile.exists() && !bookFile.mkdirs()) {
-                System.err.println("Could not create directories for: " + fullBookPath.toString());
+                logger.error("Could not create directories for: " + fullBookPath.toString());
             }
             try {
                 ObjectMapper mapper = new ObjectMapper();
@@ -57,6 +61,7 @@ class JsonHandler {
                 mapper.writeValue(Paths.get(bookFile.getPath(), book.getTitle() + ".json").toFile(), book);
                 return true;
             } catch (IOException ex) {
+                logger.error("Couldn't find the right file: ", ex);
                 return false;
             }
         } else {

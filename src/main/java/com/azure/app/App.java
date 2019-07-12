@@ -3,8 +3,6 @@
 
 package com.azure.app;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,7 +22,6 @@ public class App {
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     //For now, book_Collector pointed at the local one because Cosmos is unavailable
     private static BookCollection bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
-    private static Logger logger = LoggerFactory.getLogger(App.class);
 
     /**
      * Starting point for the library application.

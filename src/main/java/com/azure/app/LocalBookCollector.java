@@ -4,6 +4,8 @@
 package com.azure.app;
 
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -28,19 +30,19 @@ class LocalBookCollector implements BookCollection {
     private List<File> jsonFiles;
     private String root;
     private final OptionChecker optionChecker = new OptionChecker();
+    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+
 
     LocalBookCollector(String root) {
         this.root = root;
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
         File directory = new File(Paths.get(root, Constants.IMAGE_PATH).toString());
         if (!directory.exists() && !directory.mkdirs()) {
-            throw new IllegalStateException("Couldn't create non-existent JSON directory: "
-                + directory.getAbsolutePath());
+            logger.error("Couldn't create non-existent JSON directory: " + directory.getAbsolutePath());
         }
         File directoryJSON = new File(Constants.JSON_PATH);
         if (!directoryJSON.exists() && !directoryJSON.mkdirs()) {
-            throw new IllegalStateException("Couldn't create non-existent JSON directory: "
-                + directoryJSON.getAbsolutePath());
+            logger.error("Couldn't create non-existent JSON directory: " + directoryJSON.getAbsolutePath());
         }
         jsonBooks = initializeBooks().cache();
         jsonFiles = retrieveJsonFiles();
@@ -63,6 +65,7 @@ class LocalBookCollector implements BookCollection {
                 .filter(f -> f.toFile().getName().endsWith(".json"))
                 .map(path -> Constants.SERIALIZER.fromJSONtoBook(new File(path.toString())));
         } catch (IOException e) {
+            logger.error("Error making Flux: ", e);
             return Flux.error(e);
         }
     }
@@ -82,7 +85,7 @@ class LocalBookCollector implements BookCollection {
         final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), path.getName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.getParentFile().exists() && !imageFile.mkdirs()) {
-            System.err.println("Could not create directories for: " + fullImagePath.toString());
+            logger.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
         }
         Book book = new Book(title, author, imageFile);
         if (saveImage(imageFile.getParentFile(), path) && book.checkBook()) {
@@ -104,6 +107,7 @@ class LocalBookCollector implements BookCollection {
             File image = Paths.get(directory.getPath(), imagePath.getName()).toFile();
             return ImageIO.write(bufferedImage, extension, image);
         } catch (IOException ex) {
+            logger.error("Error saving image: ", ex);
             return false;
         }
     }
@@ -132,7 +136,7 @@ class LocalBookCollector implements BookCollection {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith(".json"))
                 .collect(Collectors.toList());
         } catch (IOException e) {
-            System.err.println("Exception deleting book file.");
+            logger.error("Exception deleting book file.", e);
             return Collections.emptyList();
         }
     }
@@ -155,11 +159,15 @@ class LocalBookCollector implements BookCollection {
      */
     private void clearFiles(File[] files) {
         for (File file : files) {
-            if (file.isDirectory()) {
-                clearFiles(file.listFiles());
-            }
-            if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
-                file.delete();
+            if (file == null) {
+                return;
+            } else {
+                if (file.isDirectory()) {
+                    clearFiles(file.listFiles());
+                }
+                if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
+                    file.delete();
+                }
             }
         }
     }
