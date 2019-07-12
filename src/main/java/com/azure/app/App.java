@@ -20,7 +20,6 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    //For now, book_Collector pointed at the local one because Cosmos is unavailable
     private static BookCollection bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
 
     /**
