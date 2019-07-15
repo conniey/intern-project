@@ -79,8 +79,7 @@ public class LocalBookCollectorTest {
             .verify();
         //Cleanup
         deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
-            new File(Paths.get(root, "Gre" +
-                "atGatsby.gif").toString()).toURI()));
+            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()));
     }
 
     /**
