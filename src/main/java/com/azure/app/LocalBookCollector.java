@@ -91,6 +91,7 @@ class LocalBookCollector implements BookCollection {
         }
         URI savedImage = saveImage(imageFile, imagePath);
         Book book = new Book(title, author, savedImage);
+        duplicateBook(book);
         if (optionChecker.checkImage(root, savedImage) && book.checkBook(root)) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
@@ -98,6 +99,23 @@ class LocalBookCollector implements BookCollection {
             return Mono.just(bookSaved);
         }
         return Mono.just(false);
+    }
+
+    public void duplicateBook(Book bookToCompare) {
+        jsonFiles.removeIf(x -> {
+            boolean result = optionChecker.checkFile(x, bookToCompare);
+            if (result) {
+                Book imageToDeleteoDelete = Constants.SERIALIZER.fromJSONtoBook(x);
+                new File(imageToDeleteoDelete.getCover()).delete();
+            }
+            return false;
+        });
+    }
+
+    long checkImages(URI saved) {
+        String path = saved.getPath().substring(0, saved.getPath().lastIndexOf("."));
+        Flux<Book> imageFind = jsonBooks.filter(x -> x.getCover().getPath().contains(path));
+        return imageFind.count().block();
     }
 
     private URI saveImage(File directory, File imagePath) {
@@ -108,8 +126,17 @@ class LocalBookCollector implements BookCollection {
         try {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
             File image = new File(Paths.get(directory.getPath(), imagePath.getName()).toString());
-            if (ImageIO.write(bufferedImage, extension, image)) {
-                return image.toURI();
+            String path = image.getAbsolutePath();
+            File copyImage = new File(path.substring(0, path.lastIndexOf("."))
+                + "_" + checkImages(image.toURI()) + "." + extension);
+            if (image.exists()) {
+                if (ImageIO.write(bufferedImage, extension, copyImage)) {
+                    return copyImage.toURI();
+                }
+            } else {
+                if (ImageIO.write(bufferedImage, extension, image)) {
+                    return image.toURI();
+                }
             }
         } catch (IOException ex) {
             logger.error("Error saving image: ", ex);
