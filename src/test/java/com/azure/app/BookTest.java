@@ -39,7 +39,6 @@ public class BookTest {
         Book emptyFile = new Book("Title", new Author("Good", "Author"), new File("").toURI());
         Book badFile = new Book("Title", new Author("Good", "Author"), null);
         Book notPicture = new Book("Title", new Author("Good", "Author"), new File(folder.getPath() + "Test.docx").toURI());
-
         //Act and Assert
         assertTrue(book.checkBook(root));
         assertFalse(badTitle.checkBook(root));
