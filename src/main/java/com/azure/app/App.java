@@ -3,10 +3,12 @@
 
 package com.azure.app;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
@@ -21,6 +23,7 @@ public class App {
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollection bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
     /**
      * Starting point for the library application.
@@ -97,7 +100,7 @@ public class App {
         System.out.println("Please enter the following information:");
         String title;
         String author;
-        File path;
+        URI path = null;
         do {
             System.out.println("1. Title?");
             title = SCANNER.nextLine();
@@ -110,7 +113,8 @@ public class App {
         Author newAuthor = new Author(authorName[0], authorName[1]);
         do {
             System.out.println("3. Cover image?");
-            path = new File(SCANNER.nextLine());
+            String filePath = SCANNER.nextLine();
+            path = bookCollector.retrieveURI(filePath);
         } while (!OPTION_CHECKER.checkImage(path));
         String choice;
         do {

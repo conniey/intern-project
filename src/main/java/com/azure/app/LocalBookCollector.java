@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,14 +82,17 @@ class LocalBookCollector implements BookCollection {
      * false - book wasn't saved </Boolean>
      */
     @Override
-    public Mono<Boolean> saveBook(String title, Author author, File path) {
-        final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), path.getName());
+    public Mono<Boolean> saveBook(String title, Author author, URI path) {
+        File imagePath = new File(path);
+        final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(),
+            author.getFirstName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.getParentFile().exists() && !imageFile.mkdirs()) {
             logger.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
         }
-        Book book = new Book(title, author, imageFile);
-        if (saveImage(imageFile.getParentFile(), path) && book.checkBook()) {
+        URI savedImage = saveImage(imageFile, imagePath);
+        Book book = new Book(title, author, savedImage);
+        if (savedImage != null && book.checkBook()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
@@ -97,19 +101,22 @@ class LocalBookCollector implements BookCollection {
         return Mono.just(false);
     }
 
-    private boolean saveImage(File directory, File imagePath) {
+    private URI saveImage(File directory, File imagePath) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
-            return false;
+            return null;
         }
         try {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
             File image = Paths.get(directory.getPath(), imagePath.getName()).toFile();
-            return ImageIO.write(bufferedImage, extension, image);
+            if (ImageIO.write(bufferedImage, extension, image)) {
+                return image.toURI();
+            }
         } catch (IOException ex) {
             logger.error("Error saving image: ", ex);
-            return false;
+            return null;
         }
+        return null;
     }
 
 
@@ -123,7 +130,7 @@ class LocalBookCollector implements BookCollection {
             return result;
         });
         if (delete) {
-            bookToCompare.getCover().delete();
+            new File(bookToCompare.getCover()).delete();
             deleteEmptyDirectories();
             jsonBooks = initializeBooks().cache();
             return true;
@@ -198,11 +205,29 @@ class LocalBookCollector implements BookCollection {
     /**
      * Determines whether the Flux is empty or not
      */
+    @Override
     public boolean hasBooks() {
         if (jsonBooks.count().block() == null) {
             return false;
         }
         return jsonBooks.count().block() > 0;
+    }
+
+
+    /**
+     * Determines if an entry is a file
+     */
+    boolean isFile(URI entry) {
+        if (entry == null) {
+            return false;
+        }
+        File fh = new File(entry);
+        return fh.isFile();
+    }
+
+    @Override
+    public URI retrieveURI(String path) {
+        return new File(path).toURI();
     }
 
 }

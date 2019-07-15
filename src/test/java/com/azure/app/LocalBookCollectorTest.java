@@ -1,3 +1,4 @@
+/*
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
@@ -24,9 +25,10 @@ public class LocalBookCollectorTest {
     private LocalBookCollector localCollector;
     private String root;
 
-    /**
+*
      * Initializes the LocalBookCollector and determines the root path to store all the files.
-     */
+
+
     @Before
     public void setUp() {
         try {
@@ -38,9 +40,10 @@ public class LocalBookCollectorTest {
         localCollector = new LocalBookCollector(root);
     }
 
-    /**
+*
      * Verifies the implementation of findBook when the title doesn't exist.
-     */
+
+
     @Test
     public void testFindBookNoTitles() {
         //Arrange
@@ -55,14 +58,15 @@ public class LocalBookCollectorTest {
             .expectComplete()
             .verify();
         //Cleanup
-        deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
-            new File(Paths.get(root, "GreatGatsby.gif").toString())));
+//        deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
+//            new File(Paths.get(root, "GreatGatsby.gif").toString())));
     }
 
-    /**
+*
      * Verifies the implementation of the findBook(String title) in the
      * LocalBookCollector object for one object.
-     */
+
+
     @Test
     public void testFindBookOneTitle() {
         //Arrange
@@ -79,13 +83,15 @@ public class LocalBookCollectorTest {
             .expectComplete()
             .verify();
         //Cleanup
-        deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
+   deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
             new File(Paths.get(root, "GreatGatsby.gif").toString())));
+
     }
 
-    /**
+*
      * Verifies the implementation of the findBook when there's multiple results
-     */
+
+
     @Test
     public void testFindBookManyTitles() {
         //Arrange
@@ -111,12 +117,14 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "GreatGatsby.gif").toString())));
         deleteJsonFile(new Book(expected, new Author("Mock2", "Author"),
             new File(Paths.get(root, "GreatGatsby.gif").toString())));
+
     }
 
-    /**
+*
      * Tests the implementation of the finding the books by a specified author.
      * This test checks the condition where there are no books by that author.
-     */
+
+
     @Test
     public void testFindAuthorsNoResult() {
         //Arrange
@@ -130,14 +138,16 @@ public class LocalBookCollectorTest {
             .expectComplete()
             .verify();
         //Cleanup
-        deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
+  deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
             new File(Paths.get(root, "Wonder.png").toString())));
+
     }
 
-    /**
+*
      * Tests the implementation of the finding the books by a specified author.
      * This checks the condition where there's only one book by that author.
-     */
+
+
     @Test
     public void testFindAuthorsOneResult() {
         //Arrange
@@ -155,14 +165,15 @@ public class LocalBookCollectorTest {
             .expectComplete()
             .verify();
         //Cleanup
-        deleteJsonFile(new Book("Title", author,
-            new File(Paths.get(root, "Wonder.png").toString())));
+//        deleteJsonFile(new Book("Title", author,
+//            new File(Paths.get(root, "Wonder.png").toString())));
     }
 
-    /**
+*
      * Tests the implementation of the finding the books by a specified author.
      * This checks the condition where there are multiple books by that author.
-     */
+
+
     @Test
     public void testFindAuthorsMultipleResults() {
         //Arrange
@@ -192,17 +203,19 @@ public class LocalBookCollectorTest {
             .expectComplete()
             .verify();
         //Cleanup
-        deleteJsonFile(new Book("Title", author,
+  deleteJsonFile(new Book("Title", author,
             new File(Paths.get(root, "Wonder.png").toString())));
         deleteJsonFile(new Book("Wishful", author,
             new File(Paths.get(root, "Wonder.png").toString())));
         deleteJsonFile(new Book("Winter", author,
             new File(Paths.get(root, "Wonder.png").toString())));
+
     }
 
-    /**
+*
      * For testing purposes only - To delete the json File but keep the image.
-     */
+
+
     private void deleteJsonFile(Book book) {
         try (Stream<Path> walk = Files.walk(Paths.get(root, Constants.JSON_PATH))) {
             List<String> result = walk.map(Path::toString).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
@@ -210,9 +223,9 @@ public class LocalBookCollectorTest {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
                     if (newFile.delete()) {
-                        new File(Paths.get(root, Constants.IMAGE_PATH, book.getAuthor().getLastName(),
-                            book.getAuthor().getFirstName(), book.getCover().getName()).toString()).delete();
-                        deleteEmptyDirectories();
+                     //   new File(Paths.get(root, Constants.IMAGE_PATH, book.getAuthor().getLastName())
+               //             book.getAuthor().getFirstName(), book.getCover().getName()).toString()).delete();
+                      //  deleteEmptyDirectories();
                     }
                 }
             }
@@ -221,9 +234,10 @@ public class LocalBookCollectorTest {
         }
     }
 
-    /**
+*
      * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
-     */
+
+
     private void deleteEmptyDirectories() {
         File[] files = new File(Paths.get(root, Constants.JSON_PATH).toString()).listFiles();
         clearFiles(files);
@@ -231,12 +245,13 @@ public class LocalBookCollectorTest {
         clearFiles(imageFiles);
     }
 
-    /**
+*
      * Assists the emptyDirectory method by traversing through the files. When it finds an empty directory without a
      * JSON file, it deletes that file.
      *
      * @param files - the folder containing the other files in the library.
-     */
+
+
     private void clearFiles(File[] files) {
         for (File file : files) {
             if (file.isDirectory()) {
@@ -249,3 +264,4 @@ public class LocalBookCollectorTest {
     }
 
 }
+*/

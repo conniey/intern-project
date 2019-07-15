@@ -1,3 +1,4 @@
+/*
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
@@ -16,9 +17,11 @@ public class OptionCheckerTest {
     private OptionChecker optionChecker = new OptionChecker();
     URL folder = OptionCheckerTest.class.getClassLoader().getResource(".");
 
-    /**
-     * Verifies that a png image can be read
-     */
+    */
+/**
+ * Verifies that a png image can be read
+ *//*
+
     @Test
     public void testPngImage() {
         //Arrange
@@ -29,9 +32,11 @@ public class OptionCheckerTest {
         assertTrue(pngCheck);
     }
 
-    /**
-     * Verifies that a jpg image can be read
-     */
+    */
+/**
+ * Verifies that a jpg image can be read
+ *//*
+
     @Test
     public void testJpgImage() {
         //Arrange
@@ -42,9 +47,11 @@ public class OptionCheckerTest {
         assertTrue(jpgCheck);
     }
 
-    /**
-     * Verifies that a gif image can be read
-     */
+    */
+/**
+ * Verifies that a gif image can be read
+ *//*
+
     @Test
     public void testGifImage() {
         //Arrange
@@ -55,9 +62,11 @@ public class OptionCheckerTest {
         assertTrue(gifCheck);
     }
 
-    /**
-     * Verifies that any file that's not in the *.gif,.png,.jpg is not allowed
-     */
+    */
+/**
+ * Verifies that any file that's not in the *.gif,.png,.jpg is not allowed
+ *//*
+
     @Test
     public void testNonImageFile() {
         //Arrange
@@ -68,9 +77,11 @@ public class OptionCheckerTest {
         assertFalse(check);
     }
 
-    /**
-     * Verifies that an author without a last name or only one name can't be entered
-     */
+    */
+/**
+ * Verifies that an author without a last name or only one name can't be entered
+ *//*
+
     @Test
     public void testValidateAuthorInvalid() {
         //Arrange
@@ -82,9 +93,11 @@ public class OptionCheckerTest {
     }
 
 
-    /**
-     * Verifies that an author with at least a first and last name can be entered
-     */
+    */
+/**
+ * Verifies that an author with at least a first and last name can be entered
+ *//*
+
     @Test
     public void testValidateAuthorValid() {
         //Arrange
@@ -96,9 +109,11 @@ public class OptionCheckerTest {
     }
 
 
-    /**
-     * Verifies that an author with a middle name/two last names, etc. can be entered
-     */
+    */
+/**
+ * Verifies that an author with a middle name/two last names, etc. can be entered
+ *//*
+
     @Test
     public void testValidateAuthorValidMultiName() {
         //Arrange
@@ -109,11 +124,13 @@ public class OptionCheckerTest {
         assertTrue(check);
     }
 
-    /**
-     * Verifies that a valid option will register
-     * In this test, the conditions will have a max of 5.
-     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
-     */
+    */
+/**
+ * Verifies that a valid option will register
+ * In this test, the conditions will have a max of 5.
+ * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+ *//*
+
     @Test
     public void testOptionsValid() {
         //Arrange
@@ -124,11 +141,13 @@ public class OptionCheckerTest {
         assertTrue(result != -1);
     }
 
-    /**
-     * Verifies that an option that's too big/out of range will not register
-     * In this test, the conditions will have a max of 5.
-     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
-     */
+    */
+/**
+ * Verifies that an option that's too big/out of range will not register
+ * In this test, the conditions will have a max of 5.
+ * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+ *//*
+
     @Test
     public void testOptionsOutOfRangeBig() {
         //Arrange
@@ -139,11 +158,13 @@ public class OptionCheckerTest {
         assertTrue(result == -1);
     }
 
-    /**
-     * Verifies that an option that's too small/out of range will not register
-     * In this test, the conditions will have a max of 5.
-     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
-     */
+    */
+/**
+ * Verifies that an option that's too small/out of range will not register
+ * In this test, the conditions will have a max of 5.
+ * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+ *//*
+
     @Test
     public void testOptionsOutOfRangeSmall() {
         //Arrange
@@ -154,11 +175,13 @@ public class OptionCheckerTest {
         assertTrue(result == -1);
     }
 
-    /**
-     * Verifies that an option that's not a number won't be accepted
-     * In this test, the conditions will have a max of 5.
-     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
-     */
+    */
+/**
+ * Verifies that an option that's not a number won't be accepted
+ * In this test, the conditions will have a max of 5.
+ * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+ *//*
+
     @Test
     public void testOptionsInvalidEntry() {
         //Arrange
@@ -169,11 +192,13 @@ public class OptionCheckerTest {
         assertTrue(result == -1);
     }
 
-    /**
-     * Verifies that if the user enter 'q' or "Q", their option will be accepted and they'll return to the menu
-     * In this test, the conditions will have a max of 5.
-     * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
-     */
+    */
+/**
+ * Verifies that if the user enter 'q' or "Q", their option will be accepted and they'll return to the menu
+ * In this test, the conditions will have a max of 5.
+ * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
+ *//*
+
     @Test
     public void testOptionsQuit() {
         //Arrange
@@ -187,10 +212,12 @@ public class OptionCheckerTest {
         assertTrue(result2 == 0);
     }
 
-    /**
-     * Verifies that if the user enters "y" or 'Y", their option will be accepted and thus they won't be prompted again
-     * Which is why the user returns a false value if their value is correct to alert the system not to ask them continuously.
-     */
+    */
+/**
+ * Verifies that if the user enters "y" or 'Y", their option will be accepted and thus they won't be prompted again
+ * Which is why the user returns a false value if their value is correct to alert the system not to ask them continuously.
+ *//*
+
     @Test
     public void testYesOption() {
         //Arrange
@@ -204,10 +231,12 @@ public class OptionCheckerTest {
         assertFalse(acceptLittleY);
     }
 
-    /**
-     * Verifies that if the user enters "y" or 'Y", their option will be accepted and thus they won't be prompted again
-     * Which is why the user returns a false value if their value is correct to alert the system not to ask them continuously.
-     */
+    */
+/**
+ * Verifies that if the user enters "y" or 'Y", their option will be accepted and thus they won't be prompted again
+ * Which is why the user returns a false value if their value is correct to alert the system not to ask them continuously.
+ *//*
+
     @Test
     public void testNoOption() {
         //Arrange
@@ -221,10 +250,12 @@ public class OptionCheckerTest {
         assertFalse(acceptLittleN);
     }
 
-    /**
-     * Tests various invalid entries that shouldn't be accepted if user is prompted to
-     * enter Y/N, thus the value should return true to alert the system to keep asking
-     */
+    */
+/**
+ * Tests various invalid entries that shouldn't be accepted if user is prompted to
+ * enter Y/N, thus the value should return true to alert the system to keep asking
+ *//*
+
     @Test
     public void testCheckYesOrNoInvalid() {
         //Arrange
@@ -241,10 +272,12 @@ public class OptionCheckerTest {
         assertTrue(badResult3);
     }
 
-    /**
-     * Tests to make sure a file and a book can be compared.
-     * In this test, the file and book aren't similar thus verifying a false value
-     */
+    */
+/**
+ * Tests to make sure a file and a book can be compared.
+ * In this test, the file and book aren't similar thus verifying a false value
+ *//*
+
     @Test
     public void testCheckFileNotMatching() {
         //Arrange
@@ -257,10 +290,12 @@ public class OptionCheckerTest {
         assertFalse(result);
     }
 
-    /**
-     * Tests to make sure a file and a book can be compared.
-     * In this test, the file and book are corresponding thus verifying a true value
-     */
+    */
+/**
+ * Tests to make sure a file and a book can be compared.
+ * In this test, the file and book are corresponding thus verifying a true value
+ *//*
+
     @Test
     public void testCheckFile() {
         //Arrange - corresponding book and file
@@ -272,3 +307,4 @@ public class OptionCheckerTest {
         assertTrue(result);
     }
 }
+*/

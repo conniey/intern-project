@@ -5,7 +5,7 @@ package com.azure.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.File;
+import java.net.URI;
 
 public class Book {
     @JsonProperty("title")
@@ -13,12 +13,12 @@ public class Book {
     @JsonProperty("author")
     private Author author;
     @JsonProperty("cover")
-    private File cover;
+    private URI cover;
 
     Book() {
     }
 
-    Book(String title, Author author, File cover) {
+    Book(String title, Author author, URI cover) {
         this.title = title;
         this.author = author;
         this.cover = cover;
@@ -47,7 +47,7 @@ public class Book {
      *
      * @return File of image
      */
-    public File getCover() {
+    public URI getCover() {
         return cover;
     }
 
@@ -90,6 +90,6 @@ public class Book {
     public String displayBookInfo() {
         return "Title: " + getTitle() + "\n"
             + "Author: " + getAuthor() + "\n"
-            + "Cover: " + getCover();
+            + "Cover: " + getCover().toString();
     }
 }

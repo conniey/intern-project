@@ -55,6 +55,7 @@ class JsonHandler {
             final File bookFile = fullBookPath.toFile();
             if (!bookFile.exists() && !bookFile.mkdirs()) {
                 logger.error("Could not create directories for: " + fullBookPath.toString());
+                return false;
             }
             try {
                 ObjectMapper mapper = new ObjectMapper();

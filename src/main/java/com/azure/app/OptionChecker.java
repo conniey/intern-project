@@ -4,6 +4,7 @@
 package com.azure.app;
 
 import java.io.File;
+import java.net.URI;
 
 class OptionChecker {
     /**
@@ -35,13 +36,13 @@ class OptionChecker {
      * @return - boolean : true - if image path is correct
      * false - otherwise.
      */
-    boolean checkImage(File image) {
-        if (!image.isFile()) {
+    boolean checkImage(URI image) {
+        if (!new LocalBookCollector(System.getProperty("user.dir")).isFile(image)) {
             System.out.println("Please write out a valid image file path.");
             return false;
         }
         //Parses the File path to examine its extension
-        String extension = image.getAbsolutePath();
+        String extension = image.getPath();
         extension = extension.substring(extension.lastIndexOf('.'));
         //only returns true if it has the required extension
         if (extension.contentEquals(".jpg") || (extension.contentEquals(".png"))

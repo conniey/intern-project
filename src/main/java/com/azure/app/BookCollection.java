@@ -6,7 +6,7 @@ package com.azure.app;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
+import java.net.URI;
 
 interface BookCollection {
 
@@ -27,7 +27,7 @@ interface BookCollection {
      * true - book was successfully saved
      * false - book wasn't saved </Boolean>
      */
-    Mono<Boolean> saveBook(String title, Author author, File path);
+    Mono<Boolean> saveBook(String title, Author author, URI path);
 
     /**
      * Deletes the book and the file based off its information.
@@ -62,4 +62,12 @@ interface BookCollection {
      * false - if there are no books
      */
     boolean hasBooks();
+
+    /**
+     * Converts the path to a file and then returns the URI to that path
+     *
+     * @param path - String containing the image file the user entered
+     * @return URI of the image path
+     */
+    URI retrieveURI(String path);
 }

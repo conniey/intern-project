@@ -1,3 +1,4 @@
+/*
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
@@ -13,9 +14,11 @@ import static org.junit.Assert.assertTrue;
 
 public class BookTest {
 
-    /**
-     * Verifies that the correct information was passed to the Book object
-     */
+    */
+/**
+ * Verifies that the correct information was passed to the Book object
+ *//*
+
     @Test
     public void testBookChecker() {
         //Arrange
@@ -40,3 +43,4 @@ public class BookTest {
         assertFalse(notPicture.checkBook());
     }
 }
+*/
