@@ -33,7 +33,6 @@ class LocalBookCollector implements BookCollection {
     private final OptionChecker optionChecker = new OptionChecker();
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
-
     LocalBookCollector(String root) {
         this.root = root;
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
@@ -128,7 +127,7 @@ class LocalBookCollector implements BookCollection {
      * false - Book wasn't deleted
      */
     @Override
-    public boolean deleteBook(Book bookToCompare) {
+    public Mono<Boolean> deleteBook(Book bookToCompare) {
         boolean delete = jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
@@ -140,9 +139,9 @@ class LocalBookCollector implements BookCollection {
             new File(bookToCompare.getCover()).delete();
             deleteEmptyDirectories();
             jsonBooks = initializeBooks().cache();
-            return true;
+            return Mono.just(true);
         }
-        return false;
+        return Mono.just(false);
     }
 
     private List<File> retrieveJsonFiles() {
@@ -213,13 +212,12 @@ class LocalBookCollector implements BookCollection {
      * Determines whether the Flux is empty or not
      */
     @Override
-    public boolean hasBooks() {
+    public Mono<Boolean> hasBooks() {
         if (jsonBooks.count().block() == null) {
-            return false;
+            return Mono.just(false);
         }
-        return jsonBooks.count().block() > 0;
+        return Mono.just(jsonBooks.count().block() > 0);
     }
-
 
     /**
      * Determines if an entry is a file
@@ -243,5 +241,4 @@ class LocalBookCollector implements BookCollection {
     public URI retrieveURI(String path) {
         return new File(path).toURI();
     }
-
 }

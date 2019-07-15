@@ -115,11 +115,9 @@ public class OptionCheckerTest {
         assertTrue(check);
     }
 
-
     /**
      * Verifies that an author with a middle name/two last names, etc. can be entered
      */
-
     @Test
     public void testValidateAuthorValidMultiName() {
         //Arrange
@@ -134,7 +132,6 @@ public class OptionCheckerTest {
      * Verifies that a valid option will register. In this test, the conditions will have a max of 5.
      * checkOption should not return a negative value, thus -1 is the indicator that the test failed.
      */
-
     @Test
     public void testOptionsValid() {
         //Arrange

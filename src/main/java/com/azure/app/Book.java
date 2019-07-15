@@ -14,6 +14,7 @@ public class Book {
     private Author author;
     @JsonProperty("cover")
     private URI cover;
+    private static OptionChecker optionChecker = new OptionChecker();
 
     Book() {
     }
@@ -59,7 +60,7 @@ public class Book {
      * - false otherwise
      */
     public boolean checkBook(String root) {
-        if (cover == null || !(new OptionChecker().checkImage(root, cover))) {
+        if (cover == null || !(optionChecker.checkImage(root, cover))) {
             return false;
         }
         if (author.getLastName() == null || author.getLastName().isEmpty()

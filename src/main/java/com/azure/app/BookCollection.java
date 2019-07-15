@@ -36,7 +36,7 @@ interface BookCollection {
      * true - Book was deleted
      * false - Book wasn't deleted
      */
-    boolean deleteBook(Book book);
+    Mono<Boolean> deleteBook(Book book);
 
     /**
      * Filters out the book based on the specified title.
@@ -57,10 +57,10 @@ interface BookCollection {
     /**
      * Determines whether the collection has books or not.
      *
-     * @return boolean - true if there are books
+     * @return {@Link Mono<Boolean>} - true if there are books
      * false - if there are no books
      */
-    boolean hasBooks();
+    Mono<Boolean> hasBooks();
 
     /**
      * Converts the path to a file and then returns the URI to that path

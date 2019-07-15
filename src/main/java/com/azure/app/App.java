@@ -45,18 +45,22 @@ public class App {
                     addBook();
                     break;
                 case 3:
-                    if (bookCollector.hasBooks()) {
-                        findBook();
-                    } else {
-                        System.out.println("There are no books to find.");
-                    }
+                    bookCollector.hasBooks().subscribe(x -> {
+                        if (x) {
+                            findBook();
+                        } else {
+                            System.out.println("There are no books to find.");
+                        }
+                    });
                     break;
                 case 4:
-                    if (bookCollector.hasBooks()) {
-                        deleteBook().block();
-                    } else {
-                        System.out.println("There are no books to delete.");
-                    }
+                    bookCollector.hasBooks().subscribe(x -> {
+                        if (x) {
+                            deleteBook().block();
+                        } else {
+                            System.out.println("There are no books to delete.");
+                        }
+                    });
                     break;
                 case 5:
                     System.out.println("Goodbye.");
@@ -100,7 +104,8 @@ public class App {
         System.out.println("Please enter the following information:");
         String title;
         String author;
-        URI path = null;
+        URI path;
+        String choice = "x";
         do {
             System.out.println("1. Title?");
             title = SCANNER.nextLine();
@@ -112,23 +117,27 @@ public class App {
         String[] authorName = parseAuthorsName(author.split(" "));
         Author newAuthor = new Author(authorName[0], authorName[1]);
         do {
-            System.out.println("3. Cover image?");
+            System.out.println("3. Cover image? (Enter \"Q\" to return to menu.)");
             String filePath = SCANNER.nextLine();
+            if (filePath.equalsIgnoreCase("Q")) {
+                choice = "Q";
+            }
             path = bookCollector.retrieveURI(filePath);
-        } while (!OPTION_CHECKER.checkImage(System.getProperty("user.dir"), path));
-        String choice;
-        do {
-            System.out.println("4. Save? Enter 'Y' or 'N'.");
-            choice = SCANNER.nextLine();
-        } while (OPTION_CHECKER.checkYesOrNo(choice));
-        if (choice.equalsIgnoreCase("y")) {
-            bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
-                if (x) {
-                    System.out.println("Book was successfully saved!");
-                } else {
-                    System.out.println("Error. Book wasn't saved");
-                }
-            });
+        } while (!choice.equalsIgnoreCase("q") && !OPTION_CHECKER.checkImage(System.getProperty("user.dir"), path));
+        if (!choice.equalsIgnoreCase("q")) {
+            do {
+                System.out.println("4. Save? Enter 'Y' or 'N'.");
+                choice = SCANNER.nextLine();
+            } while (OPTION_CHECKER.checkYesOrNo(choice));
+            if (choice.equalsIgnoreCase("y")) {
+                bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
+                    if (x) {
+                        System.out.println("Book was successfully saved!");
+                    } else {
+                        System.out.println("Error. Book wasn't saved");
+                    }
+                });
+            }
         }
     }
 
@@ -268,10 +277,14 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (b.checkBook(System.getProperty("user.dir")) && bookCollector.deleteBook(b)) {
-            System.out.println("Book is deleted.");
-        } else {
-            System.out.println("Error. Book wasn't deleted.");
+        if (b.checkBook(System.getProperty("user.dir"))) {
+            bookCollector.deleteBook(b).subscribe(bookDeleted -> {
+                if (bookDeleted) {
+                    System.out.println("Book is deleted.");
+                } else {
+                    System.out.println("Error. Book wasn't deleted.");
+                }
+            });
         }
     }
 
@@ -286,10 +299,10 @@ public class App {
 
     private static String[] parseAuthorsName(String[] author) {
         String lastName = author[author.length - 1];
-        String firstName = author[0];
+        StringBuilder firstName = new StringBuilder(author[0]);
         for (int i = 1; i < author.length - 1; i++) {
-            firstName += " " + author[i];
+            firstName.append(" ").append(author[i]);
         }
-        return new String[]{firstName, lastName};
+        return new String[]{firstName.toString(), lastName};
     }
 }

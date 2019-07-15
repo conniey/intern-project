@@ -38,7 +38,7 @@ class OptionChecker {
      */
     boolean checkImage(String root, URI image) {
         if (!new LocalBookCollector(root).isFile(image)) {
-            System.out.println("Please write out a valid image file path.");
+            System.out.println("Invalid image path.");
             return false;
         }
         //Parses the File path to examine its extension

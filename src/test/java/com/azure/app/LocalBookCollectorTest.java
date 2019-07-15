@@ -107,7 +107,6 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()));
         deleteJsonFile(new Book(expected, new Author("Mock2", "Author"),
             new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()));
-
     }
 
     /**
@@ -233,7 +232,7 @@ public class LocalBookCollectorTest {
 
     /**
      * Assists the emptyDirectory method by traversing through the
-     * files.When it finds an empty directory without a JSON file, it deletes that file.
+     * files. When it finds an empty directory without a JSON file, it deletes that file.
      *
      * @param files - the folder containing the other files in the library.
      */
@@ -247,5 +246,4 @@ public class LocalBookCollectorTest {
             }
         }
     }
-
 }
