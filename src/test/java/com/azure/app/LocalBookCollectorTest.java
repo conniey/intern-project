@@ -60,7 +60,6 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()));
     }
 
-
     /**
      * Verifies the implementation of the findBook(String title)
      * in the LocalBookCollector object for one object.
