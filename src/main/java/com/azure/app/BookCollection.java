@@ -9,7 +9,6 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 interface BookCollection {
-
     /**
      * Returns the Flux of Book objects
      *
