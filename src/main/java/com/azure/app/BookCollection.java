@@ -32,7 +32,7 @@ interface BookCollection {
     /**
      * Deletes the book and the file based off its information.
      *
-     * @param book
+     * @param book - Book that'll be deleted
      * @return Mono<Boolean> determines whether or not book was successfully deleted </Boolean>
      * true - Book was deleted
      * false - Book wasn't deleted

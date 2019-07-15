@@ -75,9 +75,7 @@ public class LocalBookCollectorTest {
         Flux<Book> oneBook = localCollector.findBook(expected);
         //Assert
         StepVerifier.create(oneBook)
-            .assertNext(book -> {
-                Assert.assertEquals(expected, book.getTitle());
-            })
+            .assertNext(book -> Assert.assertEquals(expected, book.getTitle()))
             .expectComplete()
             .verify();
         //Cleanup
@@ -96,18 +94,13 @@ public class LocalBookCollectorTest {
         //Act
         localCollector.saveBook(expected, new Author("Mock", "Author"),
             new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()).block();
-
         localCollector.saveBook(expected, new Author("Mock2", "Author"),
             new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()).block();
         Flux<Book> manyBooks = localCollector.findBook(expected);
         //Assert
         StepVerifier.create(manyBooks)
-            .assertNext(book -> {
-                Assert.assertEquals(expected, book.getTitle());
-            })
-            .assertNext(book -> {
-                Assert.assertEquals(expected, book.getTitle());
-            })
+            .assertNext(book -> Assert.assertEquals(expected, book.getTitle()))
+            .assertNext(book -> Assert.assertEquals(expected, book.getTitle()))
             .expectComplete()
             .verify();
         //Cleanup
@@ -137,7 +130,6 @@ public class LocalBookCollectorTest {
         //Cleanup
         deleteJsonFile(new Book("Existing", new Author("Mock", "Author"),
             new File(Paths.get(root, "Wonder.png").toString()).toURI()));
-
     }
 
     /**
@@ -204,7 +196,6 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "Wonder.png").toString()).toURI()));
         deleteJsonFile(new Book("Winter", author,
             new File(Paths.get(root, "Wonder.png").toString()).toURI()));
-
     }
 
     /**

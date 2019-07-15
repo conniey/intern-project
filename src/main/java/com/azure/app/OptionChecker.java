@@ -104,8 +104,8 @@ class OptionChecker {
         String filePath = f.getName();
         String fileFirstName = f.getParentFile().getName();
         String fileLastName = f.getParentFile().getParentFile().getName();
-        //Handles the condition where the first name ends with a period (like initials) but the file doesn't register
-        // lagging periods.
+        //Handles the condition where the first name ends with a period (like initials)
+        // but the file doesn't register lagging periods.
         String tempFirstName = b.getAuthor().getFirstName();
         if (tempFirstName.endsWith(".")) {
             tempFirstName = tempFirstName.substring(0, tempFirstName.lastIndexOf("."));

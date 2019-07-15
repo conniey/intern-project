@@ -78,7 +78,7 @@ class LocalBookCollector implements BookCollection {
      * @param author - Author object of the book
      * @param path   - File containing the cover image of the book
      * @return Mono<Boolean> that determines whether the book got saved or not
-     * true - book was successfully saved
+     * true -  book was successfully saved
      * false - book wasn't saved </Boolean>
      */
     @Override
@@ -119,7 +119,14 @@ class LocalBookCollector implements BookCollection {
         return null;
     }
 
-
+    /**
+     * Deletes the book and the file based off its information.
+     *
+     * @param bookToCompare - book that will be deleted
+     * @return Mono<Boolean> determines whether or not book was successfully deleted </Boolean>
+     * true - Book was deleted
+     * false - Book wasn't deleted
+     */
     @Override
     public boolean deleteBook(Book bookToCompare) {
         boolean delete = jsonFiles.removeIf(x -> {
@@ -225,6 +232,13 @@ class LocalBookCollector implements BookCollection {
         return fh.isFile();
     }
 
+    /**
+     * Converts a string to a File and then returns the file as a uri for the
+     * Book image
+     *
+     * @param path - String containing the image file the user entered
+     * @return URI - created from the converted file
+     */
     @Override
     public URI retrieveURI(String path) {
         return new File(path).toURI();
