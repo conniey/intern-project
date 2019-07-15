@@ -21,6 +21,10 @@ public class OptionCheckerTest {
     private URL folder = OptionCheckerTest.class.getClassLoader().getResource(".");
     private String root;
 
+    /**
+     * Sets up a String containing the location of
+     * where to look for the images saved in the test folders.
+     */
     @Before
     public void setUp() {
         try {
@@ -71,7 +75,7 @@ public class OptionCheckerTest {
         assertTrue(gifCheck);
     }
 
-    /*
+    /**
      * Verifies that any file that's not in the *.gif,.png,.jpg is not allowed
      */
     @Test

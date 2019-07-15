@@ -54,6 +54,7 @@ public class Book {
     /**
      * Checks to the book's fields to make sure they're correct
      *
+     * @param root - String containing where the image was saved
      * @return boolean - true if all the fields are valid
      * - false otherwise
      */
