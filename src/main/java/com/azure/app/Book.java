@@ -30,7 +30,7 @@ public class Book {
      *
      * @return string with book's title
      */
-    public String getTitle() {
+    String getTitle() {
         return title;
     }
 
@@ -39,7 +39,7 @@ public class Book {
      *
      * @return Author object
      */
-    public Author getAuthor() {
+    Author getAuthor() {
         return author;
     }
 
@@ -48,7 +48,7 @@ public class Book {
      *
      * @return File of image
      */
-    public URI getCover() {
+    URI getCover() {
         return cover;
     }
 
@@ -59,7 +59,7 @@ public class Book {
      * @return boolean - true if all the fields are valid
      * - false otherwise
      */
-    public boolean checkBook(String root) {
+    boolean checkBook(String root) {
         if (cover == null || !(optionChecker.checkImage(root, cover))) {
             return false;
         }
@@ -90,7 +90,7 @@ public class Book {
      *
      * @return - String with the book information
      */
-    public String displayBookInfo() {
+    String displayBookInfo() {
         return "Title: " + getTitle() + "\n"
             + "Author: " + getAuthor() + "\n"
             + "Cover: " + getCover().toString();

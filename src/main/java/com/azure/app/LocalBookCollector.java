@@ -101,7 +101,7 @@ class LocalBookCollector implements BookCollection {
         return Mono.just(false);
     }
 
-    public void duplicateBook(Book bookToCompare) {
+    private void duplicateBook(Book bookToCompare) {
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
@@ -112,7 +112,7 @@ class LocalBookCollector implements BookCollection {
         });
     }
 
-    long checkImages(URI saved) {
+    private long checkImages(URI saved) {
         String path = saved.getPath().substring(0, saved.getPath().lastIndexOf("."));
         Flux<Book> imageFind = jsonBooks.filter(x -> x.getCover().getPath().contains(path));
         return imageFind.count().block();
