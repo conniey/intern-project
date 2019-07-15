@@ -10,7 +10,7 @@ class OptionChecker {
     /**
      * Checks the user's string and makes sure its valid.
      *
-     * @param input - String the user enteredd
+     * @param input - String the user entered
      * @return -  boolean : true - the String is valid
      * false - the String isn't valid
      */
@@ -36,8 +36,8 @@ class OptionChecker {
      * @return - boolean : true - if image path is correct
      * false - otherwise.
      */
-    boolean checkImage(URI image) {
-        if (!new LocalBookCollector(System.getProperty("user.dir")).isFile(image)) {
+    boolean checkImage(String root, URI image) {
+        if (!new LocalBookCollector(root).isFile(image)) {
             System.out.println("Please write out a valid image file path.");
             return false;
         }

@@ -41,7 +41,7 @@ class LocalBookCollector implements BookCollection {
         if (!directory.exists() && !directory.mkdirs()) {
             logger.error("Couldn't create non-existent JSON directory: " + directory.getAbsolutePath());
         }
-        File directoryJSON = new File(Constants.JSON_PATH);
+        File directoryJSON = new File(Paths.get(root, Constants.JSON_PATH).toString());
         if (!directoryJSON.exists() && !directoryJSON.mkdirs()) {
             logger.error("Couldn't create non-existent JSON directory: " + directoryJSON.getAbsolutePath());
         }
@@ -87,12 +87,12 @@ class LocalBookCollector implements BookCollection {
         final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(),
             author.getFirstName());
         File imageFile = fullImagePath.toFile();
-        if (!imageFile.getParentFile().exists() && !imageFile.mkdirs()) {
+        if (!imageFile.exists() && !imageFile.mkdirs()) {
             logger.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
         }
         URI savedImage = saveImage(imageFile, imagePath);
         Book book = new Book(title, author, savedImage);
-        if (savedImage != null && book.checkBook()) {
+        if (optionChecker.checkImage(root, savedImage) && book.checkBook(root)) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
@@ -108,7 +108,7 @@ class LocalBookCollector implements BookCollection {
         }
         try {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
-            File image = Paths.get(directory.getPath(), imagePath.getName()).toFile();
+            File image = new File(Paths.get(directory.getPath(), imagePath.getName()).toString());
             if (ImageIO.write(bufferedImage, extension, image)) {
                 return image.toURI();
             }

@@ -5,6 +5,7 @@ package com.azure.app;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +17,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class JsonHandlerTest {
     private JsonHandler jsonHandler = new JsonHandler();
@@ -33,15 +37,16 @@ public class JsonHandlerTest {
             Assert.fail("");
         }
     }
-    /*
-     *//**
+
+
+    /**
      * Tests serialization of a valid book.
-     *//*
+     */
     @Test
     public void testSerializingGoodBook() {
         //Arrange
-//        Book b = new Book("Wonder", new Author("RJ", "Palacio"),
-//            new File(Paths.get(root, "Wonder.png").toString()));
+        Book b = new Book("Wonder", new Author("RJ", "Palacio"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
         //Act
         boolean result = jsonHandler.writeJSON(b, root);
         //Assert
@@ -50,65 +55,65 @@ public class JsonHandlerTest {
         deleteJsonFile(new File(Constants.JSON_PATH), b);
     }
 
-    *//**
+    /**
      * Tests serialization of a book with an invalid title.
-     *//*
+     */
     @Test
     public void testSerializingBadTitle() {
         //Arrange
-//        Book b = new Book("", new Author("RJ", "Palacio"),
-//            new File(Paths.get(root, "Wonder.png").toString()));
+        Book b = new Book("", new Author("RJ", "Palacio"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
         //Act
         boolean result = jsonHandler.writeJSON(b, root);
         //Assert
         assertFalse(result);
     }
 
-    *//**
+    /**
      * Tests serialization of a book with an invalid author.
-     *//*
+     */
     @Test
     public void testSerializingBadAuthor() {
         //Arrange
-//        Book b = new Book("Wonder", new Author("", null),
-//            new File(Paths.get(root, "Wonder.png").toString()));
+        Book b = new Book("Wonder", new Author("", null),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
         //Act
         boolean result = jsonHandler.writeJSON(b, root);
         //Assert
         assertFalse(result);
     }
 
-    *//**
+    /**
      * Tests serialization of a book with an invalid image file..
-     *//*
+     */
     @Test
     public void testSerializingBadFile() {
         //Arrange
-//        Book b = new Book("Wonder", new Author("Palacio", "R. J."), //invalid file #3
-//            new File(""));
+        Book b = new Book("Wonder", new Author("Palacio", "R. J."), //invalid file #3
+            new File("").toURI());
         //Act
         boolean result = jsonHandler.writeJSON(b, root);
         //Assert
         assertFalse(result);
     }
 
-    *//**
+    /**
      * Tests serialization of a completely invalid book
-     *//*
+     */
     @Test
     public void testSerializingBadBook() {
         //Arrange
-   //     Book b = new Book(null, new Author(null, null), //completely invalid #4
-     //       new File(""));
+        Book b = new Book(null, new Author(null, null), //completely invalid #4
+            new File("").toURI());
         //Act
         boolean result = jsonHandler.writeJSON(b, root);
         //Assert
         assertFalse(result);
     }
 
-    *//**
+    /**
      * Tests the deserialization of a JSON file to a book
-     *//*
+     */
     @Test
     public void testFromJSONtoBookValid() {
         //Arrange and Act
@@ -118,16 +123,17 @@ public class JsonHandlerTest {
         assertTrue(result != null);
     }
 
-    *//**
+    /**
      * Tests the deserialization of a bad JSON file.
-     *//*
+     */
     @Test
     public void testFromJSONtoBookInvalid() {
         //Arrange and Act
         Book result = jsonHandler.fromJSONtoBook(new File(Paths.get(root, "asdfasdf").toString()));
+
         //Assert
         assertTrue(result == null);
-    }*/
+    }
 
     /**
      * For testing purposes only - To delete the json File but keep the image.

@@ -115,7 +115,7 @@ public class App {
             System.out.println("3. Cover image?");
             String filePath = SCANNER.nextLine();
             path = bookCollector.retrieveURI(filePath);
-        } while (!OPTION_CHECKER.checkImage(path));
+        } while (!OPTION_CHECKER.checkImage(System.getProperty("user.dir"), path));
         String choice;
         do {
             System.out.println("4. Save? Enter 'Y' or 'N'.");
@@ -268,7 +268,7 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (b.checkBook() && bookCollector.deleteBook(b)) {
+        if (b.checkBook(System.getProperty("user.dir")) && bookCollector.deleteBook(b)) {
             System.out.println("Book is deleted.");
         } else {
             System.out.println("Error. Book wasn't deleted.");

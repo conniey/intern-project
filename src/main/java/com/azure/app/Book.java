@@ -57,8 +57,8 @@ public class Book {
      * @return boolean - true if all the fields are valid
      * - false otherwise
      */
-    public boolean checkBook() {
-        if (cover == null || !new OptionChecker().checkImage(cover)) {
+    public boolean checkBook(String root) {
+        if (cover == null || !(new OptionChecker().checkImage(root, cover))) {
             return false;
         }
         if (author.getLastName() == null || author.getLastName().isEmpty()
@@ -70,6 +70,7 @@ public class Book {
         }
         return true;
     }
+
 
     /**
      * Returns a string with the book's author and title.
