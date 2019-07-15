@@ -6,10 +6,9 @@ package com.azure.app;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
+import java.net.URI;
 
 interface BookCollection {
-
     /**
      * Returns the Flux of Book objects
      *
@@ -27,17 +26,17 @@ interface BookCollection {
      * true - book was successfully saved
      * false - book wasn't saved </Boolean>
      */
-    Mono<Boolean> saveBook(String title, Author author, File path);
+    Mono<Boolean> saveBook(String title, Author author, URI path);
 
     /**
      * Deletes the book and the file based off its information.
      *
-     * @param book
+     * @param book - Book that'll be deleted
      * @return Mono<Boolean> determines whether or not book was successfully deleted </Boolean>
      * true - Book was deleted
      * false - Book wasn't deleted
      */
-    boolean deleteBook(Book book);
+    Mono<Boolean> deleteBook(Book book);
 
     /**
      * Filters out the book based on the specified title.
@@ -45,7 +44,7 @@ interface BookCollection {
      * @param title - String of the book title the user is looking for
      * @return - Flux of Book objects with that title
      */
-    Flux<Book> findBookTitle(String title);
+    Flux<Book> findBook(String title);
 
     /**
      * Filters out the books based on the specified author.
@@ -53,5 +52,21 @@ interface BookCollection {
      * @param author - Contains the name of the author the user is looking for
      * @return - Flux of Book objects by that author
      */
-    Flux<Book> findBookAuthor(Author author);
+    Flux<Book> findBook(Author author);
+
+    /**
+     * Determines whether the collection has books or not.
+     *
+     * @return {@Link Mono<Boolean>} - true if there are books
+     * false - if there are no books
+     */
+    Mono<Boolean> hasBooks();
+
+    /**
+     * Converts the path to a file and then returns the URI to that path
+     *
+     * @param path - String containing the image file the user entered
+     * @return URI of the image path
+     */
+    URI retrieveURI(String path);
 }

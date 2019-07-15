@@ -4,16 +4,17 @@
 package com.azure.app;
 
 import java.io.File;
+import java.net.URI;
 
-public class OptionChecker {
+class OptionChecker {
     /**
      * Checks the user's string and makes sure its valid.
      *
-     * @param input - String the user enteredd
+     * @param input - String the user entered
      * @return -  boolean : true - the String is valid
      * false - the String isn't valid
      */
-    public boolean validateString(String input) {
+    boolean validateString(String input) {
         if (input.isEmpty()) {
             System.out.println("Please enter a value: ");
             return false;
@@ -35,13 +36,13 @@ public class OptionChecker {
      * @return - boolean : true - if image path is correct
      * false - otherwise.
      */
-    public boolean checkImage(File image) {
-        if (!image.isFile()) {
-            System.out.println("Please write out a valid image file path.");
+    boolean checkImage(String root, URI image) {
+        if (!new LocalBookCollector(root).isFile(image)) {
+            System.out.println("Invalid image path.");
             return false;
         }
         //Parses the File path to examine its extension
-        String extension = image.getAbsolutePath();
+        String extension = image.getPath();
         extension = extension.substring(extension.lastIndexOf('.'));
         //only returns true if it has the required extension
         if (extension.contentEquals(".jpg") || (extension.contentEquals(".png"))
@@ -59,9 +60,9 @@ public class OptionChecker {
      * @return - boolean : true - the String is either a y/n
      * false - the String is neither
      */
-    public boolean checkYesOrNo(String choice) {
-        if (!choice.contentEquals("Y") && !choice.contentEquals("y")
-            && !choice.contentEquals("N") && !choice.contentEquals("n")) {
+    boolean checkYesOrNo(String choice) {
+        if (!choice.equalsIgnoreCase("y")
+            && !choice.equalsIgnoreCase("n")) {
             System.out.println("Please enter Y or N.");
             return true;
         } else {
@@ -76,7 +77,7 @@ public class OptionChecker {
      * @return boolean : true - if String is valid
      * false - if String isn't valid
      */
-    public boolean validateAuthor(String[] author) {
+    boolean validateAuthor(String[] author) {
         if (author.length == 0) {
             System.out.println("Please enter their name.");
             return false;
@@ -100,9 +101,11 @@ public class OptionChecker {
         if (f == null) {
             return false;
         }
-        String filePath = f.getAbsolutePath();
-        //Handles the condition where the first name ends with a period (like initials) but the file doesn't register
-        // lagging periods.
+        String filePath = f.getName();
+        String fileFirstName = f.getParentFile().getName();
+        String fileLastName = f.getParentFile().getParentFile().getName();
+        //Handles the condition where the first name ends with a period (like initials)
+        // but the file doesn't register lagging periods.
         String tempFirstName = b.getAuthor().getFirstName();
         if (tempFirstName.endsWith(".")) {
             tempFirstName = tempFirstName.substring(0, tempFirstName.lastIndexOf("."));
@@ -111,13 +114,9 @@ public class OptionChecker {
         if (tempLastName.endsWith(".")) {
             tempLastName = tempLastName.substring(0, tempLastName.lastIndexOf("."));
         }
-        boolean check = filePath.contains(tempFirstName)
-            && filePath.contains(tempLastName)
-            && filePath.contains(b.getTitle() + ".json");
-        if (check) {
-            return f.delete();
-        }
-        return false;
+        return fileLastName.contentEquals(tempLastName)
+            && fileFirstName.contentEquals(tempFirstName)
+            && filePath.contentEquals(b.getTitle() + ".json");
     }
 
     /**
@@ -127,7 +126,7 @@ public class OptionChecker {
      * @param max    - a long containing the maximum number of options
      * @return - valid integer option, or else -1 signifies that the choice was invalid
      */
-    public int checkOption(String option, long max) {
+    int checkOption(String option, long max) {
         if (option.equalsIgnoreCase("q")) {
             return 0;
         }

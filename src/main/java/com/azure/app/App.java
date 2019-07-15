@@ -3,10 +3,12 @@
 
 package com.azure.app;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
@@ -20,8 +22,8 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    //For now, book_Collector pointed at the local one because Cosmos is unavailable
-    private static BookCollection bookCollector = new LocalBookCollector();
+    private static BookCollection bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
     /**
      * Starting point for the library application.
@@ -43,10 +45,22 @@ public class App {
                     addBook();
                     break;
                 case 3:
-                    findBook();
+                    bookCollector.hasBooks().subscribe(x -> {
+                        if (x) {
+                            findBook();
+                        } else {
+                            System.out.println("There are no books to find.");
+                        }
+                    });
                     break;
                 case 4:
-                    deleteBook().block();
+                    bookCollector.hasBooks().subscribe(x -> {
+                        if (x) {
+                            deleteBook().block();
+                        } else {
+                            System.out.println("There are no books to delete.");
+                        }
+                    });
                     break;
                 case 5:
                     System.out.println("Goodbye.");
@@ -90,7 +104,8 @@ public class App {
         System.out.println("Please enter the following information:");
         String title;
         String author;
-        File path;
+        URI path;
+        String choice = "x";
         do {
             System.out.println("1. Title?");
             title = SCANNER.nextLine();
@@ -102,22 +117,27 @@ public class App {
         String[] authorName = parseAuthorsName(author.split(" "));
         Author newAuthor = new Author(authorName[0], authorName[1]);
         do {
-            System.out.println("3. Cover image?");
-            path = new File(SCANNER.nextLine());
-        } while (!OPTION_CHECKER.checkImage(path));
-        String choice;
-        do {
-            System.out.println("4. Save? Enter 'Y' or 'N'.");
-            choice = SCANNER.nextLine();
-        } while (OPTION_CHECKER.checkYesOrNo(choice));
-        if (choice.equalsIgnoreCase("y")) {
-            bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
-                if (x) {
-                    System.out.println("Book was successfully saved!");
-                } else {
-                    System.out.println("Error. Book wasn't saved");
-                }
-            });
+            System.out.println("3. Cover image? (Enter \"Q\" to return to menu.)");
+            String filePath = SCANNER.nextLine();
+            if (filePath.equalsIgnoreCase("Q")) {
+                choice = "Q";
+            }
+            path = bookCollector.retrieveURI(filePath);
+        } while (!choice.equalsIgnoreCase("q") && !OPTION_CHECKER.checkImage(System.getProperty("user.dir"), path));
+        if (!choice.equalsIgnoreCase("q")) {
+            do {
+                System.out.println("4. Save? Enter 'Y' or 'N'.");
+                choice = SCANNER.nextLine();
+            } while (OPTION_CHECKER.checkYesOrNo(choice));
+            if (choice.equalsIgnoreCase("y")) {
+                bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
+                    if (x) {
+                        System.out.println("Book was successfully saved!");
+                    } else {
+                        System.out.println("Error. Book wasn't saved");
+                    }
+                });
+            }
         }
     }
 
@@ -147,7 +167,7 @@ public class App {
     private static Mono<Void> findTitle() {
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
-        Flux<Book> booksToFind = bookCollector.findBookTitle(title);
+        Flux<Book> booksToFind = bookCollector.findBook(title);
         return booksToFind.collectList().map(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
@@ -182,7 +202,7 @@ public class App {
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));
-        Flux<Book> booksToFind = bookCollector.findBookAuthor(new Author(name[0], name[1]));
+        Flux<Book> booksToFind = bookCollector.findBook(new Author(name[0], name[1]));
         return booksToFind.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -218,7 +238,7 @@ public class App {
 
     private static Mono<Void> deleteBook() {
         System.out.println("Enter the title of the book to delete: ");
-        Flux<Book> booksToDelete = bookCollector.findBookTitle(SCANNER.nextLine());
+        Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
@@ -257,10 +277,14 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (bookCollector.deleteBook(b)) {
-            System.out.println("Book is deleted.");
-        } else {
-            System.out.println("Error. Book wasn't deleted.");
+        if (b.checkBook(System.getProperty("user.dir"))) {
+            bookCollector.deleteBook(b).subscribe(bookDeleted -> {
+                if (bookDeleted) {
+                    System.out.println("Book is deleted.");
+                } else {
+                    System.out.println("Error. Book wasn't deleted.");
+                }
+            });
         }
     }
 
@@ -275,10 +299,10 @@ public class App {
 
     private static String[] parseAuthorsName(String[] author) {
         String lastName = author[author.length - 1];
-        String firstName = author[0];
+        StringBuilder firstName = new StringBuilder(author[0]);
         for (int i = 1; i < author.length - 1; i++) {
-            firstName += " " + author[i];
+            firstName.append(" ").append(author[i]);
         }
-        return new String[]{firstName, lastName};
+        return new String[]{firstName.toString(), lastName};
     }
 }
