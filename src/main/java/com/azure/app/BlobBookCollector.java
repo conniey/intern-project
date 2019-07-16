@@ -9,7 +9,6 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 
 public class BlobBookCollector implements BookCollection {
-    //IMPLEMENTATION TO BE DETERMINED :/
     BlobBookCollector() {
     }
 
