@@ -46,7 +46,7 @@ public class App {
                 if (input.value().toString().contentEquals("Local")) {
                     bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
                 } else {
-                    System.out.println("Sorry, but that feature is not yet supported. Switching to Local.");
+                    System.out.println("Sorry, but Blob Storage is not yet supported. Switching to Local.");
                     bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
                 }
             });
