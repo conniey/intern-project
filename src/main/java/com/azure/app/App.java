@@ -43,7 +43,7 @@ public class App {
                 .credentials(new ConfigurationClientCredentials(System.getenv("AZURE_APPCONFIG")))
                 .build();
             client.getSetting("IMAGE_STORAGE_TYPE").subscribe(input -> {
-                if (input.value().toString().contentEquals("Local")) {
+                if (input.value().value().equalsIgnoreCase("Local")) {
                     bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
                 } else {
                     System.out.println("Sorry, but Blob Storage is not yet supported. Switching to Local.");
