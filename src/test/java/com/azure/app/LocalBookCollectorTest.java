@@ -213,6 +213,7 @@ public class LocalBookCollectorTest {
                             new File(book.getCover()).getName()).toString()).delete();
                         deleteEmptyDirectories();
                         delete = true;
+                        break;
                     }
                 }
             }
@@ -282,6 +283,7 @@ public class LocalBookCollectorTest {
         //Act
         localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        //Should delete fine, because the same image would have been saved but in a file with a different name
         localCollector.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
         result = deleteJsonFile(book1);
@@ -315,6 +317,6 @@ public class LocalBookCollectorTest {
         files = Paths.get(root, "lib", "images").toFile().listFiles();
         //Assert
         Assert.assertTrue(result);
-        Assert.assertTrue(formerLength == files.length);
+        Assert.assertEquals(formerLength, files.length);
     }
 }
