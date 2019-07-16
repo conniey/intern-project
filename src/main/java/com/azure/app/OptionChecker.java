@@ -43,7 +43,10 @@ class OptionChecker {
         }
         //Parses the File path to examine its extension
         String extension = image.getPath();
-        extension = extension.substring(extension.lastIndexOf('.'));
+        extension = extension.substring(extension.lastIndexOf("."));
+        if (extension.contains("_")) {
+            extension = extension.substring(0, extension.indexOf("_"));
+        }
         //only returns true if it has the required extension
         if (extension.contentEquals(".jpg") || (extension.contentEquals(".png"))
             || (extension.contentEquals(".gif"))) {

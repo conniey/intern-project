@@ -25,7 +25,7 @@ public class Author {
      *
      * @return string with last name.
      */
-    public String getLastName() {
+    String getLastName() {
         return lastName;
     }
 
@@ -34,7 +34,7 @@ public class Author {
      *
      * @return string with first name.
      */
-    public String getFirstName() {
+    String getFirstName() {
         return firstName;
     }
 
@@ -43,6 +43,7 @@ public class Author {
      *
      * @return String with the correct format to print author's name
      */
+    @Override
     public String toString() {
         return lastName + ", " + firstName;
     }

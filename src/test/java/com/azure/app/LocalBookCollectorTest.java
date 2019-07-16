@@ -200,7 +200,8 @@ public class LocalBookCollectorTest {
      * For testing purposes only -
      * To delete the json File but keep the image.
      */
-    private void deleteJsonFile(Book book) {
+    private boolean deleteJsonFile(Book book) {
+        boolean delete = false;
         try (Stream<Path> walk = Files.walk(Paths.get(root, Constants.JSON_PATH))) {
             List<String> result = walk.map(Path::toString).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
             for (String file : result) {
@@ -211,12 +212,15 @@ public class LocalBookCollectorTest {
                             book.getAuthor().getFirstName(),
                             new File(book.getCover()).getName()).toString()).delete();
                         deleteEmptyDirectories();
+                        delete = true;
+                        break;
                     }
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return delete;
     }
 
     /**
@@ -245,5 +249,74 @@ public class LocalBookCollectorTest {
                 file.delete();
             }
         }
+    }
+
+    /**
+     * Tests saving a new book
+     */
+    @Test
+    public void testSavingNewBook() {
+        //Arrange
+        boolean result;
+        //Act
+        result = localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        //Assert
+        Assert.assertTrue(result);
+        //Cleanup
+        deleteJsonFile(new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()));
+    }
+
+    /**
+     * Tests saving a two different books by the same author AND with the same cover
+     */
+    @Test
+    public void testSavingDifferentBooksWithSameCover() {
+        //Arrange
+        boolean result;
+        boolean result2;
+        Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
+        Book book2 = new Book("Giant Peach_The Return", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
+        //Act
+        localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        //Should delete fine, because the same image would have been saved but in a file with a different name
+        localCollector.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        result = deleteJsonFile(book1);
+        result2 = deleteJsonFile(book2);
+        //Assert
+        Assert.assertTrue(result);
+        Assert.assertTrue(result2);
+        //Cleanup
+        deleteJsonFile(book1);
+        deleteJsonFile(book2);
+    }
+
+    /**
+     * Tests overwriting the same book but with a different cover image
+     */
+    @Test
+    public void testOverwritingBook() {
+        //Arrange
+        File[] files = Paths.get(root, "lib", "images").toFile().listFiles();
+        int formerLength = files.length;
+        boolean result;
+        Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
+        Book book2 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI());
+        //Act
+        localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        result = localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI()).block();
+        files = Paths.get(root, "lib", "images").toFile().listFiles();
+        //Assert
+        Assert.assertTrue(result);
+        Assert.assertEquals(formerLength, files.length);
     }
 }
