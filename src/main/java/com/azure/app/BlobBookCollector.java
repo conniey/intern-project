@@ -3,13 +3,33 @@
 
 package com.azure.app;
 
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlockBlobClient;
+import com.azure.storage.blob.ContainerClient;
+import com.azure.storage.blob.StorageClient;
+import com.azure.storage.common.credentials.SASTokenCredential;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.net.URI;
 
 public class BlobBookCollector implements BookCollection {
+    private StorageClient storageClient;
+    private ContainerClient containerClient;
+    private BlobClient blobClient;
+    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+
+
     BlobBookCollector() {
+        storageClient = StorageClient.storageClientBuilder()
+            .endpoint(System.getenv("BLOB_URL"))
+            .credential(SASTokenCredential.fromQuery(System.getenv("SAS_TOKEN")))
+            .buildClient();
+        containerClient = storageClient.getContainerClient("books");
+        blobClient = containerClient.getBlobClient("blob");
     }
 
     /**
@@ -34,6 +54,12 @@ public class BlobBookCollector implements BookCollection {
      */
     @Override
     public Mono<Boolean> saveBook(String title, Author author, URI path) {
+        BlockBlobClient blockBlobClient = containerClient.getBlockBlobClient("blob");
+        try {
+            blockBlobClient.uploadFromFile("C:\\Users\\t-katami\\Documents\\intern-project\\lib\\jsonFiles\\Pearson\\Ridley\\Kingdom Keeper.json");
+        } catch (IOException e) {
+            logger.error("Exception uploading file to blob storage: ", e);
+        }
         return Mono.just(false);
     }
 

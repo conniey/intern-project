@@ -36,6 +36,8 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
+        BookCollection test = new BlobBookCollector();
+        test.saveBook("", null, null);
         ConfigurationAsyncClient client;
         ConfigurationSetting setting = null;
         try {
