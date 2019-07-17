@@ -3,12 +3,17 @@
 
 package com.azure.app;
 
+import com.azure.data.appconfiguration.ConfigurationAsyncClient;
+import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
+import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
@@ -22,7 +27,7 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    private static BookCollection bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+    private static BookCollection bookCollector;
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
     /**
@@ -31,6 +36,23 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
+        ConfigurationAsyncClient client;
+        ConfigurationSetting setting = null;
+        try {
+            client = ConfigurationAsyncClient.builder()
+                .credentials(new ConfigurationClientCredentials(System.getenv("AZURE_APPCONFIG")))
+                .build();
+            client.getSetting("IMAGE_STORAGE_TYPE").subscribe(input -> {
+                if (input.value().value().equalsIgnoreCase("Local")) {
+                    bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+                } else {
+                    System.out.println("Sorry, but Blob Storage is not yet supported. Switching to Local.");
+                    bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+                }
+            });
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            logger.error("Exception with App Configuration: ", e);
+        }
         System.out.print("Welcome! ");
         int choice;
         do {
