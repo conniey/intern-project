@@ -58,13 +58,11 @@ public class BlobBookCollector implements BookCollection {
                 bookContainerClient.create();
             }
         });
-
         imageContainerClient.exists().subscribe(x -> {
             if (!x.value()) {
                 imageContainerClient.create();
             }
         });
-
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
     }
 
