@@ -53,10 +53,10 @@ public class BlobBookCollector implements BookCollection {
         bookContainerClient = storageClient.getContainerAsyncClient("book-library");
         imageContainerClient = storageClient.getContainerAsyncClient("book-covers");
 
-        bookContainerClient.exists().subscribe(x ->
-        {
-            if (!x.value())
+        bookContainerClient.exists().subscribe(x -> {
+            if (!x.value()) {
                 bookContainerClient.create();
+            }
         });
 
         imageContainerClient.exists().subscribe(x -> {
