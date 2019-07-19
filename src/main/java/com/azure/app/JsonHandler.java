@@ -18,7 +18,6 @@ import java.nio.file.Paths;
 class JsonHandler {
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
-
     /**
      * Converts a json file back to a Book object
      *
@@ -45,8 +44,8 @@ class JsonHandler {
      * Converts a Book object a json object and stores it in a file.
      *
      * @param book - the Book object that's going to be converted to a json file
-     * @return boolean - true if Book was successfully converted to Javadoc
-     * false if Book wasn't successfully converted to Javadoc
+     * @return boolean - true if Book was successfully converted to JSON file
+     * false if Book wasn't successfully converted to JSON file
      */
     boolean writeJSON(Book book, String root) {
         if (book.checkBook(root)) {
@@ -70,4 +69,26 @@ class JsonHandler {
             return false;
         }
     }
+
+
+    /**
+     * Converts a Book object to a JSON file and stores it in a file.
+     *
+     * @param book - the Book object that's going to be converted to a JSON filE
+     * @return file - if it was successfully converted, file should contain book's contents via JSON format
+     * otherwise, it returns null
+     */
+    File writeJSON(Book book) {
+        try {
+            File bookFile = new File(book.getTitle() + ".json");
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            mapper.writeValue(bookFile, book);
+            return bookFile;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

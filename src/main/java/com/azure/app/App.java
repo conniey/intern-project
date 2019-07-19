@@ -35,8 +35,6 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        BookCollection test = new BlobBookCollector();
-        test.saveBook("", null, null);
         String connectionString = System.getenv("AZURE_APPCONFIG");
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -48,14 +46,17 @@ public class App {
             client = ConfigurationAsyncClient.builder()
                 .credentials(new ConfigurationClientCredentials(System.getenv("AZURE_APPCONFIG")))
                 .build();
-            client.getSetting("IMAGE_STORAGE_TYPE").subscribe(input -> {
-                if (input.value().value().equalsIgnoreCase("Local")) {
-                    bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+            Mono<BookCollection> bookCollectionMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
+                String storageType = input.value().value();
+                if (storageType.equalsIgnoreCase("Local")) {
+                    return Mono.just(new LocalBookCollector(System.getProperty("user.dir")));
+                } else if (storageType.equalsIgnoreCase("BlobStorage")) {
+                    return Mono.just(new BlobBookCollector());
                 } else {
-                    System.out.println("Sorry, but Blob Storage is not yet supported. Switching to Local.");
-                    bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+                    return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
                 }
             });
+            bookCollector = bookCollectionMono.block();
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
         }
@@ -158,13 +159,7 @@ public class App {
                 choice = SCANNER.nextLine();
             } while (OPTION_CHECKER.checkYesOrNo(choice));
             if (choice.equalsIgnoreCase("y")) {
-                bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
-                    if (x) {
-                        System.out.println("Book was successfully saved!");
-                    } else {
-                        System.out.println("Error. Book wasn't saved");
-                    }
-                });
+                bookCollector.saveBook(title, newAuthor, path).block();
             }
         }
     }
