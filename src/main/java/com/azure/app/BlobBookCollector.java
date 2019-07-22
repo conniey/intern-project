@@ -102,21 +102,26 @@ public class BlobBookCollector implements BookCollection {
         if (bookFile == null) {
             return Mono.just(false);
         }
-        saveImage(new File(path));
-        String blobName = null;
+        saveImage(new File(path), author);
+        String blobLastName;
+        String blobFirstName;
+        String blobName;
         try {
+            blobLastName = URLEncoder.encode(author.getLastName().toLowerCase(), StandardCharsets.US_ASCII.toString());
             blobName = URLEncoder.encode(bookFile.getName(), StandardCharsets.US_ASCII.toString());
+            blobFirstName = URLEncoder.encode(author.getFirstName().toLowerCase(), StandardCharsets.US_ASCII.toString());
         } catch (UnsupportedEncodingException e) {
             return Mono.error(e);
         }
-        blockBlobClient = bookContainerClient.getBlockBlobAsyncClient(blobName);
+        blockBlobClient = bookContainerClient.getBlockBlobAsyncClient(blobLastName + "/" + blobFirstName
+            + "/" + blobName);
         return blockBlobClient.uploadFromFile(bookFile.getAbsolutePath()).then(Mono.fromCallable(() -> {
             bookFile.delete();
             return true;
         }));
     }
 
-    private boolean saveImage(File imagePath) {
+    private boolean saveImage(File imagePath, Author author) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
             return false;
@@ -125,8 +130,20 @@ public class BlobBookCollector implements BookCollection {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
             File image = new File(imagePath.getName());
             File savedImage = image;
+            String blobLastName;
+            String blobFirstName;
+            String blobName;
+            try {
+                blobLastName = URLEncoder.encode(author.getLastName().toLowerCase(), StandardCharsets.US_ASCII.toString());
+                blobName = URLEncoder.encode(savedImage.getName(), StandardCharsets.US_ASCII.toString());
+                blobFirstName = URLEncoder.encode(author.getFirstName().toLowerCase(), StandardCharsets.US_ASCII.toString());
+            } catch (UnsupportedEncodingException e) {
+                logger.error("Error encoding names: ", e);
+                return false;
+            }
             if (ImageIO.write(bufferedImage, extension, image)) {
-                blockBlobClient = imageContainerClient.getBlockBlobAsyncClient(image.getName());
+                blockBlobClient = imageContainerClient.getBlockBlobAsyncClient(blobLastName + "/"
+                    + blobFirstName + "/" + blobName);
                 blockBlobClient.uploadFromFile(savedImage.getPath()).subscribe(Stream.builder()::accept);
                 return true;
             }
@@ -141,7 +158,7 @@ public class BlobBookCollector implements BookCollection {
      * Deletes the book and the file based off its information.
      *
      * @param book - Book that'll be deleted
-     * @return Mono<Boolean> determines whether or not book was successfully deleted </Boolean>
+     * @return Mono<Boolean> determines whether or not book was successfully deleted
      * true - Book was deleted
      * false - Book wasn't deleted
      */
