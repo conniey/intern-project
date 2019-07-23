@@ -3,6 +3,10 @@
 
 package com.azure.app;
 
+import com.azure.data.appconfiguration.ConfigurationAsyncClient;
+import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
+import com.azure.data.appconfiguration.models.ConfigurationSetting;
+import com.azure.data.appconfiguration.models.SettingSelector;
 import com.azure.storage.blob.BlockBlobAsyncClient;
 import com.azure.storage.blob.ContainerAsyncClient;
 import com.azure.storage.blob.StorageAsyncClient;
@@ -23,47 +27,79 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public class BlobBookCollector implements BookCollection {
     private final Set<String> supportedImageFormats;
-    private StorageAsyncClient storageClient;
-    private ContainerAsyncClient imageContainerClient;
-    private ContainerAsyncClient bookContainerClient;
+    private Mono<StorageAsyncClient> storageClient;
+    private Mono<ContainerAsyncClient> imageContainerClient;
+    private Mono<ContainerAsyncClient> bookContainerClient;
+    private Flux<Book> blobBooks;
     private BlockBlobAsyncClient blockBlobClient;
     private static Logger logger = LoggerFactory.getLogger(BlobBookCollector.class);
 
     BlobBookCollector() {
-        String accountName = System.getenv("BLOB_ACCOUNTNAME");
-        String accountKey = System.getenv("BLOB_KEY");
-
-        SharedKeyCredential credential = new SharedKeyCredential(accountName, accountKey);
-        String endPoint = String.format(Locale.ROOT, System.getenv("BLOB_URL"));
-
-        storageClient = StorageClient.storageClientBuilder()
-            .endpoint(endPoint)
-            .credential(credential)
-            .buildAsyncClient();
-
-        bookContainerClient = storageClient.getContainerAsyncClient("book-library");
-        imageContainerClient = storageClient.getContainerAsyncClient("book-covers");
-
-        bookContainerClient.exists().subscribe(x -> {
-            if (!x.value()) {
-                bookContainerClient.create();
-            }
-        });
-        imageContainerClient.exists().subscribe(x -> {
-            if (!x.value()) {
-                imageContainerClient.create();
-            }
-        });
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
+        String connectionString = System.getenv("AZURE_APPCONFIG");
+        if (connectionString == null || connectionString.isEmpty()) {
+            System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
+                + " Please set it.");
+            return;
+        }
+        ConfigurationAsyncClient client;
+        try {
+            client = ConfigurationAsyncClient.builder()
+                .credentials(new ConfigurationClientCredentials(connectionString))
+                .build();
+            SettingSelector keys = new SettingSelector().keys("BLOB*");
+            storageClient = client.listSettings(keys).collectList().map(list ->
+            {
+                String accountName = null;
+                String accountKey = null;
+                String url = null;
+                for (ConfigurationSetting configurationSetting : list) {
+                    String key = configurationSetting.key();
+                    if (key.contentEquals("BLOB_ACCOUNT_NAME")) {
+                        accountName = configurationSetting.value();
+                    } else if (key.contentEquals("BLOB_KEY")) {
+                        accountKey = configurationSetting.value();
+                    } else {
+                        url = configurationSetting.value();
+                    }
+                }
+                SharedKeyCredential credential = new SharedKeyCredential(accountName, accountKey);
+                String endPoint = String.format(Locale.ROOT, url);
+                return StorageClient.storageClientBuilder()
+                    .endpoint(endPoint)
+                    .credential(credential)
+                    .buildAsyncClient();
+            });
+            bookContainerClient = storageClient.map(container ->
+                container.getContainerAsyncClient("book-library"));
+            imageContainerClient = storageClient.map(container ->
+                container.getContainerAsyncClient("book-covers"));
+            bookContainerClient.subscribe(containerAsyncClient -> containerAsyncClient.exists().map(created -> {
+                if (!created.value()) {
+                    containerAsyncClient.create();
+                }
+                return created;
+            }));
+            imageContainerClient.subscribe(containerAsyncClient -> containerAsyncClient.exists().map(created -> {
+                if (!created.value()) {
+                    containerAsyncClient.create();
+                }
+                return created;
+            }));
+            blobBooks = initializeBooks().cache();
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            logger.error("Exception with App Configuration: ", e);
+        }
     }
 
     /**
@@ -73,10 +109,13 @@ public class BlobBookCollector implements BookCollection {
      */
     @Override
     public Flux<Book> getBooks() {
+        return blobBooks;
+    }
 
-        return bookContainerClient.listBlobsFlat().flatMap(blob -> {
-            blockBlobClient = bookContainerClient.getBlockBlobAsyncClient(blob.name());
-            File temporaryBookHolder = new File(blob.name());
+    private Flux<Book> initializeBooks() {
+        return bookContainerClient.flatMapMany(container -> container.listBlobsFlat().flatMap(blob -> {
+            blockBlobClient = container.getBlockBlobAsyncClient(blob.name());
+            File temporaryBookHolder = new File(blob.name().substring(blob.name().lastIndexOf("/") + 1));
             try {
                 temporaryBookHolder.createNewFile();
             } catch (IOException e) {
@@ -89,7 +128,7 @@ public class BlobBookCollector implements BookCollection {
                     temporaryBookHolder.delete();
                     return b;
                 }));
-        });
+        }));
     }
 
 
@@ -113,12 +152,13 @@ public class BlobBookCollector implements BookCollection {
         } catch (UnsupportedEncodingException e) {
             return Mono.error(e);
         }
-        blockBlobClient = bookContainerClient.getBlockBlobAsyncClient(blobLastName + "/" + blobFirstName
+      /*  blockBlobClient = bookContainerClient.getBlockBlobAsyncClient(blobLastName + "/" + blobFirstName
             + "/" + blobName);
         return blockBlobClient.uploadFromFile(bookFile.getAbsolutePath()).then(Mono.fromCallable(() -> {
             bookFile.delete();
             return true;
-        }));
+        }));*/
+        return null;
     }
 
     private boolean saveImage(File imagePath, Author author) {
@@ -141,12 +181,12 @@ public class BlobBookCollector implements BookCollection {
                 logger.error("Error encoding names: ", e);
                 return false;
             }
-            if (ImageIO.write(bufferedImage, extension, image)) {
+            /*if (ImageIO.write(bufferedImage, extension, image)) {
                 blockBlobClient = imageContainerClient.getBlockBlobAsyncClient(blobLastName + "/"
                     + blobFirstName + "/" + blobName);
                 blockBlobClient.uploadFromFile(savedImage.getPath()).subscribe(Stream.builder()::accept);
                 return true;
-            }
+            }*/
         } catch (IOException ex) {
             logger.error("Error saving image: ", ex);
             return false;

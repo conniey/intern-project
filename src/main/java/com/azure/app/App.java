@@ -35,6 +35,9 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
+        bookCollector = new BlobBookCollector();
+        listBooks().block();
+
         String connectionString = System.getenv("AZURE_APPCONFIG");
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -44,7 +47,7 @@ public class App {
         ConfigurationAsyncClient client;
         try {
             client = ConfigurationAsyncClient.builder()
-                .credentials(new ConfigurationClientCredentials(System.getenv("AZURE_APPCONFIG")))
+                .credentials(new ConfigurationClientCredentials(connectionString))
                 .build();
             Mono<BookCollection> bookCollectionMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
                 String storageType = input.value().value();

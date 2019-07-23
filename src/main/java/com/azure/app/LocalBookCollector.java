@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class LocalBookCollector implements BookCollection {
+final class LocalBookCollector implements BookCollection {
     private final Set<String> supportedImageFormats;
     private Flux<Book> jsonBooks;
     private List<File> jsonFiles;
@@ -105,8 +105,8 @@ class LocalBookCollector implements BookCollection {
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
-                Book imageToDeleteoDelete = Constants.SERIALIZER.fromJSONtoBook(x);
-                new File(imageToDeleteoDelete.getCover()).delete();
+                Book imageToDelete = Constants.SERIALIZER.fromJSONtoBook(x);
+                new File(imageToDelete.getCover()).delete();
             }
             return false;
         });
