@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.net.URI;
 import java.security.InvalidKeyException;
@@ -72,7 +71,11 @@ public class App {
                     listBooks().block();
                     break;
                 case 2:
-                    addBook();
+                    final Mono<String> savedBookMono = addBook()
+                        .then(Mono.just("Book was successfully saved!"))
+                        .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
+                    final String description = savedBookMono.block();
+                    System.out.println("Status: " + description);
                     break;
                 case 3:
                     bookCollector.hasBooks().subscribe(x -> {
@@ -130,7 +133,7 @@ public class App {
         }).then();
     }
 
-    private static void addBook() {
+    private static Mono<Void> addBook() {
         System.out.println("Please enter the following information:");
         String title;
         String author;
@@ -160,16 +163,10 @@ public class App {
                 choice = SCANNER.nextLine();
             } while (OPTION_CHECKER.checkYesOrNo(choice));
             if (choice.equalsIgnoreCase("y")) {
-                try {
-                    StepVerifier.create(bookCollector.saveBook(title, newAuthor, path))
-                        .expectComplete().
-                        verify();
-                    System.out.println("Book was successfully saved!");
-                } catch (AssertionError e) {
-                    System.out.println("Error. Book wasn't saved");
-                }
+                return bookCollector.saveBook(title, newAuthor, path);
             }
         }
+        return Mono.empty();
     }
 
     private static void findBook() {

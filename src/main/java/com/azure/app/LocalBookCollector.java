@@ -96,12 +96,22 @@ final class LocalBookCollector implements BookCollection {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
-            return Mono.empty().then();
+            if (bookSaved) {
+                return Mono.empty().then();
+            } else {
+                return Mono.error(new IllegalStateException("Unsuccessful save"));
+            }
         }
-        return Mono.error(new IllegalStateException());
+        return Mono.error(new IllegalStateException("Unsuccessful save"));
     }
 
+    /**
+     * Deletes the old book if the new book has a the same title and author
+     *
+     * @param bookToCompare
+     */
     private void duplicateBook(Book bookToCompare) {
+        //Checks to see if the book has a duplicate, if so it'll delete it so it can be overwritten
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
@@ -121,6 +131,7 @@ final class LocalBookCollector implements BookCollection {
     private URI saveImage(File directory, File imagePath) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
+            logger.error("Error. Wrong image format.");
             return null;
         }
         try {

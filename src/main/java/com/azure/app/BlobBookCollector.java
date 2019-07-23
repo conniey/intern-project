@@ -54,8 +54,7 @@ public class BlobBookCollector implements BookCollection {
                 .credentials(new ConfigurationClientCredentials(connectionString))
                 .build();
             SettingSelector keys = new SettingSelector().keys("BLOB*");
-            storageClient = client.listSettings(keys).collectList().map(list ->
-            {
+            storageClient = client.listSettings(keys).collectList().map(list -> {
                 String accountName = null;
                 String accountKey = null;
                 String url = null;
@@ -78,8 +77,7 @@ public class BlobBookCollector implements BookCollection {
             });
             bookContainerClient = storageClient.flatMap(container -> {
                 final ContainerAsyncClient temp = container.getContainerAsyncClient("book-library");
-                return temp.exists().flatMap(exists ->
-                {
+                return temp.exists().flatMap(exists -> {
                     if (exists.value()) {
                         return Mono.just(temp);
                     } else {
@@ -89,8 +87,7 @@ public class BlobBookCollector implements BookCollection {
             });
             imageContainerClient = storageClient.flatMap(container -> {
                 final ContainerAsyncClient temp = container.getContainerAsyncClient("book-covers");
-                return temp.exists().flatMap(exists ->
-                {
+                return temp.exists().flatMap(exists -> {
                     if (exists.value()) {
                         return Mono.just(temp);
                     } else {
