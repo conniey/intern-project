@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.net.URI;
 import java.security.InvalidKeyException;
@@ -159,10 +160,12 @@ public class App {
                 choice = SCANNER.nextLine();
             } while (OPTION_CHECKER.checkYesOrNo(choice));
             if (choice.equalsIgnoreCase("y")) {
-                boolean success = bookCollector.saveBook(title, newAuthor, path).block();
-                if (success) {
+                try {
+                    StepVerifier.create(bookCollector.saveBook(title, newAuthor, path))
+                        .expectComplete().
+                        verify();
                     System.out.println("Book was successfully saved!");
-                } else {
+                } catch (AssertionError e) {
                     System.out.println("Error. Book wasn't saved");
                 }
             }

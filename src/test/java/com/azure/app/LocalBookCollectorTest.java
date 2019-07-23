@@ -250,10 +250,10 @@ public class LocalBookCollectorTest {
             }
         }
     }
-
-    /**
+    /*
+     *//**
      * Tests saving a new book
-     */
+     *//*
     @Test
     public void testSavingNewBook() {
         //Arrange
@@ -268,9 +268,9 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "Wonder.png").toString()).toURI()));
     }
 
-    /**
+    *//**
      * Tests saving a two different books by the same author AND with the same cover
-     */
+     *//*
     @Test
     public void testSavingDifferentBooksWithSameCover() {
         //Arrange
@@ -296,9 +296,9 @@ public class LocalBookCollectorTest {
         deleteJsonFile(book2);
     }
 
-    /**
+    *//**
      * Tests overwriting the same book but with a different cover image
-     */
+     *//*
     @Test
     public void testOverwritingBook() {
         //Arrange
@@ -318,5 +318,5 @@ public class LocalBookCollectorTest {
         //Assert
         Assert.assertTrue(result);
         Assert.assertEquals(formerLength, files.length);
-    }
+    }*/
 }

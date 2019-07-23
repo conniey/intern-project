@@ -26,7 +26,7 @@ interface BookCollection {
      * true - book was successfully saved
      * false - book wasn't saved </Boolean>
      */
-    Mono<Boolean> saveBook(String title, Author author, URI path);
+    Mono<Void> saveBook(String title, Author author, URI path);
 
     /**
      * Deletes the book and the file based off its information.

@@ -95,13 +95,11 @@ class JsonHandler {
      * @return file - if it was successfully converted, file should contain book's contents via JSON format
      * otherwise, it returns null
      */
-    File writeJSON(Book book) {
+    byte[] writeJSON(Book book) {
         try {
-            File bookFile = new File(book.getTitle() + ".json");
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            mapper.writeValue(bookFile, book);
-            return bookFile;
+            return mapper.writeValueAsBytes(book);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -81,7 +81,7 @@ final class LocalBookCollector implements BookCollection {
      * false - book wasn't saved </Boolean>
      */
     @Override
-    public Mono<Boolean> saveBook(String title, Author author, URI path) {
+    public Mono<Void> saveBook(String title, Author author, URI path) {
         File imagePath = new File(path);
         final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(),
             author.getFirstName());
@@ -96,9 +96,9 @@ final class LocalBookCollector implements BookCollection {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
-            return Mono.just(bookSaved);
+            return Mono.empty().then();
         }
-        return Mono.just(false);
+        return Mono.error(new IllegalStateException());
     }
 
     private void duplicateBook(Book bookToCompare) {
