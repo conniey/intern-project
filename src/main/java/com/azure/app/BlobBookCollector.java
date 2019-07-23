@@ -130,19 +130,19 @@ public class BlobBookCollector implements BookCollection {
         if (blobInfo == null) {
             return Mono.error(new IllegalArgumentException("Error encoding blob name"));
         }
-        return saveImage(new File(path), author).then(bookContainerClient.flatMap(containerAsyncClient -> {
+        return saveImage(new File(path), author, title).then(bookContainerClient.flatMap(containerAsyncClient -> {
             final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
                 + "/" + blobInfo[0]);
             return blockBlobClient.upload(Flux.just(ByteBuffer.wrap(bookFile)), bookFile.length).then();
         }));
     }
 
-    private Mono<Void> saveImage(File imagePath, Author author) {
+    private Mono<Void> saveImage(File imagePath, Author author, String title) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
             return Mono.error(new IllegalStateException("Error. Wrong file formtat for image"));
         }
-        String[] blobInfo = getBlobInformation(author, imagePath.getName());
+        String[] blobInfo = getBlobInformation(author, title + "." + extension);
         if (blobInfo == null) {
             return Mono.error(new IllegalArgumentException("Error encoding blob name"));
         }

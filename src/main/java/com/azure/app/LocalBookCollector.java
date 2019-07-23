@@ -89,7 +89,7 @@ final class LocalBookCollector implements BookCollection {
         if (!imageFile.exists() && !imageFile.mkdirs()) {
             logger.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
         }
-        URI savedImage = saveImage(imageFile, imagePath);
+        URI savedImage = saveImage(imageFile, imagePath, title);
         Book book = new Book(title, author, savedImage);
         duplicateBook(book);
         if (book.checkBook()) {
@@ -128,7 +128,7 @@ final class LocalBookCollector implements BookCollection {
         return imageFind.count().block();
     }
 
-    private URI saveImage(File directory, File imagePath) {
+    private URI saveImage(File directory, File imagePath, String title) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
             logger.error("Error. Wrong image format.");
@@ -136,7 +136,7 @@ final class LocalBookCollector implements BookCollection {
         }
         try {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
-            File image = new File(Paths.get(directory.getPath(), imagePath.getName()).toString());
+            File image = new File(Paths.get(directory.getPath(), title + "." + extension).toString());
             String path = image.getAbsolutePath();
             File copyImage = new File(path.substring(0, path.lastIndexOf("."))
                 + "_" + checkImages(image.toURI()) + "." + extension);
