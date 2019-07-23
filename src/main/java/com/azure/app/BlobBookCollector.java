@@ -141,7 +141,7 @@ public class BlobBookCollector implements BookCollection {
         if (bookFile == null) {
             return Mono.just(false);
         }
-        saveImage(new File(path), author);
+        Mono<Boolean> savedImage = saveImage(new File(path), author);
         String blobLastName;
         String blobFirstName;
         String blobName;
@@ -152,19 +152,23 @@ public class BlobBookCollector implements BookCollection {
         } catch (UnsupportedEncodingException e) {
             return Mono.error(e);
         }
-      /*  blockBlobClient = bookContainerClient.getBlockBlobAsyncClient(blobLastName + "/" + blobFirstName
-            + "/" + blobName);
-        return blockBlobClient.uploadFromFile(bookFile.getAbsolutePath()).then(Mono.fromCallable(() -> {
-            bookFile.delete();
-            return true;
-        }));*/
-        return null;
+        Mono<Boolean> savedBook = bookContainerClient.flatMap(containerAsyncClient -> {
+            blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobLastName + "/" + blobFirstName
+                + "/" + blobName);
+            return blockBlobClient.uploadFromFile(bookFile.getAbsolutePath()).then(Mono.fromCallable(() -> {
+                bookFile.delete();
+                return true;
+            }));
+        });
+        Flux<Mono<Boolean>> successSaved = Flux.just(savedBook, savedImage);
+        return successSaved.all(result ->
+            result.equals(Mono.just(true)));
     }
 
-    private boolean saveImage(File imagePath, Author author) {
+    private Mono<Boolean> saveImage(File imagePath, Author author) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
-            return false;
+            return Mono.just(false);
         }
         try {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
@@ -179,19 +183,23 @@ public class BlobBookCollector implements BookCollection {
                 blobFirstName = URLEncoder.encode(author.getFirstName().toLowerCase(), StandardCharsets.US_ASCII.toString());
             } catch (UnsupportedEncodingException e) {
                 logger.error("Error encoding names: ", e);
-                return false;
+                return Mono.just(false);
             }
-            /*if (ImageIO.write(bufferedImage, extension, image)) {
-                blockBlobClient = imageContainerClient.getBlockBlobAsyncClient(blobLastName + "/"
-                    + blobFirstName + "/" + blobName);
-                blockBlobClient.uploadFromFile(savedImage.getPath()).subscribe(Stream.builder()::accept);
-                return true;
-            }*/
+            if (ImageIO.write(bufferedImage, extension, image)) {
+                return imageContainerClient.flatMap(containerAsyncClient -> {
+                    blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobLastName + "/"
+                        + blobFirstName + "/" + blobName);
+                    return blockBlobClient.uploadFromFile(savedImage.getAbsolutePath()).then(Mono.fromCallable(() -> {
+                        savedImage.delete();
+                        return true;
+                    }));
+                });
+            }
         } catch (IOException ex) {
             logger.error("Error saving image: ", ex);
-            return false;
+            return Mono.just(false);
         }
-        return false;
+        return Mono.just(false);
     }
 
     /**

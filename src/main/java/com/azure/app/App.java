@@ -35,9 +35,6 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        bookCollector = new BlobBookCollector();
-        listBooks().block();
-
         String connectionString = System.getenv("AZURE_APPCONFIG");
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -162,7 +159,12 @@ public class App {
                 choice = SCANNER.nextLine();
             } while (OPTION_CHECKER.checkYesOrNo(choice));
             if (choice.equalsIgnoreCase("y")) {
-                bookCollector.saveBook(title, newAuthor, path).block();
+                boolean success = bookCollector.saveBook(title, newAuthor, path).block();
+                if (success) {
+                    System.out.println("Book was successfully saved!");
+                } else {
+                    System.out.println("Error. Book wasn't saved");
+                }
             }
         }
     }
