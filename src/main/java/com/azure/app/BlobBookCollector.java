@@ -154,9 +154,9 @@ public class BlobBookCollector implements BookCollection {
     }
 
     private String[] getBlobInformation(Author author, String fileName) {
-        String blobLastName;
-        String blobFirstName;
-        String blobName;
+        String blobLastName,
+            blobFirstName,
+            blobName;
         try {
             blobLastName = URLEncoder.encode(author.getLastName().toLowerCase(), StandardCharsets.US_ASCII.toString());
             blobName = URLEncoder.encode(fileName, StandardCharsets.US_ASCII.toString());
