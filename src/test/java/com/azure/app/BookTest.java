@@ -40,13 +40,13 @@ public class BookTest {
         Book badFile = new Book("Title", new Author("Good", "Author"), null);
         Book notPicture = new Book("Title", new Author("Good", "Author"), new File(folder.getPath() + "Test.docx").toURI());
         //Act and Assert
-        assertTrue(book.checkBook(root));
-        assertFalse(badTitle.checkBook(root));
-        assertFalse(badAuthorLastName.checkBook(root));
-        assertFalse(badAuthorFirstName.checkBook(root));
-        assertFalse(badAuthorCompletely.checkBook(root));
-        assertFalse(emptyFile.checkBook(root));
-        assertFalse(badFile.checkBook(root));
-        assertFalse(notPicture.checkBook(root));
+        assertTrue(book.checkBook());
+        assertFalse(badTitle.checkBook());
+        assertFalse(badAuthorLastName.checkBook());
+        assertFalse(badAuthorFirstName.checkBook());
+        assertFalse(badAuthorCompletely.checkBook());
+        assertFalse(emptyFile.checkBook());
+        assertFalse(badFile.checkBook());
+        assertFalse(notPicture.checkBook());
     }
 }

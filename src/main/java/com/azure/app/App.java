@@ -71,13 +71,11 @@ public class App {
                     listBooks().block();
                     break;
                 case 2:
-                    if (addBook() != null) {
                         final Mono<String> savedBookMono = addBook()
                             .then(Mono.just("Book was successfully saved!"))
                             .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
                         final String description = savedBookMono.block();
                         System.out.println("Status: " + description);
-                    }
                     break;
                 case 3:
                     boolean notEmpty = bookCollector.hasBooks().block();
@@ -138,7 +136,7 @@ public class App {
         String title;
         String author;
         URI path;
-        String choice = "x";
+        String choice;
         do {
             System.out.println("1. Title?");
             title = SCANNER.nextLine();
@@ -303,7 +301,7 @@ public class App {
     }
 
     private static void deleteBookHelper(Book b) {
-        if (b.checkBook(System.getProperty("user.dir"))) {
+        if (b.checkBook()) {
             bookCollector.deleteBook(b).subscribe(bookDeleted -> {
                 if (bookDeleted) {
                     System.out.println("Book is deleted.");

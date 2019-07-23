@@ -56,12 +56,11 @@ public class Book {
     /**
      * Checks to the book's fields to make sure they're correct
      *
-     * @param root - String containing where the image was saved
      * @return boolean - true if all the fields are valid
      * - false otherwise
      */
-    boolean checkBook(String root) {
-        if (cover == null || !(optionChecker.checkImage(root, cover))) {
+    boolean checkBook() {
+        if (cover == null) {
             return false;
         }
         if (author.getLastName() == null || author.getLastName().isEmpty()

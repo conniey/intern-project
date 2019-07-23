@@ -190,6 +190,7 @@ public class BlobBookCollector implements BookCollection {
     @Override
     public Flux<Book> findBook(String title) {
         return getBooks().filter(book -> title.contentEquals(book.getTitle()));
+
     }
 
     /**

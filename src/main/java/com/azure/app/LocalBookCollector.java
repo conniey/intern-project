@@ -92,7 +92,7 @@ final class LocalBookCollector implements BookCollection {
         URI savedImage = saveImage(imageFile, imagePath);
         Book book = new Book(title, author, savedImage);
         duplicateBook(book);
-        if (optionChecker.checkImage(root, savedImage) && book.checkBook(root)) {
+        if (book.checkBook()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
@@ -142,11 +142,15 @@ final class LocalBookCollector implements BookCollection {
                 + "_" + checkImages(image.toURI()) + "." + extension);
             if (image.exists()) {
                 if (ImageIO.write(bufferedImage, extension, copyImage)) {
-                    return copyImage.toURI();
+                    URI saved = copyImage.toURI();
+                    URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
+                    return relative;
                 }
             } else {
                 if (ImageIO.write(bufferedImage, extension, image)) {
-                    return image.toURI();
+                    URI saved = image.toURI();
+                    URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
+                    return relative;
                 }
             }
         } catch (IOException ex) {
