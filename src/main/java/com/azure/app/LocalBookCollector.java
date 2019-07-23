@@ -251,10 +251,7 @@ final class LocalBookCollector implements BookCollection {
      */
     @Override
     public Mono<Boolean> hasBooks() {
-        if (jsonBooks.count().block() == null) {
-            return Mono.just(false);
-        }
-        return Mono.just(jsonBooks.count().block() > 0);
+        return jsonBooks.hasElements();
     }
 
     /**

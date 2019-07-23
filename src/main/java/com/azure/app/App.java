@@ -71,29 +71,29 @@ public class App {
                     listBooks().block();
                     break;
                 case 2:
-                    final Mono<String> savedBookMono = addBook()
-                        .then(Mono.just("Book was successfully saved!"))
-                        .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
-                    final String description = savedBookMono.block();
-                    System.out.println("Status: " + description);
+                    if (addBook() != null) {
+                        final Mono<String> savedBookMono = addBook()
+                            .then(Mono.just("Book was successfully saved!"))
+                            .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
+                        final String description = savedBookMono.block();
+                        System.out.println("Status: " + description);
+                    }
                     break;
                 case 3:
-                    bookCollector.hasBooks().subscribe(x -> {
-                        if (x) {
-                            findBook();
-                        } else {
-                            System.out.println("There are no books to find.");
-                        }
-                    });
+                    boolean notEmpty = bookCollector.hasBooks().block();
+                    if (notEmpty) {
+                        findBook();
+                    } else {
+                        System.out.println("There are no books to find.");
+                    }
                     break;
                 case 4:
-                    bookCollector.hasBooks().subscribe(x -> {
-                        if (x) {
-                            deleteBook().block();
-                        } else {
-                            System.out.println("There are no books to delete.");
-                        }
-                    });
+                    notEmpty = bookCollector.hasBooks().block();
+                    if (notEmpty) {
+                        deleteBook().block();
+                    } else {
+                        System.out.println("There are no books to delete");
+                    }
                     break;
                 case 5:
                     System.out.println("Goodbye.");
@@ -153,18 +153,16 @@ public class App {
             System.out.println("3. Cover image? (Enter \"Q\" to return to menu.)");
             String filePath = SCANNER.nextLine();
             if (filePath.equalsIgnoreCase("Q")) {
-                choice = "Q";
+                return null;
             }
             path = bookCollector.retrieveURI(filePath);
-        } while (!choice.equalsIgnoreCase("q") && !OPTION_CHECKER.checkImage(System.getProperty("user.dir"), path));
-        if (!choice.equalsIgnoreCase("q")) {
-            do {
-                System.out.println("4. Save? Enter 'Y' or 'N'.");
-                choice = SCANNER.nextLine();
-            } while (OPTION_CHECKER.checkYesOrNo(choice));
-            if (choice.equalsIgnoreCase("y")) {
-                return bookCollector.saveBook(title, newAuthor, path);
-            }
+        } while (!OPTION_CHECKER.checkImage(System.getProperty("user.dir"), path));
+        do {
+            System.out.println("4. Save? Enter 'Y' or 'N'.");
+            choice = SCANNER.nextLine();
+        } while (OPTION_CHECKER.checkYesOrNo(choice));
+        if (choice.equalsIgnoreCase("y")) {
+            return bookCollector.saveBook(title, newAuthor, path);
         }
         return Mono.empty();
     }
