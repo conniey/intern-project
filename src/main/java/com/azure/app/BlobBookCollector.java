@@ -41,7 +41,6 @@ public class BlobBookCollector implements BookCollection {
     private Mono<ContainerAsyncClient> imageContainerClient;
     private Mono<ContainerAsyncClient> bookContainerClient;
     private Flux<Book> blobBooks;
-    private BlockBlobAsyncClient blockBlobClient;
     private static Logger logger = LoggerFactory.getLogger(BlobBookCollector.class);
 
     BlobBookCollector() {
@@ -80,22 +79,28 @@ public class BlobBookCollector implements BookCollection {
                     .credential(credential)
                     .buildAsyncClient();
             });
-            bookContainerClient = storageClient.map(container ->
-                container.getContainerAsyncClient("book-library"));
-            imageContainerClient = storageClient.map(container ->
-                container.getContainerAsyncClient("book-covers"));
-            bookContainerClient.subscribe(containerAsyncClient -> containerAsyncClient.exists().map(created -> {
-                if (!created.value()) {
-                    containerAsyncClient.create();
-                }
-                return created;
-            }));
-            imageContainerClient.subscribe(containerAsyncClient -> containerAsyncClient.exists().map(created -> {
-                if (!created.value()) {
-                    containerAsyncClient.create();
-                }
-                return created;
-            }));
+            bookContainerClient = storageClient.flatMap(container -> {
+                final ContainerAsyncClient temp = container.getContainerAsyncClient("book-library");
+                return temp.exists().flatMap(exists ->
+                {
+                    if (exists.value()) {
+                        return Mono.just(temp);
+                    } else {
+                        return temp.create().then(Mono.just(temp));
+                    }
+                });
+            });
+            imageContainerClient = storageClient.flatMap(container -> {
+                final ContainerAsyncClient temp = container.getContainerAsyncClient("book-covers");
+                return temp.exists().flatMap(exists ->
+                {
+                    if (exists.value()) {
+                        return Mono.just(temp);
+                    } else {
+                        return temp.create().then(Mono.just(temp));
+                    }
+                });
+            });
             blobBooks = initializeBooks().cache();
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
@@ -114,23 +119,13 @@ public class BlobBookCollector implements BookCollection {
 
     private Flux<Book> initializeBooks() {
         return bookContainerClient.flatMapMany(container -> container.listBlobsFlat().flatMap(blob -> {
-            blockBlobClient = container.getBlockBlobAsyncClient(blob.name());
-            File temporaryBookHolder = new File(blob.name().substring(blob.name().lastIndexOf("/") + 1));
-            try {
-                temporaryBookHolder.createNewFile();
-            } catch (IOException e) {
-                logger.error("Error creating file.", e);
-                return Mono.error(e);
-            }
-            return blockBlobClient.downloadToFile(temporaryBookHolder.getAbsolutePath())
-                .then(Mono.fromCallable(() -> {
-                    Book b = Constants.SERIALIZER.fromJSONtoBook(temporaryBookHolder);
-                    temporaryBookHolder.delete();
-                    return b;
-                }));
+            final BlockBlobAsyncClient blockBlobClient = container.getBlockBlobAsyncClient(blob.name());
+            return blockBlobClient.download().flatMapMany(byteBuff -> byteBuff.value().map(byteBuffer -> {
+                Book b = Constants.SERIALIZER.fromJSONtoBook(byteBuffer);
+                return b;
+            }));
         }));
     }
-
 
     @Override
     public Mono<Boolean> saveBook(String title, Author author, URI path) {
@@ -153,7 +148,7 @@ public class BlobBookCollector implements BookCollection {
             return Mono.error(e);
         }
         Mono<Boolean> savedBook = bookContainerClient.flatMap(containerAsyncClient -> {
-            blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobLastName + "/" + blobFirstName
+            final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobLastName + "/" + blobFirstName
                 + "/" + blobName);
             return blockBlobClient.uploadFromFile(bookFile.getAbsolutePath()).then(Mono.fromCallable(() -> {
                 bookFile.delete();
@@ -187,7 +182,7 @@ public class BlobBookCollector implements BookCollection {
             }
             if (ImageIO.write(bufferedImage, extension, image)) {
                 return imageContainerClient.flatMap(containerAsyncClient -> {
-                    blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobLastName + "/"
+                    final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobLastName + "/"
                         + blobFirstName + "/" + blobName);
                     return blockBlobClient.uploadFromFile(savedImage.getAbsolutePath()).then(Mono.fromCallable(() -> {
                         savedImage.delete();

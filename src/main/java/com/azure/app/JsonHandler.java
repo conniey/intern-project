@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -29,6 +30,22 @@ class JsonHandler {
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
             Book b = mapper.readValue(jsonFile, Book.class);
+            return b;
+        } catch (JsonGenerationException e) {
+            logger.error("Error generating JSON file: ", e);
+        } catch (JsonMappingException e) {
+            logger.error("Error mapping JSON file: ", e);
+        } catch (IOException e) {
+            logger.error("Error while writing JSON file: ", e);
+        }
+        return null;
+    }
+
+    Book fromJSONtoBook(ByteBuffer byteBuffer) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            Book b = mapper.readValue(byteBuffer.array(), Book.class);
             return b;
         } catch (JsonGenerationException e) {
             logger.error("Error generating JSON file: ", e);
