@@ -170,7 +170,7 @@ final class LocalBookCollector implements BookCollection {
      * false - Book wasn't deleted
      */
     @Override
-    public Mono<Boolean> deleteBook(Book bookToCompare) {
+    public Mono<Void> deleteBook(Book bookToCompare) {
         boolean delete = jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
@@ -183,9 +183,9 @@ final class LocalBookCollector implements BookCollection {
                 bookToCompare.getCover().getPath()).toString()).delete();
             deleteEmptyDirectories();
             jsonBooks = initializeBooks().cache();
-            return Mono.just(true);
+            return Mono.empty();
         }
-        return Mono.just(false);
+        return Mono.error(new IllegalStateException(""));
     }
 
     private List<File> retrieveJsonFiles() {

@@ -12,7 +12,6 @@ import com.azure.storage.blob.ContainerAsyncClient;
 import com.azure.storage.blob.StorageAsyncClient;
 import com.azure.storage.blob.StorageClient;
 import com.azure.storage.blob.models.BlobItem;
-
 import com.azure.storage.common.credentials.SharedKeyCredential;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -180,8 +179,29 @@ public class BlobBookCollector implements BookCollection {
      * false - Book wasn't deleted
      */
     @Override
-    public Mono<Boolean> deleteBook(Book book) {
-        return null;
+    public Mono<Void> deleteBook(Book book) {
+        String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
+        return deleteImage(book).then(bookContainerClient.flatMap(containerAsyncClient -> {
+                final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobConversion[2] + "/"
+                    + blobConversion[1]
+                    + "/" + blobConversion[0] + ".json");
+                return blob.delete().then();
+            }
+        ));
+    }
+
+    private Mono<Void> deleteImage(Book book) {
+        String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
+        Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient
+            -> containerAsyncClient.listBlobsFlat().filter(blobItem ->
+            blobItem.name().contains(blobConversion[2] + "/"
+                + blobConversion[1]
+                + "/" + blobConversion[0]))).elementAt(0);
+        return imageContainerClient.flatMap(containerAsyncClient ->
+            file.flatMap(blobItem -> {
+                final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
+                return blob.delete().then();
+            }));
     }
 
     /**
