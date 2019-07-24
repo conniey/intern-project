@@ -57,6 +57,22 @@ class JsonHandler {
         return null;
     }
 
+    Book fromJSONtoBook(ByteBuffer byteBuffer) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            Book b = mapper.readValue(byteBuffer.array(), Book.class);
+            return b;
+        } catch (JsonGenerationException e) {
+            logger.error("Error generating JSON file: ", e);
+        } catch (JsonMappingException e) {
+            logger.error("Error mapping JSON file: ", e);
+        } catch (IOException e) {
+            logger.error("Error while writing JSON file: ", e);
+        }
+        return null;
+    }
+
     /**
      * Converts a Book object a json object and stores it in a file.
      *
