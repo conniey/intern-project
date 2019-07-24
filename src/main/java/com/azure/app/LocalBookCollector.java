@@ -283,6 +283,13 @@ final class LocalBookCollector implements BookCollection {
         return new File(path).toURI();
     }
 
+    /**
+     * Grab a String containing the absolute path to the book's cover location
+     * If it's in Azure Database storage, the cover will be downloaded to the temporary directory.
+     *
+     * @param book - Book object of whose cover you want to retrieve
+     * @return {@Link Mono} holds a String of the absolute path
+     */
     @Override
     public Mono<String> grabCoverImage(Book book) {
         return Mono.just(Paths.get(System.getProperty("user.dir"), book.getCover().getPath()).toString());

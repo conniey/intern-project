@@ -228,6 +228,13 @@ public class BlobBookCollector implements BookCollection {
         return new File(path).toURI();
     }
 
+    /**
+     * Grab a String containing the absolute path to the book's cover location
+     * If it's in Azure Database storage, the cover will be downloaded to the temporary directory.
+     *
+     * @param book - Book object of whose cover you want to retrieve
+     * @return {@Link Mono} holds a String of the absolute path
+     */
     @Override
     public Mono<String> grabCoverImage(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
