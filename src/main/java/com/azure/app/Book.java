@@ -14,11 +14,9 @@ public class Book {
     private Author author;
     @JsonProperty("cover")
     private URI cover;
-    private static OptionChecker optionChecker = new OptionChecker();
 
     Book() {
     }
-
 
     Book(String title, Author author, URI cover) {
         this.title = title;

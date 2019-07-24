@@ -84,20 +84,6 @@ public class JsonHandlerTest {
     }
 
     /**
-     * Tests serialization of a book with an invalid image file..
-     */
-    @Test
-    public void testSerializingBadFile() {
-        //Arrange
-        Book b = new Book("Wonder", new Author("Palacio", "R. J."), //invalid file #3
-            new File("").toURI());
-        //Act
-        boolean result = jsonHandler.writeJSON(b, root);
-        //Assert
-        assertFalse(result);
-    }
-
-    /**
      * Tests serialization of a completely invalid book
      */
     @Test
@@ -117,8 +103,7 @@ public class JsonHandlerTest {
     @Test
     public void testFromJSONtoBookValid() {
         //Arrange and Act
-        Book result = jsonHandler.fromJSONtoBook(new File(Paths.get(root,
-            "Kingdom Keepers VIII.json").toString()));
+        Book result = jsonHandler.fromJSONtoBook(Paths.get(root, "Kingdom Keepers VIII.json").toFile());
         //Assert
         assertTrue(result != null);
     }

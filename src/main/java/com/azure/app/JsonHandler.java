@@ -36,7 +36,7 @@ class JsonHandler {
         } catch (JsonMappingException e) {
             logger.error("Error mapping JSON file: ", e);
         } catch (IOException e) {
-            logger.error("Error while writing JSON file: ", e);
+            logger.error("Error while reading JSON file: ", e);
         }
         return null;
     }
