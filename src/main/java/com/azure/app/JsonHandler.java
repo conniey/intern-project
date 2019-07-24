@@ -41,6 +41,12 @@ class JsonHandler {
         return null;
     }
 
+    /**
+     * Converts a an array of bites  back to a Book object
+     *
+     * @param byteBuffer - the ByteBuffers holds the byte information to be converted
+     * @return Book - created from the JSON file
+     */
     Book fromJSONtoBook(ByteBuffer byteBuffer) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -48,11 +54,11 @@ class JsonHandler {
             Book b = mapper.readValue(byteBuffer.array(), Book.class);
             return b;
         } catch (JsonGenerationException e) {
-            logger.error("Error generating JSON file: ", e);
+            logger.error("Error generating byte array: ", e);
         } catch (JsonMappingException e) {
-            logger.error("Error mapping JSON file: ", e);
+            logger.error("Error mapping byte array: ", e);
         } catch (IOException e) {
-            logger.error("Error while writing JSON file: ", e);
+            logger.error("Error while reading from byte array: ", e);
         }
         return null;
     }
