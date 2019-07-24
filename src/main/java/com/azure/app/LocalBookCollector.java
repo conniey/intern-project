@@ -136,7 +136,8 @@ final class LocalBookCollector implements BookCollection {
         }
         try {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
-            File image = new File(Paths.get(directory.getPath(), title + "." + extension).toString());
+            String safeTitle = title.replace(' ', '-');
+            File image = new File(Paths.get(directory.getPath(), safeTitle + "." + extension).toString());
             String path = image.getAbsolutePath();
             File copyImage = new File(path.substring(0, path.lastIndexOf("."))
                 + "_" + checkImages(image.toURI()) + "." + extension);
@@ -178,7 +179,8 @@ final class LocalBookCollector implements BookCollection {
             return result;
         });
         if (delete) {
-            new File(bookToCompare.getCover()).delete();
+            new File(Paths.get(System.getProperty("user.dir"),
+                bookToCompare.getCover().getPath()).toString()).delete();
             deleteEmptyDirectories();
             jsonBooks = initializeBooks().cache();
             return Mono.just(true);
@@ -279,5 +281,10 @@ final class LocalBookCollector implements BookCollection {
     @Override
     public URI retrieveURI(String path) {
         return new File(path).toURI();
+    }
+
+    @Override
+    public Mono<String> grabCoverImage(Book book) {
+        return Mono.just(Paths.get(System.getProperty("user.dir"), book.getCover().getPath()).toString());
     }
 }

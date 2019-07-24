@@ -90,9 +90,9 @@ public class Book {
      *
      * @return - String with the book information
      */
-    String displayBookInfo() {
+    String displayBookInfo(String coverLoc) {
         return "Title: " + getTitle() + "\n"
             + "Author: " + getAuthor() + "\n"
-            + "Cover: " + getCover().toString();
+            + "Cover: " + coverLoc + "\n";
     }
 }

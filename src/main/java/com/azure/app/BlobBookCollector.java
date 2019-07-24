@@ -11,6 +11,7 @@ import com.azure.storage.blob.BlockBlobAsyncClient;
 import com.azure.storage.blob.ContainerAsyncClient;
 import com.azure.storage.blob.StorageAsyncClient;
 import com.azure.storage.blob.StorageClient;
+import com.azure.storage.blob.models.BlobItem;
 import com.azure.storage.common.credentials.SharedKeyCredential;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -190,7 +192,6 @@ public class BlobBookCollector implements BookCollection {
     @Override
     public Flux<Book> findBook(String title) {
         return getBooks().filter(book -> title.contentEquals(book.getTitle()));
-
     }
 
     /**
@@ -225,5 +226,31 @@ public class BlobBookCollector implements BookCollection {
     @Override
     public URI retrieveURI(String path) {
         return new File(path).toURI();
+    }
+
+    @Override
+    public Mono<String> grabCoverImage(Book book) {
+        String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
+        Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient
+            -> containerAsyncClient.listBlobsFlat().filter(blobItem ->
+            blobItem.name().contains(blobConversion[2] + "/"
+                + blobConversion[1]
+                + "/" + blobConversion[0]))).elementAt(0);
+        return imageContainerClient.flatMap(containerAsyncClient ->
+            file.flatMap(blobItem -> {
+                final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
+                String property = "java.io.tmpdir";
+                String tempDir = System.getProperty(property);
+                File newFile = new File(tempDir + blobItem.name().
+                    substring(blobItem.name().lastIndexOf("/") + 1));
+                try {
+                    newFile.createNewFile();
+                } catch (IOException e) {
+                    logger.error("Exception creating the file: ", e);
+                    return Mono.error(new IOException("Exception creating the file."));
+                }
+                return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(Mono.fromCallable(() ->
+                    newFile.getAbsolutePath()));
+            }));
     }
 }

@@ -71,11 +71,11 @@ public class App {
                     listBooks().block();
                     break;
                 case 2:
-                        final Mono<String> savedBookMono = addBook()
-                            .then(Mono.just("Book was successfully saved!"))
-                            .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
-                        final String description = savedBookMono.block();
-                        System.out.println("Status: " + description);
+                    final Mono<String> savedBookMono = addBook()
+                        .then(Mono.just("Book was successfully saved!"))
+                        .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
+                    final String description = savedBookMono.block();
+                    System.out.println("Status: " + description);
                     break;
                 case 3:
                     boolean notEmpty = bookCollector.hasBooks().block();
@@ -178,21 +178,21 @@ public class App {
             case 0:
                 break;
             case 1:
-                findTitle().block();
+                System.out.print(findTitle().block());
                 break;
             case 2:
-                findAuthor().block();
+                System.out.print(findAuthor().block());
                 break;
             default:
                 System.out.println("Please enter a number between 1 or 2.");
         }
     }
 
-    private static Mono<Void> findTitle() {
+    private static Mono<String> findTitle() {
         System.out.println("What is the book title?");
         String title = SCANNER.nextLine();
         Flux<Book> booksToFind = bookCollector.findBook(title);
-        return booksToFind.collectList().map(list -> {
+        return booksToFind.collectList().flatMap(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
             } else if (list.size() == 1) {
@@ -201,7 +201,9 @@ public class App {
                 System.out.println("Would you like to view it?");
                 String choice = getYesOrNo();
                 if (choice.equalsIgnoreCase("y")) {
-                    System.out.println(list.get(0).displayBookInfo());
+                    return bookCollector.grabCoverImage(list.get(0)).map(cover ->
+                        list.get(0).displayBookInfo(cover)
+                    );
                 }
             } else {
                 System.out.println("Here are the books titled " + title + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
@@ -214,35 +216,39 @@ public class App {
                     String option = SCANNER.nextLine();
                     choice = OPTION_CHECKER.checkOption(option, list.size());
                 } while (choice == INVALID);
+                int bookNum = choice - 1;
                 if (choice != 0) {
-                    System.out.println(list.get(choice - 1).displayBookInfo());
+                    return bookCollector.grabCoverImage(list.get(bookNum)).map(cover ->
+                        list.get(bookNum).displayBookInfo(cover)
+                    );
                 }
             }
-            return list;
-        }).then();
+            return Mono.just("");
+        });
     }
 
-    private static Mono<Void> findAuthor() {
+    private static Mono<String> findAuthor() {
         System.out.println("What is the author's full name?");
         String author = SCANNER.nextLine();
         String[] name = parseAuthorsName(author.split(" "));
         Flux<Book> booksToFind = bookCollector.findBook(new Author(name[0], name[1]));
-        return booksToFind.collectList().map(list -> {
+        return booksToFind.collectList().flatMap(list -> {
             if (list.isEmpty()) {
                 AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books by that author.");
-                return list;
-            }
-            AR_REFERENCE.set(list);
-            if (list.size() == 1) {
+            } else if (list.size() == 1) {
+                AR_REFERENCE.set(list);
                 System.out.println("Here is a book by " + author + ".");
                 System.out.println(" * " + list.get(0));
                 System.out.println("Would you like to view it?");
                 String choice = getYesOrNo();
                 if (choice.equalsIgnoreCase("y")) {
-                    System.out.println(list.get(0).displayBookInfo());
+                    return bookCollector.grabCoverImage(list.get(0)).map(cover ->
+                        list.get(0).displayBookInfo(cover)
+                    );
                 }
             } else {
+                AR_REFERENCE.set(list);
                 System.out.println("Here are books by " + author + ". Please enter the number you wish to view. (Enter \"Q\" to return to menu.)");
                 for (int i = 0; i < list.size(); i++) {
                     System.out.println(i + 1 + ". " + list.get(i));
@@ -252,12 +258,15 @@ public class App {
                     String option = SCANNER.nextLine();
                     choice = OPTION_CHECKER.checkOption(option, list.size());
                 } while (choice == INVALID);
+                int bookNum = choice - 1;
                 if (choice != 0) {
-                    System.out.println(list.get(choice - 1).displayBookInfo());
+                    return bookCollector.grabCoverImage(list.get(bookNum)).map(cover ->
+                        list.get(bookNum).displayBookInfo(cover)
+                    );
                 }
             }
-            return list;
-        }).then();
+            return Mono.just("");
+        });
     }
 
     private static Mono<Void> deleteBook() {
