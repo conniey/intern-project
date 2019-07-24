@@ -31,7 +31,7 @@ public class LocalBookCollectorTest {
     @Before
     public void setUp() {
         try {
-            URI folder = LocalBookCollector.class.getClassLoader().getResource(".").toURI();
+            URI folder = LocalBookCollectorTest.class.getClassLoader().getResource(".").toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             Assert.fail("");
@@ -48,7 +48,7 @@ public class LocalBookCollectorTest {
         String expected = "AsOKalsdjfkal";
         //Act
         localCollector.saveBook("Existing", new Author("Mock", "Author"),
-            new File(Paths.get(root, "GreatGatsby.json").toString()).toURI()).block();
+            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()).block();
         Flux<Book> noTitles = localCollector.findBook(expected);
         //Assert
         StepVerifier.create(noTitles)
@@ -259,10 +259,11 @@ public class LocalBookCollectorTest {
         //Arrange
         boolean result;
         //Act
-        result = localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
-        //Assert
-        Assert.assertTrue(result);
+        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()))
+            //Assert
+            .expectComplete()
+            .verify();
         //Cleanup
         deleteJsonFile(new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Wonder.png").toString()).toURI()));
@@ -280,12 +281,12 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "Wonder.png").toString()).toURI());
         Book book2 = new Book("Giant Peach_The Return", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Wonder.png").toString()).toURI());
-        //Act
-        localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        //Act & Assert
+        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI())).expectComplete().verify();
+        StepVerifier.create(localCollector.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI())).expectComplete().verify();
         //Should delete fine, because the same image would have been saved but in a file with a different name
-        localCollector.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
         result = deleteJsonFile(book1);
         result2 = deleteJsonFile(book2);
         //Assert
@@ -309,14 +310,13 @@ public class LocalBookCollectorTest {
             new File(Paths.get(root, "Wonder.png").toString()).toURI());
         Book book2 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI());
-        //Act
-        localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
-        result = localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI()).block();
+        //Act & Assert
+        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI())).expectComplete().verify();
+        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI())).expectComplete().verify();
         files = Paths.get(root, "lib", "images").toFile().listFiles();
-        //Assert
-        Assert.assertTrue(result);
+        //Double check size
         Assert.assertEquals(formerLength, files.length);
     }
 }

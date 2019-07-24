@@ -12,12 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class JsonHandler {
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
-
 
     /**
      * Converts a json file back to a Book object
@@ -41,12 +41,28 @@ class JsonHandler {
         return null;
     }
 
+    Book fromJSONtoBook(ByteBuffer byteBuffer) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            Book b = mapper.readValue(byteBuffer.array(), Book.class);
+            return b;
+        } catch (JsonGenerationException e) {
+            logger.error("Error generating JSON file: ", e);
+        } catch (JsonMappingException e) {
+            logger.error("Error mapping JSON file: ", e);
+        } catch (IOException e) {
+            logger.error("Error while writing JSON file: ", e);
+        }
+        return null;
+    }
+
     /**
      * Converts a Book object a json object and stores it in a file.
      *
      * @param book - the Book object that's going to be converted to a json file
-     * @return boolean - true if Book was successfully converted to Javadoc
-     * false if Book wasn't successfully converted to Javadoc
+     * @return boolean - true if Book was successfully converted to JSON file
+     * false if Book wasn't successfully converted to JSON file
      */
     boolean writeJSON(Book book, String root) {
         if (book.checkBook(root)) {
@@ -70,4 +86,24 @@ class JsonHandler {
             return false;
         }
     }
+
+
+    /**
+     * Converts a Book object to a JSON file and stores it in a file.
+     *
+     * @param book - the Book object that's going to be converted to a JSON filE
+     * @return file - if it was successfully converted, file should contain book's contents via JSON format
+     * otherwise, it returns null
+     */
+    byte[] writeJSON(Book book) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            return mapper.writeValueAsBytes(book);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }

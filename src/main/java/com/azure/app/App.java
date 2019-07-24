@@ -5,7 +5,6 @@ package com.azure.app;
 
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
-import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -36,20 +35,28 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
+        String connectionString = System.getenv("AZURE_APPCONFIG");
+        if (connectionString == null || connectionString.isEmpty()) {
+            System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
+                + " Please set it.");
+            return;
+        }
         ConfigurationAsyncClient client;
-        ConfigurationSetting setting = null;
         try {
             client = ConfigurationAsyncClient.builder()
-                .credentials(new ConfigurationClientCredentials(System.getenv("AZURE_APPCONFIG")))
+                .credentials(new ConfigurationClientCredentials(connectionString))
                 .build();
-            client.getSetting("IMAGE_STORAGE_TYPE").subscribe(input -> {
-                if (input.value().value().equalsIgnoreCase("Local")) {
-                    bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+            Mono<BookCollection> bookCollectionMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
+                String storageType = input.value().value();
+                if (storageType.equalsIgnoreCase("Local")) {
+                    return Mono.just(new LocalBookCollector(System.getProperty("user.dir")));
+                } else if (storageType.equalsIgnoreCase("BlobStorage")) {
+                    return Mono.just(new BlobBookCollector());
                 } else {
-                    System.out.println("Sorry, but Blob Storage is not yet supported. Switching to Local.");
-                    bookCollector = new LocalBookCollector(System.getProperty("user.dir"));
+                    return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
                 }
             });
+            bookCollector = bookCollectionMono.block();
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
         }
@@ -64,7 +71,11 @@ public class App {
                     listBooks().block();
                     break;
                 case 2:
-                    addBook();
+                    final Mono<String> savedBookMono = addBook()
+                        .then(Mono.just("Book was successfully saved!"))
+                        .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
+                    final String description = savedBookMono.block();
+                    System.out.println("Status: " + description);
                     break;
                 case 3:
                     bookCollector.hasBooks().subscribe(x -> {
@@ -122,7 +133,7 @@ public class App {
         }).then();
     }
 
-    private static void addBook() {
+    private static Mono<Void> addBook() {
         System.out.println("Please enter the following information:");
         String title;
         String author;
@@ -152,15 +163,10 @@ public class App {
                 choice = SCANNER.nextLine();
             } while (OPTION_CHECKER.checkYesOrNo(choice));
             if (choice.equalsIgnoreCase("y")) {
-                bookCollector.saveBook(title, newAuthor, path).subscribe(x -> {
-                    if (x) {
-                        System.out.println("Book was successfully saved!");
-                    } else {
-                        System.out.println("Error. Book wasn't saved");
-                    }
-                });
+                return bookCollector.saveBook(title, newAuthor, path);
             }
         }
+        return Mono.empty();
     }
 
     private static void findBook() {

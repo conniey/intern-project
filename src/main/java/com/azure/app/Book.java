@@ -19,6 +19,7 @@ public class Book {
     Book() {
     }
 
+
     Book(String title, Author author, URI cover) {
         this.title = title;
         this.author = author;

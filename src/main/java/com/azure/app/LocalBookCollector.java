@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class LocalBookCollector implements BookCollection {
+final class LocalBookCollector implements BookCollection {
     private final Set<String> supportedImageFormats;
     private Flux<Book> jsonBooks;
     private List<File> jsonFiles;
@@ -81,7 +81,7 @@ class LocalBookCollector implements BookCollection {
      * false - book wasn't saved </Boolean>
      */
     @Override
-    public Mono<Boolean> saveBook(String title, Author author, URI path) {
+    public Mono<Void> saveBook(String title, Author author, URI path) {
         File imagePath = new File(path);
         final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(),
             author.getFirstName());
@@ -96,17 +96,27 @@ class LocalBookCollector implements BookCollection {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
-            return Mono.just(bookSaved);
+            if (bookSaved) {
+                return Mono.empty().then();
+            } else {
+                return Mono.error(new IllegalStateException("Unsuccessful save"));
+            }
         }
-        return Mono.just(false);
+        return Mono.error(new IllegalStateException("Unsuccessful save"));
     }
 
+    /**
+     * Deletes the old book if the new book has a the same title and author
+     *
+     * @param bookToCompare
+     */
     private void duplicateBook(Book bookToCompare) {
+        //Checks to see if the book has a duplicate, if so it'll delete it so it can be overwritten
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
-                Book imageToDeleteoDelete = Constants.SERIALIZER.fromJSONtoBook(x);
-                new File(imageToDeleteoDelete.getCover()).delete();
+                Book imageToDelete = Constants.SERIALIZER.fromJSONtoBook(x);
+                new File(imageToDelete.getCover()).delete();
             }
             return false;
         });
@@ -121,6 +131,7 @@ class LocalBookCollector implements BookCollection {
     private URI saveImage(File directory, File imagePath) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
+            logger.error("Error. Wrong image format.");
             return null;
         }
         try {
