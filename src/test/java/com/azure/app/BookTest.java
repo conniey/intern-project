@@ -3,48 +3,57 @@
 
 package com.azure.app;
 
-import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collection;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@RunWith(Parameterized.class)
 public class BookTest {
 
     /**
      * Verifies that the correct information was passed to the Book object
      */
     @Test
-    public void testBookChecker() {
+    public void testGoodBookChecker() {
         //Arrange
         URL folder = LocalBookCollectorTest.class.getClassLoader().getResource(".");
-        String root = null;
-        try {
-            URI rootFolder = LocalBookCollector.class.getClassLoader().getResource(".").toURI();
-            root = Paths.get(rootFolder).toString();
-        } catch (URISyntaxException e) {
-            Assert.fail("");
-        }
         Book book = new Book("Title", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI());
-        Book badTitle = new Book("", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI());
-        Book badAuthorLastName = new Book("Title", new Author("Good", ""), new File(folder.getPath() + "KK8.jpg").toURI());
-        Book badAuthorFirstName = new Book("Title", new Author("", "Bad"), new File(folder.getPath() + "KK8.jpg").toURI());
-        Book badAuthorCompletely = new Book("Title", new Author("", ""), new File(folder.getPath() + "KK8.jpg").toURI());
-        //    Book emptyFile = new Book("Title", new Author("Good", "Author"), new File("").toURI());
-        Book badFile = new Book("Title", new Author("Good", "Author"), null);
         //Act and Assert
         assertTrue(book.checkBook());
-        assertFalse(badTitle.checkBook());
-        assertFalse(badAuthorLastName.checkBook());
-        assertFalse(badAuthorFirstName.checkBook());
-        assertFalse(badAuthorCompletely.checkBook());
-        //     assertFalse(emptyFile.checkBook());
-        assertFalse(badFile.checkBook());
+    }
+
+    //TEST INVALID BOOKS
+    @Parameterized.Parameters
+    public static Collection<Book[]> data() {
+        //Arrange
+        URL folder = LocalBookCollectorTest.class.getClassLoader().getResource(".");
+        return Arrays.asList(new Book[][]{
+            {new Book("", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI())},
+            {new Book("Title", new Author("Good", ""), new File(folder.getPath() + "KK8.jpg").toURI())},
+            {new Book("Title", new Author("", "Bad"), new File(folder.getPath() + "KK8.jpg").toURI())},
+            {new Book("Title", new Author("", ""), new File(folder.getPath() + "KK8.jpg").toURI())},
+            {new Book("Title", new Author("Good", "Author"), null)}
+        });
+    }
+
+    private Book bInput;
+    private boolean expected;
+
+    public BookTest(Book b) {
+        this.bInput = b;
+        this.expected = false;
+    }
+
+    @Test
+    public void testInvalidBooks() {
+        assertEquals(expected, bInput.checkBook());
     }
 }
