@@ -12,7 +12,6 @@ import com.azure.storage.blob.ContainerAsyncClient;
 import com.azure.storage.blob.StorageAsyncClient;
 import com.azure.storage.blob.StorageClient;
 import com.azure.storage.blob.models.BlobItem;
-
 import com.azure.storage.common.credentials.SharedKeyCredential;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -239,9 +238,8 @@ public class BlobBookCollector implements BookCollection {
     @Override
     public Mono<String> grabCoverImage(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
-        Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient
-            -> containerAsyncClient.listBlobsFlat().filter(blobItem ->
-            blobItem.name().contains(blobConversion[2] + "/"
+        Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
+            containerAsyncClient.listBlobsFlat().filter(blobItem -> blobItem.name().contains(blobConversion[2] + "/"
                 + blobConversion[1]
                 + "/" + blobConversion[0]))).elementAt(0);
         return imageContainerClient.flatMap(containerAsyncClient ->
