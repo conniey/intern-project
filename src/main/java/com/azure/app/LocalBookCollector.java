@@ -91,7 +91,7 @@ final class LocalBookCollector implements BookCollection {
         }
         URI savedImage = saveImage(imageFile, imagePath, title);
         Book book = new Book(title, author, savedImage);
-        duplicateBook(book);
+        duplicateBook(book, imageFile, imagePath);
         if (book.checkBook()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
@@ -110,22 +110,19 @@ final class LocalBookCollector implements BookCollection {
      *
      * @param bookToCompare
      */
-    private void duplicateBook(Book bookToCompare) {
+    private void duplicateBook(Book bookToCompare, File imagePath, File newImage) {
         //Checks to see if the book has a duplicate, if so it'll delete it so it can be overwritten
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
                 Book imageToDelete = Constants.SERIALIZER.fromJSONtoBook(x);
-                new File(imageToDelete.getCover()).delete();
+                Paths.get(System.getProperty("user.dir"),
+                    imageToDelete.getCover().getPath()).toFile().delete();
+                saveImage(imagePath, newImage, bookToCompare.getTitle());
+                return true;
             }
             return false;
         });
-    }
-
-    private long checkImages(URI saved) {
-        String path = saved.getPath().substring(0, saved.getPath().lastIndexOf("."));
-        Flux<Book> imageFind = jsonBooks.filter(x -> x.getCover().getPath().contains(path));
-        return imageFind.count().block();
     }
 
     private URI saveImage(File directory, File imagePath, String title) {
@@ -138,21 +135,10 @@ final class LocalBookCollector implements BookCollection {
             BufferedImage bufferedImage = ImageIO.read(imagePath);
             String safeTitle = title.replace(' ', '-');
             File image = new File(Paths.get(directory.getPath(), safeTitle + "." + extension).toString());
-            String path = image.getAbsolutePath();
-            File copyImage = new File(path.substring(0, path.lastIndexOf("."))
-                + "_" + checkImages(image.toURI()) + "." + extension);
-            if (image.exists()) {
-                if (ImageIO.write(bufferedImage, extension, copyImage)) {
-                    URI saved = copyImage.toURI();
-                    URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
-                    return relative;
-                }
-            } else {
-                if (ImageIO.write(bufferedImage, extension, image)) {
-                    URI saved = image.toURI();
-                    URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
-                    return relative;
-                }
+            if (ImageIO.write(bufferedImage, extension, image)) {
+                URI saved = image.toURI();
+                URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
+                return relative;
             }
         } catch (IOException ex) {
             logger.error("Error saving image: ", ex);

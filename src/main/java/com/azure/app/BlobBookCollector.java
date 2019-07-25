@@ -253,7 +253,7 @@ public class BlobBookCollector implements BookCollection {
                     newFile.createNewFile();
                 } catch (IOException e) {
                     logger.error("Exception creating the file: ", e);
-                    return Mono.error(new IOException("Exception creating the file."));
+                    return Mono.error(e);
                 }
                 return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(Mono.fromCallable(() ->
                     newFile.getAbsolutePath()));

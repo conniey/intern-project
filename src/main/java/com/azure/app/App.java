@@ -13,10 +13,7 @@ import reactor.core.publisher.Mono;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A library application that keeps track of books using Azure services.
@@ -24,7 +21,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class App {
     private static final int INVALID = -1;
     private static final Scanner SCANNER = new Scanner(System.in);
-    private static final AtomicReference<List<Book>> AR_REFERENCE = new AtomicReference<>();
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollection bookCollector;
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
@@ -59,6 +55,7 @@ public class App {
             bookCollector = bookCollectionMono.block();
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
+            return;
         }
         System.out.print("Welcome! ");
         int choice;
@@ -78,16 +75,14 @@ public class App {
                     System.out.println("Status: " + description);
                     break;
                 case 3:
-                    boolean notEmpty = bookCollector.hasBooks().block();
-                    if (notEmpty) {
+                    if (bookCollector.hasBooks().block()) {
                         System.out.print(findBook().block());
                     } else {
                         System.out.println("There are no books to find.");
                     }
                     break;
                 case 4:
-                    notEmpty = bookCollector.hasBooks().block();
-                    if (notEmpty) {
+                    if (bookCollector.hasBooks().block()) {
                         deleteBook().block();
                     } else {
                         System.out.println("There are no books to delete");
@@ -117,12 +112,10 @@ public class App {
         Flux<Book> book = bookCollector.getBooks();
         return book.collectList().map(list -> {
             if (list.isEmpty()) {
-                AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books.");
                 return list;
             }
             System.out.println("Here are all the books you have: ");
-            AR_REFERENCE.set(list);
             for (int i = 0; i < list.size(); i++) {
                 Book book1 = list.get(i);
                 System.out.println(i + 1 + ". " + book1);
@@ -241,11 +234,9 @@ public class App {
         Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
             if (list.isEmpty()) {
-                AR_REFERENCE.set(Collections.emptyList());
                 System.out.println("There are no books with that title.");
                 return list;
             }
-            AR_REFERENCE.set(list);
             if (list.size() == 1) {
                 System.out.println("Here is a matching book.");
                 System.out.println(" * " + list.get(0));
