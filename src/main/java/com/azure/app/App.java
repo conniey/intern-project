@@ -192,11 +192,11 @@ public class App {
         }
         return booksToFind.collectList().flatMap(list -> {
             if (list.isEmpty()) {
-                System.out.printf("There are no books %s.\n", option.contentEquals("title") ? "with that title" :
-                    "by that author");
+                System.out.printf("There are no books %s.\n", option.contentEquals("title") ? "with that title"
+                    : "by that author");
             } else if (list.size() == 1) {
-                System.out.printf("Here is a book %s %s.\n", option.contentEquals("title") ? "titled" :
-                    "by", input);
+                System.out.printf("Here is a book %s %s.\n", option.contentEquals("title") ? "titled"
+                    : "by", input);
                 System.out.println(" * " + list.get(0));
                 System.out.println("Would you like to view it?");
                 String choice = getYesOrNo();
@@ -206,9 +206,9 @@ public class App {
                     );
                 }
             } else {
-                System.out.printf("Here are books %s %s. Please enter the number you wish to view." +
-                    " (Enter \"Q\" to return to menu.)\n", option.contentEquals("title") ? "titled" :
-                    "by", input);
+                System.out.printf("Here are books %s %s. Please enter the number you wish to view."
+                    + " (Enter \"Q\" to return to menu.)\n", option.contentEquals("title") ? "titled"
+                    : "by", input);
                 for (int i = 0; i < list.size(); i++) {
                     Book book1 = list.get(i);
                     System.out.println(i + 1 + ". " + book1);
