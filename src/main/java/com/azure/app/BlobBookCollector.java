@@ -170,6 +170,36 @@ public class BlobBookCollector implements BookCollection {
         return new String[]{blobName, blobFirstName, blobLastName};
     }
 
+    @Override
+    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
+        if (saveCover == 1) {
+            return deleteBook(oldBook).then(
+                saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover()));
+        } else {
+            String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
+            Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
+                containerAsyncClient.listBlobsFlat().filter(blobItem -> blobItem.name().contains(blobConversion[2] + "/"
+                    + blobConversion[1]
+                    + "/" + blobConversion[0] + "."))).elementAt(0);
+            return imageContainerClient.flatMap(containerAsyncClient ->
+                file.flatMap(blobItem -> {
+                    final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
+                    String property = "java.io.tmpdir";
+                    String tempDir = System.getProperty(property);
+                    File newFile = new File(tempDir + blobItem.name().
+                        substring(blobItem.name().lastIndexOf("/") + 1));
+                    try {
+                        newFile.createNewFile();
+                    } catch (IOException e) {
+                        logger.error("Exception creating the file: ", e);
+                        return Mono.error(e);
+                    }
+                    return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(deleteBook(oldBook)).then(saveBook(newBook.getTitle(),
+                        newBook.getAuthor(), newFile.toURI()));
+                }));
+        }
+    }
+
     /**
      * Deletes the book and the file based off its information.
      *
@@ -262,7 +292,7 @@ public class BlobBookCollector implements BookCollection {
         Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
             containerAsyncClient.listBlobsFlat().filter(blobItem -> blobItem.name().contains(blobConversion[2] + "/"
                 + blobConversion[1]
-                + "/" + blobConversion[0]))).elementAt(0);
+                + "/" + blobConversion[0] + "."))).elementAt(0);
         return imageContainerClient.flatMap(containerAsyncClient ->
             file.flatMap(blobItem -> {
                 final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());

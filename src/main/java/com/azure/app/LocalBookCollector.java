@@ -105,6 +105,11 @@ final class LocalBookCollector implements BookCollection {
         return Mono.error(new IllegalStateException("Unsuccessful save"));
     }
 
+    @Override
+    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
+        return null;
+    }
+
     /**
      * Deletes the old book if the new book has a the same title and author
      *

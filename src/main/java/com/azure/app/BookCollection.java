@@ -28,6 +28,8 @@ interface BookCollection {
      */
     Mono<Void> saveBook(String title, Author author, URI path);
 
+    Mono<Void> editBook(Book oldBook, Book newBook, int saveCover);
+
     /**
      * Deletes the book and the file based off its information.
      *
