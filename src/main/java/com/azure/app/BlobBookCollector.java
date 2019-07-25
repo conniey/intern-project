@@ -277,7 +277,7 @@ public class BlobBookCollector implements BookCollection {
                     return Mono.error(e);
                 }
                 return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(Mono.fromCallable(() ->
-                    newFile.getAbsolutePath()));
+                    newFile.getAbsolutePath() + "\n\tThis was downloaded and saved to the user's TEMP folder."));
             }));
     }
 }
