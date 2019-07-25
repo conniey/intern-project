@@ -93,7 +93,6 @@ class JsonHandler {
         }
     }
 
-
     /**
      * Converts a Book object to a JSON file and stores it in a file.
      *
@@ -111,5 +110,4 @@ class JsonHandler {
         }
         return null;
     }
-
 }
