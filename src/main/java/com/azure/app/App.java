@@ -75,7 +75,7 @@ public class App {
                     System.out.println("Status: " + description);
                     break;
                 case 3:
-                    System.out.print(edit().block());
+                    System.out.println(edit().block());
                     break;
                 case 4:
                     if (bookCollector.hasBooks().block()) {
@@ -278,7 +278,6 @@ public class App {
     }
 
     private static Mono<String> deleteBook() {
-        Mono<Book> bookToDelete = grabBook("delete");
         return grabBook("delete").flatMap(book ->
         {
             if (book.getTitle() == null) {

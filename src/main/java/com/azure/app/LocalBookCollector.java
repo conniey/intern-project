@@ -107,7 +107,13 @@ final class LocalBookCollector implements BookCollection {
 
     @Override
     public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
-        return null;
+        if (saveCover == 1) {// Overwriting/changing cover
+            return saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover());
+        } else {
+            File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
+            return saveBook(newBook.getTitle(), newBook.getAuthor(), image.toURI()).then(
+                deleteBook(oldBook));
+        }
     }
 
     /**
