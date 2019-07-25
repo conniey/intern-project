@@ -110,7 +110,7 @@ public class BlobBookCollector implements BookCollection {
      */
     @Override
     public Flux<Book> getBooks() {
-        return bookContainerClient.flatMapMany(container -> container.listBlobsFlat().flatMap(blob -> {
+        return bookContainerClient.flatMapMany(container -> container.listBlobsFlat().flatMapSequential(blob -> {
             final BlockBlobAsyncClient blockBlobClient = container.getBlockBlobAsyncClient(blob.name());
             return blockBlobClient.download().flatMapMany(byteBuff -> byteBuff.value().map(byteBuffer -> {
                 Book b = Constants.SERIALIZER.fromJSONtoBook(byteBuffer);
