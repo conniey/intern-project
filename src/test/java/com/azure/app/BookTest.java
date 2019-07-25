@@ -31,6 +31,12 @@ public class BookTest {
     }
 
     //TEST INVALID BOOKS
+
+    /**
+     * Gathers the data for the Book object that'll be tested
+     *
+     * @return Collection of Book objects
+     */
     @Parameterized.Parameters
     public static Collection<Book[]> data() {
         //Arrange
@@ -47,11 +53,20 @@ public class BookTest {
     private Book bInput;
     private boolean expected;
 
+    /**
+     * Constructor for the BookTest to pass the parameters and set the
+     * expected result
+     *
+     * @param b - one of the faulty Book objects
+     */
     public BookTest(Book b) {
         this.bInput = b;
         this.expected = false;
     }
 
+    /**
+     * Verifies that none of the parameters pass the checkBook test
+     */
     @Test
     public void testInvalidBooks() {
         assertEquals(expected, bInput.checkBook());
