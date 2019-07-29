@@ -256,8 +256,6 @@ public class LocalBookCollectorTest {
      */
     @Test
     public void testSavingNewBook() {
-        //Arrange
-        boolean result;
         //Act
         StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Wonder.png").toString()).toURI()))
