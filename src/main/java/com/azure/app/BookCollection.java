@@ -69,4 +69,13 @@ interface BookCollection {
      * @return URI of the image path
      */
     URI retrieveURI(String path);
+
+    /**
+     * Grab a String containing the absolute path to the book's cover location
+     * If it's in Azure Database storage, the cover will be downloaded to the temporary directory.
+     *
+     * @param book - Book object of whose cover you want to retrieve
+     * @return {@Link Mono} holds a String of the absolute path
+     */
+    Mono<String> grabCoverImage(Book book);
 }
