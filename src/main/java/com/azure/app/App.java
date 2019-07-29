@@ -83,7 +83,7 @@ public class App {
                     break;
                 case 4:
                     if (bookCollector.hasBooks().block()) {
-                        System.out.println(deleteBook().block());
+                        System.out.print(deleteBook().block());
                     } else {
                         System.out.println("There are no books to delete");
                     }
@@ -225,7 +225,7 @@ public class App {
                     );
                 }
             }
-            return Mono.just("");
+            return Mono.just("\n");
         });
     }
 
@@ -270,11 +270,11 @@ public class App {
     private static Mono<String> deleteBookHelper(Book b) {
         if (b.checkBook()) {
             Mono<String> deleteBook = bookCollector.deleteBook(b).
-                then(Mono.just("Book was deleted."))
-                .onErrorResume(error -> Mono.just("Error. Book wasn't deleted."));
+                then(Mono.just("Book was deleted.\n"))
+                .onErrorResume(error -> Mono.just("Error. Book wasn't deleted.\n"));
             return deleteBook;
         }
-        return Mono.just("Book wasn't deleted.");
+        return Mono.just("Book wasn't deleted.\n");
     }
 
     private static String getYesOrNo() {
