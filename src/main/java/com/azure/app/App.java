@@ -83,7 +83,7 @@ public class App {
                     break;
                 case 4:
                     if (bookCollector.hasBooks().block()) {
-                        System.out.print(deleteBook().block());
+                      System.out.print(deleteBook().block());
                     } else {
                         System.out.println("There are no books to delete");
                     }
@@ -256,8 +256,8 @@ public class App {
                     choice = OPTION_CHECKER.checkOption(option, list.size());
                 } while (choice == INVALID);
                 if (choice != 0) {
-                    System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
-                    String delete = SCANNER.nextLine();
+                    System.out.println("Delete \"" + list.get(choice - 1) + "\"? ");
+                    String delete = getYesOrNo();
                     if (delete.equalsIgnoreCase("y")) {
                         return deleteBookHelper(list.get(choice - 1));
                     }
