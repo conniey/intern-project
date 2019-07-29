@@ -83,7 +83,7 @@ public class App {
                     break;
                 case 4:
                     if (bookCollector.hasBooks().block()) {
-                      System.out.print(deleteBook().block());
+                        System.out.print(deleteBook().block());
                     } else {
                         System.out.println("There are no books to delete");
                     }

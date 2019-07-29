@@ -31,7 +31,6 @@ public class BookTest {
     }
 
     //TEST INVALID BOOKS
-
     /**
      * Gathers the data for the Book object that'll be tested
      *
