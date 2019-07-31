@@ -328,7 +328,7 @@ public class App {
         });
     }
 
-    private static int getBook(List<Book> allBooks) {
+  private static int getBook(List<Book> allBooks) {
         for (int i = 0; i < allBooks.size(); i++) {
             System.out.println(i + 1 + ". " + allBooks.get(i));
         }
