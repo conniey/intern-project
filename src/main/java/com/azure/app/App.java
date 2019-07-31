@@ -65,7 +65,7 @@ public class App {
         do {
             showMenu();
             String option = SCANNER.nextLine();
-            choice = OPTION_CHECKER.checkOption(option, 5);
+            choice = OPTION_CHECKER.checkOption(option, 6);
             switch (choice) {
                 case 1:
                     listBooks().block();
