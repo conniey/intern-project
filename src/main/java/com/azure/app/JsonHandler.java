@@ -99,7 +99,7 @@ class JsonHandler {
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(b);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            logger.error("Couldn't parse the Book to a JSON object: ", e);
         }
         return "";
     }
@@ -117,7 +117,7 @@ class JsonHandler {
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
             return mapper.writeValueAsBytes(book);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Couldn't find the file: ", e);
         }
         return null;
     }
