@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
@@ -57,7 +60,6 @@ public class CosmosBookCollector implements BookCollection {
                 .build();
         });
     }
-
 
     @Override
     public Flux<Book> getBooks() {

@@ -181,9 +181,9 @@ public class BlobBookCollector implements BookCollection {
                     + blobConversion[1]
                     + "/" + blobConversion[0] + ".")));
             Mono<BlobItem> bookMono = file.hasElements().flatMap(notEmpty -> {
-                if (notEmpty)
+                if (notEmpty) {
                     return file.elementAt(0);
-                else {
+                } else {
                     return Mono.error(new IllegalStateException("Cover image not found."));
                 }
             });

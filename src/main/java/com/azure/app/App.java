@@ -282,8 +282,7 @@ public class App {
     }
 
     private static Mono<String> deleteBook() {
-        return grabBook("delete").flatMap(book ->
-        {
+        return grabBook("delete").flatMap(book -> {
             if (book.getTitle() == null) {
                 return Mono.just("");
             }
@@ -294,8 +293,8 @@ public class App {
     }
 
     private static Mono<Book> grabBook(String modifier) {
-        System.out.printf("Please enter the title of the book %s: ", modifier.contentEquals("delete") ?
-            "to delete" : "to edit");
+        System.out.printf("Please enter the title of the book %s: ", modifier.contentEquals("delete")
+            ? "to delete" : "to edit");
         Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
         return booksToDelete.collectList().map(list -> {
             if (list.isEmpty()) {
@@ -305,8 +304,8 @@ public class App {
             if (list.size() == 1) {
                 System.out.println("Here is a matching book.");
                 System.out.println(" * " + list.get(0));
-                System.out.printf("Would you like to %s it? ", modifier.contentEquals("delete") ?
-                    "delete" : "edit");
+                System.out.printf("Would you like to %s it? ", modifier.contentEquals("delete")
+                    ? "delete" : "edit");
                 String choice = getYesOrNo();
                 if (choice.equalsIgnoreCase("Y")) {
                     return list.get(0);
