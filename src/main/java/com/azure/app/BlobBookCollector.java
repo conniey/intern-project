@@ -239,7 +239,7 @@ public class BlobBookCollector implements BookCollection {
             -> containerAsyncClient.listBlobsFlat().filter(blobItem ->
             blobItem.name().contains(blobConversion[2] + "/"
                 + blobConversion[1]
-                + "/" + blobConversion[0]))).elementAt(0);
+                + "/" + blobConversion[0] + "."))).elementAt(0);
         return imageContainerClient.flatMap(containerAsyncClient ->
             file.flatMap(blobItem -> {
                 final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
