@@ -90,7 +90,7 @@ public class App {
                     break;
                 case 5:
                     if (bookCollector.hasBooks().block()) {
-                        System.out.print(deleteBook().block());
+                        System.out.println(deleteBook().block());
                     } else {
                         System.out.println("There are no books to delete");
                     }
@@ -277,7 +277,7 @@ public class App {
                     );
                 }
             }
-            return Mono.just("\n");
+            return Mono.just("");
         });
     }
 
@@ -296,7 +296,7 @@ public class App {
         System.out.printf("Please enter the title of the book %s: ", modifier.contentEquals("delete")
             ? "to delete" : "to edit");
         Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
-        return booksToDelete.collectList().flatMap(list -> {
+        return booksToDelete.collectList().map(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
                 return new Book(null, null, null);
@@ -328,7 +328,7 @@ public class App {
         });
     }
 
-  private static int getBook(List<Book> allBooks) {
+    private static int getBook(List<Book> allBooks) {
         for (int i = 0; i < allBooks.size(); i++) {
             System.out.println(i + 1 + ". " + allBooks.get(i));
         }

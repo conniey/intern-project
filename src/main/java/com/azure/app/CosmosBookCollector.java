@@ -31,16 +31,12 @@ import java.util.List;
 public class CosmosBookCollector implements BookCollection {
     private static Logger logger = LoggerFactory.getLogger(CosmosBookCollector.class);
     private Mono<AsyncDocumentClient> asyncClient;
-    private String collectionLink;
     private Observable<Database> databaseCache;
     private Observable<DocumentCollection> bookCollection;
 
     CosmosBookCollector(ConfigurationAsyncClient client) {
         ConnectionPolicy policy = new ConnectionPolicy();
         policy.setConnectionMode(ConnectionMode.Direct);
-        String databaseName = "book-inventory";
-        String collectionName = "book-info";
-        collectionLink = String.format("/dbs/%s/colls/%s", databaseName, collectionName);
         asyncClient = client.listSettings(new SettingSelector().keys("COSMOS*")).collectList().map(list -> {
             String endpoint = null;
             String masterKey = null;

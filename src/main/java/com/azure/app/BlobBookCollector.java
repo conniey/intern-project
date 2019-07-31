@@ -57,7 +57,10 @@ public class BlobBookCollector implements BookCollection {
                     url = configurationSetting.value();
                 }
             }
+            assert accountName != null;
+            assert accountKey != null;
             SharedKeyCredential credential = new SharedKeyCredential(accountName, accountKey);
+            assert url != null;
             String endPoint = String.format(Locale.ROOT, url);
             return StorageClient.storageClientBuilder()
                 .endpoint(endPoint)
@@ -96,10 +99,8 @@ public class BlobBookCollector implements BookCollection {
     public Flux<Book> getBooks() {
         return bookContainerClient.flatMapMany(container -> container.listBlobsFlat().flatMapSequential(blob -> {
             final BlockBlobAsyncClient blockBlobClient = container.getBlockBlobAsyncClient(blob.name());
-            return blockBlobClient.download().flatMapMany(byteBuff -> byteBuff.value().map(byteBuffer -> {
-                Book b = Constants.SERIALIZER.fromJSONtoBook(byteBuffer);
-                return b;
-            }));
+            return blockBlobClient.download().flatMapMany(byteBuff -> byteBuff.value().map(byteBuffer ->
+                Constants.SERIALIZER.fromJSONtoBook(byteBuffer)));
         }));
     }
 
@@ -177,9 +178,12 @@ public class BlobBookCollector implements BookCollection {
         } else {
             String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
             Flux<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
-                containerAsyncClient.listBlobsFlat().filter(blobItem -> blobItem.name().contains(blobConversion[2] + "/"
-                    + blobConversion[1]
-                    + "/" + blobConversion[0] + ".")));
+                containerAsyncClient.listBlobsFlat().filter(blobItem -> {
+                    assert blobConversion != null;
+                    return blobItem.name().contains(blobConversion[2] + "/"
+                        + blobConversion[1]
+                        + "/" + blobConversion[0] + ".");
+                }));
             Mono<BlobItem> bookMono = file.hasElements().flatMap(notEmpty -> {
                 if (notEmpty) {
                     return file.elementAt(0);
@@ -225,7 +229,8 @@ public class BlobBookCollector implements BookCollection {
     public Mono<Void> deleteBook(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
         return deleteImage(book).then(bookContainerClient.flatMap(containerAsyncClient -> {
-                final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobConversion[2] + "/"
+            assert blobConversion != null;
+            final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobConversion[2] + "/"
                     + blobConversion[1]
                     + "/" + blobConversion[0] + ".json");
                 return blob.delete().then();
@@ -303,9 +308,12 @@ public class BlobBookCollector implements BookCollection {
     public Mono<String> grabCoverImage(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
         Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
-            containerAsyncClient.listBlobsFlat().filter(blobItem -> blobItem.name().contains(blobConversion[2] + "/"
-                + blobConversion[1]
-                + "/" + blobConversion[0] + "."))).elementAt(0);
+            containerAsyncClient.listBlobsFlat().filter(blobItem -> {
+                assert blobConversion != null;
+                return blobItem.name().contains(blobConversion[2] + "/"
+                    + blobConversion[1]
+                    + "/" + blobConversion[0] + ".");
+            })).elementAt(0);
         return imageContainerClient.flatMap(containerAsyncClient ->
             file.flatMap(blobItem -> {
                 final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
