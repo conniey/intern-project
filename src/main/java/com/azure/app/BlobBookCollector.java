@@ -3,8 +3,8 @@
 
 package com.azure.app;
 
+import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
-import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
 import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import com.azure.data.appconfiguration.models.SettingSelector;
 import com.azure.storage.blob.BlockBlobAsyncClient;
@@ -27,8 +27,6 @@ import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,65 +40,54 @@ public class BlobBookCollector implements BookCollection {
     private Mono<ContainerAsyncClient> bookContainerClient;
     private static Logger logger = LoggerFactory.getLogger(BlobBookCollector.class);
 
-    BlobBookCollector() {
+    BlobBookCollector(ConfigurationAsyncClient client) {
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
-        String connectionString = System.getenv("AZURE_APPCONFIG");
-        if (connectionString == null || connectionString.isEmpty()) {
-            System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
-                + " Please set it.");
-            return;
-        }
-        ConfigurationAsyncClient client;
-        try {
-            client = ConfigurationAsyncClient.builder()
-                .credentials(new ConfigurationClientCredentials(connectionString))
-                .build();
-            SettingSelector keys = new SettingSelector().keys("BLOB*");
-            storageClient = client.listSettings(keys).collectList().map(list -> {
-                String accountName = null;
-                String accountKey = null;
-                String url = null;
-                for (ConfigurationSetting configurationSetting : list) {
-                    String key = configurationSetting.key();
-                    if (key.contentEquals("BLOB_ACCOUNT_NAME")) {
-                        accountName = configurationSetting.value();
-                    } else if (key.contentEquals("BLOB_KEY")) {
-                        accountKey = configurationSetting.value();
-                    } else {
-                        url = configurationSetting.value();
-                    }
+        SettingSelector keys = new SettingSelector().keys("BLOB*");
+        storageClient = client.listSettings(keys).collectList().map(list -> {
+            String accountName = null;
+            String accountKey = null;
+            String url = null;
+            for (ConfigurationSetting configurationSetting : list) {
+                String key = configurationSetting.key();
+                if (key.contentEquals("BLOB_ACCOUNT_NAME")) {
+                    accountName = configurationSetting.value();
+                } else if (key.contentEquals("BLOB_KEY")) {
+                    accountKey = configurationSetting.value();
+                } else {
+                    url = configurationSetting.value();
                 }
-                SharedKeyCredential credential = new SharedKeyCredential(accountName, accountKey);
-                String endPoint = String.format(Locale.ROOT, url);
-                return StorageClient.storageClientBuilder()
-                    .endpoint(endPoint)
-                    .credential(credential)
-                    .buildAsyncClient();
+            }
+            assert accountName != null;
+            assert accountKey != null;
+            SharedKeyCredential credential = new SharedKeyCredential(accountName, accountKey);
+            assert url != null;
+            String endPoint = String.format(Locale.ROOT, url);
+            return StorageClient.storageClientBuilder()
+                .endpoint(endPoint)
+                .credential(credential)
+                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
+                .buildAsyncClient();
+        });
+        bookContainerClient = storageClient.flatMap(container -> {
+            final ContainerAsyncClient temp = container.getContainerAsyncClient("book-library");
+            return temp.exists().flatMap(exists -> {
+                if (exists.value()) {
+                    return Mono.just(temp);
+                } else {
+                    return temp.create().then(Mono.just(temp));
+                }
             });
-            bookContainerClient = storageClient.flatMap(container -> {
-                final ContainerAsyncClient temp = container.getContainerAsyncClient("book-library");
-                return temp.exists().flatMap(exists -> {
-                    if (exists.value()) {
-                        return Mono.just(temp);
-                    } else {
-                        return temp.create().then(Mono.just(temp));
-                    }
-                });
+        });
+        imageContainerClient = storageClient.flatMap(container -> {
+            final ContainerAsyncClient temp = container.getContainerAsyncClient("book-covers");
+            return temp.exists().flatMap(exists -> {
+                if (exists.value()) {
+                    return Mono.just(temp);
+                } else {
+                    return temp.create().then(Mono.just(temp));
+                }
             });
-            imageContainerClient = storageClient.flatMap(container -> {
-                final ContainerAsyncClient temp = container.getContainerAsyncClient("book-covers");
-                return temp.exists().flatMap(exists -> {
-                    if (exists.value()) {
-                        return Mono.just(temp);
-                    } else {
-                        return temp.create().then(Mono.just(temp));
-                    }
-                });
-            });
-        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
-            logger.error("Exception with App Configuration: ", e);
-            return;
-        }
+        });
     }
 
     /**
@@ -112,16 +99,19 @@ public class BlobBookCollector implements BookCollection {
     public Flux<Book> getBooks() {
         return bookContainerClient.flatMapMany(container -> container.listBlobsFlat().flatMapSequential(blob -> {
             final BlockBlobAsyncClient blockBlobClient = container.getBlockBlobAsyncClient(blob.name());
-            return blockBlobClient.download().flatMapMany(byteBuff -> byteBuff.value().map(byteBuffer -> {
-                Book b = Constants.SERIALIZER.fromJSONtoBook(byteBuffer);
-                return b;
-            }));
+            return blockBlobClient.download().flatMapMany(byteBuff -> byteBuff.value().map(byteBuffer ->
+                Constants.SERIALIZER.fromJSONtoBook(byteBuffer)));
         }));
     }
 
     @Override
     public Mono<Void> saveBook(String title, Author author, URI path) {
-        File relativePath = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), new File(path).getName()).toFile();
+        String extension = FilenameUtils.getExtension(new File(path).getName());
+        String[] imageBlobInfo = getBlobInformation(author, title + "." + extension);
+        if (imageBlobInfo == null) {
+            return Mono.error(new IllegalArgumentException("Error encoding blob name"));
+        }
+        File relativePath = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), imageBlobInfo[0]).toFile();
         URI saved = relativePath.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         byte[] bookFile = Constants.SERIALIZER.writeJSON(new Book(title, author, relative));
@@ -142,7 +132,7 @@ public class BlobBookCollector implements BookCollection {
     private Mono<Void> saveImage(File imagePath, Author author, String title) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
-            return Mono.error(new IllegalStateException("Error. Wrong file formtat for image"));
+            return Mono.error(new IllegalStateException("Error. Wrong file format for image"));
         }
         String[] blobInfo = getBlobInformation(author, title + "." + extension);
         if (blobInfo == null) {
@@ -163,11 +153,68 @@ public class BlobBookCollector implements BookCollection {
             blobLastName = URLEncoder.encode(author.getLastName().toLowerCase(), StandardCharsets.US_ASCII.toString());
             blobName = URLEncoder.encode(fileName, StandardCharsets.US_ASCII.toString());
             blobFirstName = URLEncoder.encode(author.getFirstName().toLowerCase(), StandardCharsets.US_ASCII.toString());
+            String apostrophe = URLEncoder.encode("'", StandardCharsets.US_ASCII.toString());
+            if (blobFirstName.contains(apostrophe)) {
+                blobFirstName = blobFirstName.replace(apostrophe, "'");
+            }
+            if (blobLastName.contains(apostrophe)) {
+                blobLastName = blobLastName.replace(apostrophe, "'");
+            }
+            if (blobName.contains(apostrophe)) {
+                blobName = blobName.replace(apostrophe, "'");
+            }
         } catch (UnsupportedEncodingException e) {
             logger.error("Error encoding names: ", e);
             return null;
         }
         return new String[]{blobName, blobFirstName, blobLastName};
+    }
+
+    @Override
+    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
+        if (saveCover == 1) {
+            return deleteBook(oldBook).then(
+                saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover()));
+        } else {
+            String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
+            Flux<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
+                containerAsyncClient.listBlobsFlat().filter(blobItem -> {
+                    assert blobConversion != null;
+                    return blobItem.name().contains(blobConversion[2] + "/"
+                        + blobConversion[1]
+                        + "/" + blobConversion[0] + ".");
+                }));
+            Mono<BlobItem> bookMono = file.hasElements().flatMap(notEmpty -> {
+                if (notEmpty) {
+                    return file.elementAt(0);
+                } else {
+                    return Mono.error(new IllegalStateException("Cover image not found."));
+                }
+            });
+            return imageContainerClient.flatMap(containerAsyncClient ->
+                bookMono.flatMap(blobItem -> {
+                    final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
+                    String property = "java.io.tmpdir";
+                    String tempDir = System.getProperty(property);
+                    String newFileName;
+                    try {
+                        newFileName = URLEncoder.encode(newBook.getTitle(), StandardCharsets.US_ASCII.toString());
+                    } catch (UnsupportedEncodingException e) {
+                        logger.error("Error encoding file: ", e);
+                        return Mono.error(e);
+                    }
+                    String extension = blobItem.name().substring(blobItem.name().lastIndexOf("."));
+                    File newFile = new File(tempDir + newFileName + extension);
+                    try {
+                        newFile.createNewFile();
+                    } catch (IOException e) {
+                        logger.error("Exception creating the file: ", e);
+                        return Mono.error(e);
+                    }
+                    return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(deleteBook(oldBook)).then(saveBook(newBook.getTitle(),
+                        newBook.getAuthor(), newFile.toURI()));
+                }));
+        }
     }
 
     /**
@@ -182,7 +229,8 @@ public class BlobBookCollector implements BookCollection {
     public Mono<Void> deleteBook(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
         return deleteImage(book).then(bookContainerClient.flatMap(containerAsyncClient -> {
-                final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobConversion[2] + "/"
+            assert blobConversion != null;
+            final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobConversion[2] + "/"
                     + blobConversion[1]
                     + "/" + blobConversion[0] + ".json");
                 return blob.delete().then();
@@ -196,7 +244,7 @@ public class BlobBookCollector implements BookCollection {
             -> containerAsyncClient.listBlobsFlat().filter(blobItem ->
             blobItem.name().contains(blobConversion[2] + "/"
                 + blobConversion[1]
-                + "/" + blobConversion[0]))).elementAt(0);
+                + "/" + blobConversion[0] + "."))).elementAt(0);
         return imageContainerClient.flatMap(containerAsyncClient ->
             file.flatMap(blobItem -> {
                 final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
@@ -260,9 +308,12 @@ public class BlobBookCollector implements BookCollection {
     public Mono<String> grabCoverImage(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
         Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
-            containerAsyncClient.listBlobsFlat().filter(blobItem -> blobItem.name().contains(blobConversion[2] + "/"
-                + blobConversion[1]
-                + "/" + blobConversion[0]))).elementAt(0);
+            containerAsyncClient.listBlobsFlat().filter(blobItem -> {
+                assert blobConversion != null;
+                return blobItem.name().contains(blobConversion[2] + "/"
+                    + blobConversion[1]
+                    + "/" + blobConversion[0] + ".");
+            })).elementAt(0);
         return imageContainerClient.flatMap(containerAsyncClient ->
             file.flatMap(blobItem -> {
                 final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
