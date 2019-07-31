@@ -3,6 +3,7 @@
 
 package com.azure.app;
 
+import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
 import org.slf4j.Logger;
@@ -42,13 +43,14 @@ public class App {
         try {
             client = ConfigurationAsyncClient.builder()
                 .credentials(new ConfigurationClientCredentials(connectionString))
+                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .build();
             Mono<BookCollection> bookCollectionMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
                 String storageType = input.value().value();
                 if (storageType.equalsIgnoreCase("Local")) {
                     return Mono.just(new LocalBookCollector(System.getProperty("user.dir")));
                 } else if (storageType.equalsIgnoreCase("BlobStorage")) {
-                    return Mono.just(new BlobBookCollector());
+                    return Mono.just(new BlobBookCollector(client));
                 } else {
                     return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
                 }
@@ -72,7 +74,9 @@ public class App {
                     final Mono<String> savedBookMono = addBook()
                         .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
                     final String description = savedBookMono.block();
-                    System.out.println("Status: " + description);
+                    if (!description.isEmpty()) {
+                        System.out.println("Status: " + description);
+                    }
                     break;
                 case 3:
                     System.out.println(edit().block());
