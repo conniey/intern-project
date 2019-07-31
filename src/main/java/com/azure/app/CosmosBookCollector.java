@@ -66,7 +66,7 @@ public class CosmosBookCollector implements BookCollection {
 
     private Mono<Void> setupDatabase(String lastName) {
         Database databaseDefinition = new Database();
-        databaseDefinition.setId(lastName);
+        databaseDefinition.setId(generateID(lastName));
         return asyncClient.map(client -> {
             Observable<List<FeedResponse<Database>>> listObservable = client.queryDatabases("SELECT * FROM root r WHERE r.id='" + lastName
                 + "'", null).toList();
@@ -80,7 +80,7 @@ public class CosmosBookCollector implements BookCollection {
 
     private Mono<Void> setupCollection(String firstName) {
         DocumentCollection collection = new DocumentCollection();
-        collection.setId(firstName);
+        collection.setId(generateID(firstName));
         return asyncClient.map(client -> {
             bookCollection = databaseCache.flatMap(databaseLink -> {
                 Observable<List<FeedResponse<DocumentCollection>>> collectionList = client
@@ -123,34 +123,23 @@ public class CosmosBookCollector implements BookCollection {
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
         Document bookDoc = new Document(Constants.SERIALIZER.toJson(book));
-        bookDoc.set("id", generateID(book));
+        bookDoc.set("id", generateID(title));
         return setupDatabase(author.getLastName()).then(setupCollection(author.getFirstName())).then(saveDocument(bookDoc));
     }
 
-    private String generateID(Book b) {
-        String lastName,
-            firstName,
-            title;
-        Author author = b.getAuthor();
+    private String generateID(String info) {
+        String id;
         try {
-            lastName = URLEncoder.encode(author.getLastName().toLowerCase(), StandardCharsets.US_ASCII.toString());
-            title = URLEncoder.encode(b.getTitle(), StandardCharsets.US_ASCII.toString());
-            firstName = URLEncoder.encode(author.getFirstName().toLowerCase(), StandardCharsets.US_ASCII.toString());
+            id = URLEncoder.encode(info, StandardCharsets.US_ASCII.toString());
             String apostrophe = URLEncoder.encode("'", StandardCharsets.US_ASCII.toString());
-            if (firstName.contains(apostrophe)) {
-                firstName = firstName.replace(apostrophe, "'");
-            }
-            if (lastName.contains(apostrophe)) {
-                lastName = lastName.replace(apostrophe, "'");
-            }
-            if (title.contains(apostrophe)) {
-                title = title.replace(apostrophe, "'");
+            if (info.contains(apostrophe)) {
+                id = id.replace(apostrophe, "'");
             }
         } catch (UnsupportedEncodingException e) {
             logger.error("Error encoding names: ", e);
             return null;
         }
-        return lastName + "-" + firstName + "-" + title;
+        return id;
     }
 
     @Override
