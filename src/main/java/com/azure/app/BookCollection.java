@@ -36,7 +36,7 @@ interface BookCollection {
      * true - Book was deleted
      * false - Book wasn't deleted
      */
-    Mono<Boolean> deleteBook(Book book);
+    Mono<Void> deleteBook(Book book);
 
     /**
      * Filters out the book based on the specified title.

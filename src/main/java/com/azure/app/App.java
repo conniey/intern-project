@@ -83,7 +83,7 @@ public class App {
                     break;
                 case 4:
                     if (bookCollector.hasBooks().block()) {
-                        deleteBook().block();
+                        System.out.print(deleteBook().block());
                     } else {
                         System.out.println("There are no books to delete");
                     }
@@ -225,17 +225,17 @@ public class App {
                     );
                 }
             }
-            return Mono.just("");
+            return Mono.just("\n");
         });
     }
 
-    private static Mono<Void> deleteBook() {
+    private static Mono<String> deleteBook() {
         System.out.println("Enter the title of the book to delete: ");
         Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
-        return booksToDelete.collectList().map(list -> {
+        return booksToDelete.collectList().flatMap(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
-                return list;
+                return Mono.just("");
             }
             if (list.size() == 1) {
                 System.out.println("Here is a matching book.");
@@ -243,7 +243,7 @@ public class App {
                 System.out.print("Would you like to delete it? ");
                 String choice = getYesOrNo();
                 if (choice.equalsIgnoreCase("Y")) {
-                    deleteBookHelper(list.get(0));
+                    return deleteBookHelper(list.get(0));
                 }
             } else {
                 System.out.println("Here are matching books. Enter the number to delete :  (Enter \"Q\" to return to menu.) ");
@@ -259,24 +259,22 @@ public class App {
                     System.out.println("Delete \"" + list.get(choice - 1) + "\"? ");
                     String delete = getYesOrNo();
                     if (delete.equalsIgnoreCase("y")) {
-                        deleteBookHelper(list.get(choice - 1));
+                        return deleteBookHelper(list.get(choice - 1));
                     }
                 }
             }
-            return list;
-        }).then();
+            return Mono.just("");
+        });
     }
 
-    private static void deleteBookHelper(Book b) {
+    private static Mono<String> deleteBookHelper(Book b) {
         if (b.checkBook()) {
-            bookCollector.deleteBook(b).subscribe(bookDeleted -> {
-                if (bookDeleted) {
-                    System.out.println("Book is deleted.");
-                } else {
-                    System.out.println("Error. Book wasn't deleted.");
-                }
-            });
+            Mono<String> deleteBook = bookCollector.deleteBook(b).
+                then(Mono.just("Book was deleted.\n"))
+                .onErrorResume(error -> Mono.just("Error. Book wasn't deleted.\n"));
+            return deleteBook;
         }
+        return Mono.just("Book wasn't deleted.\n");
     }
 
     private static String getYesOrNo() {
