@@ -51,6 +51,8 @@ public class App {
                     return Mono.just(new LocalBookCollector(System.getProperty("user.dir")));
                 } else if (storageType.equalsIgnoreCase("BlobStorage")) {
                     return Mono.just(new BlobBookCollector(client));
+                } else if (storageType.equalsIgnoreCase("Cosmos")) {
+                    return Mono.just(new CosmosBookCollector(client));
                 } else {
                     return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
                 }
@@ -103,7 +105,7 @@ public class App {
                     break;
             }
             System.out.println("------------------------------------------------");
-        } while (choice != 5);
+        } while (choice != 6);
     }
 
     private static Mono<String> edit() {

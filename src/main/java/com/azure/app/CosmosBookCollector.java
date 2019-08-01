@@ -33,6 +33,8 @@ public class CosmosBookCollector implements BookCollection {
     private Mono<AsyncDocumentClient> asyncClient;
     private Observable<Database> databaseCache;
     private Observable<DocumentCollection> bookCollection;
+    private String collectionLink;
+    private Flux<Book> cosmosBooks;
 
     CosmosBookCollector(ConfigurationAsyncClient client) {
         ConnectionPolicy policy = new ConnectionPolicy();
@@ -48,48 +50,67 @@ public class CosmosBookCollector implements BookCollection {
                     masterKey = list.get(i).value();
                 }
             }
-            return new AsyncDocumentClient.Builder()
+            AsyncDocumentClient asyncClient = new AsyncDocumentClient.Builder()
                 .withServiceEndpoint(endpoint)
                 .withMasterKeyOrResourceToken(masterKey)
                 .withConnectionPolicy(policy)
                 .withConsistencyLevel(ConsistencyLevel.Eventual)
                 .build();
+            Database databaseDefinition = new Database();
+            String databaseID = "book-inventory";
+            databaseDefinition.setId(databaseID);
+            DocumentCollection collection = new DocumentCollection();
+            String collectionID = "book-info";
+            collection.setId(collectionID);
+            Observable<List<FeedResponse<Database>>> listObservable = asyncClient.queryDatabases("SELECT * FROM root r WHERE r.id='" + databaseID
+                + "'", null).toList();
+            databaseCache = listObservable.flatMap(databases -> Observable.just(databases.get(0).getResults().get(0)))
+                .onErrorResumeNext(asyncClient.createDatabase(databaseDefinition, null)
+                    .map(ResourceResponse::getResource)).cache();
+            bookCollection = databaseCache.flatMap(datbaseLink -> {
+                Observable<List<FeedResponse<DocumentCollection>>> collections = asyncClient.queryCollections(datbaseLink.getSelfLink(), "SELECT * FROM root r where r.id = '" + collectionID + "'", null).toList();
+                return collections.flatMap(colList -> Observable.just(colList.get(0).getResults().get(0)))
+                    .onErrorResumeNext(asyncClient.createCollection(datbaseLink.getSelfLink(), collection, null)
+                        .map(item -> item.getResource()));
+            });
+            collectionLink = String.format("/dbs/%s/colls/%s", databaseID, collectionID);
+            cosmosBooks = Flux.empty();
+            return asyncClient;
         });
     }
 
     @Override
     public Flux<Book> getBooks() {
-        return null;
+        initializeBooks().block();
+        return cosmosBooks.sort(this::compare);
     }
 
-    private Mono<Void> setupDatabase(String lastName) {
-        Database databaseDefinition = new Database();
-        databaseDefinition.setId(generateID(lastName));
-        return asyncClient.map(client -> {
-            Observable<List<FeedResponse<Database>>> listObservable = client.queryDatabases("SELECT * FROM root r WHERE r.id='" + lastName
-                + "'", null).toList();
-            databaseCache = listObservable.flatMap(databases -> Observable.just(databases.get(0).getResults().get(0)))
-                .onErrorResumeNext(client.createDatabase(databaseDefinition, null)
-                    .map(ResourceResponse::getResource));
-            databaseCache.toCompletable().await();
-            return client;
-        }).then();
+    public int compare(Book obj1, Book obj2) {
+        String lastName1 = obj1.getAuthor().getLastName();
+        String lastName2 = obj2.getAuthor().getLastName();
+        int i = lastName1.compareTo(lastName2);
+        if (i != 0) return i;
+        String firstName1 = obj1.getAuthor().getFirstName();
+        String firstName2 = obj2.getAuthor().getFirstName();
+        i = firstName1.compareTo(firstName2);
+        if (i != 0) return i;
+        String title = obj1.getTitle();
+        String title2 = obj2.getTitle();
+        return title.compareTo(title2);
     }
 
-    private Mono<Void> setupCollection(String firstName) {
-        DocumentCollection collection = new DocumentCollection();
-        collection.setId(generateID(firstName));
+    public Mono<Void> initializeBooks() {
         return asyncClient.map(client -> {
-            bookCollection = databaseCache.flatMap(databaseLink -> {
-                Observable<List<FeedResponse<DocumentCollection>>> collectionList = client
-                    .queryCollections(databaseLink.getSelfLink(),
-                        "SELECT * FROM root r WHERE r.id='" + firstName
-                            + "'", null).toList();
-                return collectionList.flatMap(colList -> Observable.just(colList.get(0).getResults().get(0)))
-                    .onErrorResumeNext(client.createCollection(databaseLink.getSelfLink(), collection, null)
-                        .map(item -> item.getResource()));
-            });
-            bookCollection.toCompletable().await();
+            Observable<List<FeedResponse<Document>>> documentList
+                = client.queryDocuments(collectionLink, "Select * FROM all", null).toList();
+            documentList.toCompletable().await();
+            documentList.map(docs -> {
+                List<Document> results = docs.get(0).getResults();
+                cosmosBooks = Flux.fromIterable(results).map(doc -> Constants.SERIALIZER.fromJSONtoBook(doc.toJson().substring(0,
+                    (doc.toJson().indexOf(",\"id\""))) + "}")
+                );
+                return docs;
+            }).toCompletable().await();
             return client;
         }).then();
     }
@@ -122,7 +143,7 @@ public class CosmosBookCollector implements BookCollection {
         Book book = new Book(title, author, relative);
         Document bookDoc = new Document(Constants.SERIALIZER.toJson(book));
         bookDoc.set("id", generateID(title));
-        return setupDatabase(author.getLastName()).then(setupCollection(author.getFirstName())).then(saveDocument(bookDoc));
+        return saveDocument(bookDoc);
     }
 
     private String generateID(String info) {
@@ -167,7 +188,7 @@ public class CosmosBookCollector implements BookCollection {
 
     @Override
     public URI retrieveURI(String path) {
-        return null;
+        return new File(path).toURI();
     }
 
     @Override
