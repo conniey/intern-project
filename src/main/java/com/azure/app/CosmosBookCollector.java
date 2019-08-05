@@ -66,12 +66,11 @@ public class CosmosBookCollector implements BookCollection {
                 }
             });
         });
-        cosmosBooks = Flux.empty();
     }
 
     @Override
     public Flux<Book> getBooks() {
-        return bookCollection.flatMapMany(items -> {
+        Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
             Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM all",
                 new FeedOptions().enableCrossPartitionQuery(true));
             return containerItems.flatMap(item -> {
@@ -86,6 +85,7 @@ public class CosmosBookCollector implements BookCollection {
                 });
             });
         });
+        return cosmosBooks.sort(this::compare);
     }
 
     /**
@@ -112,29 +112,6 @@ public class CosmosBookCollector implements BookCollection {
         String title = obj1.getTitle();
         String title2 = obj2.getTitle();
         return title.compareTo(title2);
-    }
-
-    /**
-     * Initializes the Books by querying every item in the document collection.
-     *
-     * @return
-     */
-    private Mono<Void> initializeBooks() {
-        // RxJava2Adapter.observableToFlux()
-       /* return asyncClient.map(client -> {
-            Observable<List<FeedResponse<Document>>> documentList
-                = client.queryDocuments(collectionLink, "Select * FROM all", null).toList();
-            documentList.toCompletable().await();
-            documentList.map(docs -> {
-                List<Document> results = docs.get(0).getResults();
-                cosmosBooks = Flux.fromIterable(results).map(doc -> Constants.SERIALIZER.fromJSONtoBook(doc.toJson().substring(0,
-                    (doc.toJson().indexOf(",\"id\""))) + "}")
-                );
-                return docs;
-            }).toCompletable().await();
-            return client;
-        }).then();*/
-        return null;
     }
 
     @Override
@@ -183,7 +160,7 @@ public class CosmosBookCollector implements BookCollection {
 
     @Override
     public Mono<Boolean> hasBooks() {
-        return null;
+        return getBooks().hasElements();
     }
 
     @Override
