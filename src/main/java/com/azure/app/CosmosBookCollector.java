@@ -33,7 +33,6 @@ public class CosmosBookCollector implements BookCollection {
     private Mono<CosmosClient> asyncClient;
     private Mono<CosmosDatabaseResponse> databaseCache;
     private Mono<CosmosContainerResponse> bookCollection;
-    private Flux<Book> cosmosBooks;
 
     CosmosBookCollector() {
     }
