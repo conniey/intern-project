@@ -164,7 +164,7 @@ public class App {
     }
 
     private static void showMenu() {
-        System.out.println("Select one of the options below (1 - 5).");
+        System.out.println("Select one of the options below (1 - 6).");
         System.out.println("1. List books");
         System.out.println("2. Add a book");
         System.out.println("3. Edit a book");

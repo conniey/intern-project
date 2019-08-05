@@ -14,6 +14,7 @@ import com.azure.data.cosmos.CosmosDatabaseResponse;
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -146,12 +147,42 @@ public class CosmosBookCollector implements BookCollection {
 
     @Override
     public Flux<Book> findBook(String title) {
-        return null;
+        Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \"" +
+                title + "\"", new FeedOptions().enableCrossPartitionQuery(true));
+            return containerItems.flatMap(item -> {
+                List<CosmosItemProperties> list = item.results();
+                return Flux.fromIterable(list).map(book -> {
+                    try {
+                        return book.getObject(Book.class);
+                    } catch (IOException e) {
+                        logger.error("Failed to de-serialize: ", e);
+                        return null;
+                    }
+                });
+            });
+        });
+        return cosmosBooks.sort(this::compare);
     }
 
     @Override
     public Flux<Book> findBook(Author author) {
-        return null;
+        Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.author =" +
+                author, new FeedOptions().enableCrossPartitionQuery(true));
+            return containerItems.flatMap(item -> {
+                List<CosmosItemProperties> list = item.results();
+                return Flux.fromIterable(list).map(book -> {
+                    try {
+                        return book.getObject(Book.class);
+                    } catch (IOException e) {
+                        logger.error("Failed to de-serialize: ", e);
+                        return null;
+                    }
+                });
+            });
+        });
+        return cosmosBooks.sort(this::compare);
     }
 
     @Override
@@ -166,6 +197,12 @@ public class CosmosBookCollector implements BookCollection {
 
     @Override
     public Mono<String> grabCoverImage(Book book) {
-        return null;
+        String extension = FilenameUtils.getExtension(book.getCover().getPath());
+        String property = "java.io.tmpdir";
+        Author author = book.getAuthor();
+        String tempDir = System.getProperty(property);
+        File newFile = Paths.get(tempDir, author.getLastName(),
+            author.getFirstName(), book.getTitle() + "." + extension).toFile();
+        return Mono.just(newFile.getAbsolutePath() + "\n\tThis was downloaded and saved to the user's TEMP folder.");
     }
 }
