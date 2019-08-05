@@ -13,7 +13,6 @@ import com.azure.data.cosmos.CosmosContainerProperties;
 import com.azure.data.cosmos.CosmosContainerResponse;
 import com.azure.data.cosmos.CosmosDatabaseResponse;
 import com.azure.data.cosmos.FeedResponse;
-import com.azure.data.cosmos.internal.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -33,6 +32,9 @@ public class CosmosBookCollector implements BookCollection {
     private Mono<CosmosDatabaseResponse> databaseCache;
     private Mono<CosmosContainerResponse> bookCollection;
     private Flux<Book> cosmosBooks;
+
+    CosmosBookCollector() {
+    }
 
     CosmosBookCollector(ConfigurationAsyncClient client) {
         ConnectionPolicy policy = new ConnectionPolicy();
@@ -124,10 +126,6 @@ public class CosmosBookCollector implements BookCollection {
             }).toCompletable().await();
             return client;
         }).then();*/
-        return null;
-    }
-
-    private Mono<Void> saveDocument(Document book) {
         return null;
     }
 

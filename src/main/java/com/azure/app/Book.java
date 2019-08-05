@@ -16,7 +16,7 @@ public class Book {
     @JsonProperty("cover")
     private URI cover;
     @JsonProperty("id")
-    transient private String id;
+    private String id;
 
     Book() {
     }
