@@ -6,6 +6,7 @@ package com.azure.app;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.net.URI;
+import java.util.UUID;
 
 public class Book {
     @JsonProperty("title")
@@ -14,6 +15,8 @@ public class Book {
     private Author author;
     @JsonProperty("cover")
     private URI cover;
+    @JsonProperty("id")
+    transient private String id;
 
     Book() {
     }
@@ -23,6 +26,7 @@ public class Book {
         this.title = title;
         this.author = author;
         this.cover = cover;
+        id = UUID.randomUUID().toString();
     }
 
     /**
