@@ -6,19 +6,14 @@ package com.azure.app;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import com.azure.data.appconfiguration.models.SettingSelector;
-import com.azure.data.cosmos.ConnectionMode;
-import com.azure.data.cosmos.ConnectionPolicy;
-import com.azure.data.cosmos.CosmosClient;
-import com.azure.data.cosmos.CosmosContainerProperties;
-import com.azure.data.cosmos.CosmosContainerResponse;
-import com.azure.data.cosmos.CosmosDatabaseResponse;
-import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -76,8 +71,21 @@ public class CosmosBookCollector implements BookCollection {
 
     @Override
     public Flux<Book> getBooks() {
-        initializeBooks().block();
-        return cosmosBooks.sort(this::compare);
+        return bookCollection.flatMapMany(items -> {
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM all",
+                new FeedOptions().enableCrossPartitionQuery(true));
+            return containerItems.flatMap(item -> {
+                List<CosmosItemProperties> list = item.results();
+                return Flux.fromIterable(list).map(book -> {
+                    try {
+                        return book.getObject(Book.class);
+                    } catch (IOException e) {
+                        logger.error("Failed to de-serialize: ", e);
+                        return null;
+                    }
+                });
+            });
+        });
     }
 
     /**
@@ -147,8 +155,9 @@ public class CosmosBookCollector implements BookCollection {
         URI saved = relativeFile.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
-        return bookCollection.map(collection ->
-            collection.container().createItem(book)
+        CosmosContainer container = bookCollection.map(CosmosContainerResponse::container).block();
+        container.createItem(book).block();
+        return bookCollection.map(collection -> collection.container().createItem(book)
         ).then();
     }
 

@@ -52,7 +52,7 @@ public class CosmosTest {
     @Ignore
     @Test
     public void testSaveBook() {
-        Book book = new Book("Valid", new Author("Work", "Hard"),
+        Book book = new Book("Once", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
         cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         //Todo: Cleanup when you figure out how to delete
