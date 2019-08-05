@@ -65,6 +65,7 @@ public class CosmosBookCollector implements BookCollection {
         bookCollection = databaseCache.flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
     }
 
+
     @Override
     public Flux<Book> getBooks() {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
