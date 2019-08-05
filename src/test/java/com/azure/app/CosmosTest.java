@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import java.io.File;
 import java.net.URL;
@@ -54,7 +55,8 @@ public class CosmosTest {
     public void testSaveBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
-        cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
+        StepVerifier.create(cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()))
+            .verifyComplete();
         //Todo: Cleanup when you figure out how to delete
     }
 

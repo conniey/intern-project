@@ -6,7 +6,14 @@ package com.azure.app;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import com.azure.data.appconfiguration.models.SettingSelector;
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.ConnectionMode;
+import com.azure.data.cosmos.ConnectionPolicy;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosContainerResponse;
+import com.azure.data.cosmos.CosmosDatabaseResponse;
+import com.azure.data.cosmos.CosmosItemProperties;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -55,17 +62,7 @@ public class CosmosBookCollector implements BookCollection {
         String collectionLink = "/StoredBooks";
         asyncClient = Mono.just(cosmosClient);
         databaseCache = asyncClient.flatMap(asyncClient -> asyncClient.createDatabaseIfNotExists(databaseId));
-        bookCollection = databaseCache.flatMap(databaseResponse -> {
-            Flux<FeedResponse<CosmosContainerProperties>> feedResponseFlux = databaseResponse.database().queryContainers("SELECT * FROM all");
-            return feedResponseFlux.count().flatMap(size -> {
-                if (size == 0) {
-                    return databaseResponse.database().
-                        createContainer(collectionId, collectionLink);
-                } else {
-                    return databaseResponse.database().getContainer(collectionId).read();
-                }
-            });
-        });
+        bookCollection = databaseCache.flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
     }
 
     @Override
@@ -132,9 +129,8 @@ public class CosmosBookCollector implements BookCollection {
         URI saved = relativeFile.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
-        CosmosContainer container = bookCollection.map(CosmosContainerResponse::container).block();
-        container.createItem(book).block();
-        return bookCollection.map(collection -> collection.container().createItem(book)
+        return bookCollection.flatMap(collection ->
+            collection.container().createItem(book).then()
         ).then();
     }
 
