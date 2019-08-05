@@ -49,6 +49,7 @@ public class CosmosTest {
     /**
      * Tests to see that a book can be saved to Cosmos as a JSON file.
      */
+    @Ignore
     @Test
     public void testSaveBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
