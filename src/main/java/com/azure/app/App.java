@@ -345,7 +345,6 @@ public class App {
         return choice;
     }
 
-
     private static String getYesOrNo() {
         System.out.println("Enter 'Y' or 'N'.");
         String yesOrNo;
