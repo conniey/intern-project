@@ -71,17 +71,7 @@ public class CosmosBookCollector implements BookCollection {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
             Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM all",
                 new FeedOptions().enableCrossPartitionQuery(true));
-            return containerItems.flatMap(item -> {
-                List<CosmosItemProperties> list = item.results();
-                return Flux.fromIterable(list).map(book -> {
-                    try {
-                        return book.getObject(Book.class);
-                    } catch (IOException e) {
-                        logger.error("Failed to de-serialize: ", e);
-                        return null;
-                    }
-                });
-            });
+            return queryBooks(containerItems);
         });
         return cosmosBooks.sort(this::compare);
     }
@@ -148,19 +138,9 @@ public class CosmosBookCollector implements BookCollection {
     @Override
     public Flux<Book> findBook(String title) {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
-            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \"" +
-                title + "\"", new FeedOptions().enableCrossPartitionQuery(true));
-            return containerItems.flatMap(item -> {
-                List<CosmosItemProperties> list = item.results();
-                return Flux.fromIterable(list).map(book -> {
-                    try {
-                        return book.getObject(Book.class);
-                    } catch (IOException e) {
-                        logger.error("Failed to de-serialize: ", e);
-                        return null;
-                    }
-                });
-            });
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \""
+                + title + "\"", new FeedOptions().enableCrossPartitionQuery(true));
+            return queryBooks(containerItems);
         });
         return cosmosBooks.sort(this::compare);
     }
@@ -168,21 +148,31 @@ public class CosmosBookCollector implements BookCollection {
     @Override
     public Flux<Book> findBook(Author author) {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
-            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.author =" +
-                author, new FeedOptions().enableCrossPartitionQuery(true));
-            return containerItems.flatMap(item -> {
-                List<CosmosItemProperties> list = item.results();
-                return Flux.fromIterable(list).map(book -> {
-                    try {
-                        return book.getObject(Book.class);
-                    } catch (IOException e) {
-                        logger.error("Failed to de-serialize: ", e);
-                        return null;
-                    }
-                });
-            });
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.author.lastName =\""
+                + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"", new FeedOptions().enableCrossPartitionQuery(true));
+            return queryBooks(containerItems);
         });
         return cosmosBooks.sort(this::compare);
+    }
+
+    /**
+     * Searches through Cosmos database for books that match a specific criteria
+     *
+     * @param containerItems
+     * @return
+     */
+    private Flux<Book> queryBooks(Flux<FeedResponse<CosmosItemProperties>> containerItems) {
+        return containerItems.flatMap(item -> {
+            List<CosmosItemProperties> list = item.results();
+            return Flux.fromIterable(list).map(book -> {
+                try {
+                    return book.getObject(Book.class);
+                } catch (IOException e) {
+                    logger.error("Failed to de-serialize: ", e);
+                    return null;
+                }
+            });
+        });
     }
 
     @Override
