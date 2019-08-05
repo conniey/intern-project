@@ -156,9 +156,9 @@ public class CosmosBookCollector implements BookCollection {
     }
 
     /**
-     * Searches through Cosmos database for books that match a specific criteria
+     * Converts the items in the Cosmos container into Book objects
      *
-     * @param containerItems
+     * @param containerItems - the query with the Cosmos items under a specific criteria
      * @return
      */
     private Flux<Book> queryBooks(Flux<FeedResponse<CosmosItemProperties>> containerItems) {
