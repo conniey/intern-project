@@ -114,7 +114,7 @@ public class CosmosBookCollector implements BookCollection {
             }
         } catch (UnsupportedEncodingException e) {
             logger.error("Error encoding names: ", e);
-            return null;
+            return Mono.error(e);
         }
         File relativeFile = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), titleImage).toFile();
         URI saved = relativeFile.toURI();
