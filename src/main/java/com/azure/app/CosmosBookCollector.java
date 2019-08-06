@@ -132,7 +132,16 @@ public class CosmosBookCollector implements BookCollection {
 
     @Override
     public Mono<Void> deleteBook(Book book) {
-        return null;
+        String title = book.getTitle();
+        Author author = book.getAuthor();
+        return bookCollection.flatMapMany(items -> {
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \""
+                    + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
+                new FeedOptions().enableCrossPartitionQuery(true));
+            return containerItems.map(id -> {
+                return items.container().getItem(id.results().get(0).id(), items.properties().partitionKeyDefinition().kind().toString()).delete();
+            });
+        }).then();
     }
 
     @Override
