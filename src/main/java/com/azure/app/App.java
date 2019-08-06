@@ -136,7 +136,7 @@ public class App {
                     } while (!OPTION_CHECKER.validateString(newTitle));
                     newBook = new Book(newTitle, oldBook.getAuthor(), oldBook.getCover());
                     return bookCollector.editBook(oldBook, newBook, 0)
-                        .then(Mono.fromCallable(() -> "Book was changed."));
+                        .then(Mono.just("Book was changed."));
                 case 2:
                     String author;
                     do {
@@ -146,7 +146,7 @@ public class App {
                     String[] authorName = parseAuthorsName(author.split(" "));
                     Author newAuthor = new Author(authorName[0], authorName[1]);
                     newBook = new Book(oldBook.getTitle(), newAuthor, oldBook.getCover());
-                    return bookCollector.editBook(oldBook, newBook, 0).then(Mono.fromCallable(() ->
+                    return bookCollector.editBook(oldBook, newBook, 0).then(Mono.just(
                         "Book was changed."));
                 case 3:
                     URI newPath;
@@ -156,7 +156,7 @@ public class App {
                         newPath = bookCollector.retrieveURI(filePath);
                     } while (!OPTION_CHECKER.checkImage(System.getProperty("user.dir"), newPath));
                     newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), newPath);
-                    return bookCollector.editBook(oldBook, newBook, 1).then(Mono.fromCallable(() -> "Book was changed"));
+                    return bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"));
                 default:
                     return Mono.just("");
             }
@@ -216,7 +216,7 @@ public class App {
         System.out.print("4. Save? ");
         choice = getYesOrNo();
         if (choice.equalsIgnoreCase("y")) {
-            return bookCollector.saveBook(title, newAuthor, path).then(Mono.fromCallable(() -> "Book was successfully saved."));
+            return bookCollector.saveBook(title, newAuthor, path).then(Mono.just("Book was successfully saved."));
         }
         return Mono.just("");
     }
