@@ -65,7 +65,7 @@ public class CosmosTest {
      */
     @Ignore
     @Test
-    public void test() {
+    public void testGetBook() {
         Flux<Book> books = cosmosBC.getBooks();
         books.collectList().map(list -> {
             for (int i = 0; i < list.size(); i++) {
