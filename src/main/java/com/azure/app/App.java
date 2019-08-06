@@ -51,11 +51,16 @@ public class App {
                     return Mono.just(new LocalBookCollector(System.getProperty("user.dir")));
                 } else if (storageType.equalsIgnoreCase("BlobStorage")) {
                     return Mono.just(new BlobBookCollector(client));
+                } else if (storageType.equalsIgnoreCase("Cosmos")) {
+                    return Mono.just(new CosmosBookCollector());
                 } else {
                     return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
                 }
             });
             bookCollector = bookCollectionMono.block();
+            if (bookCollector instanceof CosmosBookCollector) {
+                bookCollector = new CosmosBookCollector(client);
+            }
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
             return;
@@ -103,7 +108,7 @@ public class App {
                     break;
             }
             System.out.println("------------------------------------------------");
-        } while (choice != 5);
+        } while (choice != 6);
     }
 
     private static Mono<String> edit() {
@@ -131,7 +136,7 @@ public class App {
                     } while (!OPTION_CHECKER.validateString(newTitle));
                     newBook = new Book(newTitle, oldBook.getAuthor(), oldBook.getCover());
                     return bookCollector.editBook(oldBook, newBook, 0)
-                        .then(Mono.fromCallable(() -> "Book was changed."));
+                        .then(Mono.just("Book was changed."));
                 case 2:
                     String author;
                     do {
@@ -141,7 +146,7 @@ public class App {
                     String[] authorName = parseAuthorsName(author.split(" "));
                     Author newAuthor = new Author(authorName[0], authorName[1]);
                     newBook = new Book(oldBook.getTitle(), newAuthor, oldBook.getCover());
-                    return bookCollector.editBook(oldBook, newBook, 0).then(Mono.fromCallable(() ->
+                    return bookCollector.editBook(oldBook, newBook, 0).then(Mono.just(
                         "Book was changed."));
                 case 3:
                     URI newPath;
@@ -151,7 +156,7 @@ public class App {
                         newPath = bookCollector.retrieveURI(filePath);
                     } while (!OPTION_CHECKER.checkImage(System.getProperty("user.dir"), newPath));
                     newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), newPath);
-                    return bookCollector.editBook(oldBook, newBook, 1).then(Mono.fromCallable(() -> "Book was changed"));
+                    return bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"));
                 default:
                     return Mono.just("");
             }
@@ -159,7 +164,7 @@ public class App {
     }
 
     private static void showMenu() {
-        System.out.println("Select one of the options below (1 - 5).");
+        System.out.println("Select one of the options below (1 - 6).");
         System.out.println("1. List books");
         System.out.println("2. Add a book");
         System.out.println("3. Edit a book");
@@ -211,7 +216,7 @@ public class App {
         System.out.print("4. Save? ");
         choice = getYesOrNo();
         if (choice.equalsIgnoreCase("y")) {
-            return bookCollector.saveBook(title, newAuthor, path).then(Mono.fromCallable(() -> "Book was successfully saved."));
+            return bookCollector.saveBook(title, newAuthor, path).then(Mono.just("Book was successfully saved."));
         }
         return Mono.just("");
     }
@@ -339,7 +344,6 @@ public class App {
         } while (choice == INVALID);
         return choice;
     }
-
 
     private static String getYesOrNo() {
         System.out.println("Enter 'Y' or 'N'.");

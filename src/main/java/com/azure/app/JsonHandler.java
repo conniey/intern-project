@@ -4,7 +4,6 @@
 package com.azure.app;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -43,10 +42,10 @@ class JsonHandler {
     }
 
     /**
-     * Converts a an array of bites  back to a Book object
+     * Converts a an array of bytes back to a Book object
      *
      * @param byteBuffer - the ByteBuffers holds the byte information to be converted
-     * @return Book - created from the JSON file
+     * @return Book - created from the array of bytes
      */
     Book fromJSONtoBook(ByteBuffer byteBuffer) {
         try {
@@ -60,6 +59,28 @@ class JsonHandler {
             logger.error("Error mapping byte array: ", e);
         } catch (IOException e) {
             logger.error("Error while reading from byte array: ", e);
+        }
+        return null;
+    }
+
+    /**
+     * Converts a JSON string back to a Book object
+     *
+     * @param json - String with the book information JSON format
+     * @return Book - created from the JSON string
+     */
+    Book fromJSONtoBook(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.enable(SerializationFeature.INDENT_OUTPUT);
+            Book b = mapper.readValue(json, Book.class);
+            return b;
+        } catch (JsonGenerationException e) {
+            logger.error("Error generating JSON file: ", e);
+        } catch (JsonMappingException e) {
+            logger.error("Error mapping JSON file: ", e);
+        } catch (IOException e) {
+            logger.error("Error while reading JSON file: ", e);
         }
         return null;
     }
@@ -94,16 +115,6 @@ class JsonHandler {
         }
     }
 
-    String toJson(Book b) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(b);
-        } catch (JsonProcessingException e) {
-            logger.error("Couldn't parse the Book to a JSON object: ", e);
-        }
-        return "";
-    }
-
     /**
      * Converts a Book object to a JSON file and stores it in a file.
      *
@@ -117,7 +128,7 @@ class JsonHandler {
             mapper.enable(SerializationFeature.INDENT_OUTPUT);
             return mapper.writeValueAsBytes(book);
         } catch (IOException e) {
-            logger.error("Couldn't find the file: ", e);
+            e.printStackTrace();
         }
         return null;
     }
