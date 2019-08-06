@@ -17,7 +17,6 @@ import java.io.File;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
 
 public class CosmosTest {
     private CosmosBookCollector cosmosBC;
@@ -34,7 +33,6 @@ public class CosmosTest {
                 + " Please set it.");
             return;
         }
-        UUID.randomUUID().toString();
         ConfigurationAsyncClient client;
         try {
             client = ConfigurationAsyncClient.builder()
@@ -73,5 +71,16 @@ public class CosmosTest {
             }
             return list;
         }).block();
+    }
+
+    /**
+     * Tests deletion.
+     */
+    @Ignore
+    @Test
+    public void testDeleteBook() {
+        Book book = new Book("Once", new Author("Work", "Hard"),
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
+        cosmosBC.deleteBook(book).block();
     }
 }

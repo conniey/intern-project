@@ -33,12 +33,52 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class BlobBookCollector implements BookCollection {
+final class BlobBookCollector implements BookCollection, ImageProvider {
     private final Set<String> supportedImageFormats;
     private Mono<StorageAsyncClient> storageClient;
     private Mono<ContainerAsyncClient> imageContainerClient;
     private Mono<ContainerAsyncClient> bookContainerClient;
     private static Logger logger = LoggerFactory.getLogger(BlobBookCollector.class);
+
+    BlobBookCollector(ConfigurationAsyncClient client, int imageProvider) {
+        supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
+        SettingSelector keys = new SettingSelector().keys("BLOB*");
+        storageClient = client.listSettings(keys).collectList().map(list -> {
+            String accountName = null;
+            String accountKey = null;
+            String url = null;
+            for (ConfigurationSetting configurationSetting : list) {
+                String key = configurationSetting.key();
+                if (key.contentEquals("BLOB_ACCOUNT_NAME")) {
+                    accountName = configurationSetting.value();
+                } else if (key.contentEquals("BLOB_KEY")) {
+                    accountKey = configurationSetting.value();
+                } else {
+                    url = configurationSetting.value();
+                }
+            }
+            assert accountName != null;
+            assert accountKey != null;
+            SharedKeyCredential credential = new SharedKeyCredential(accountName, accountKey);
+            assert url != null;
+            String endPoint = String.format(Locale.ROOT, url);
+            return StorageClient.storageClientBuilder()
+                .endpoint(endPoint)
+                .credential(credential)
+                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
+                .buildAsyncClient();
+        });
+        imageContainerClient = storageClient.flatMap(container -> {
+            final ContainerAsyncClient temp = container.getContainerAsyncClient("cosmos-book-covers");
+            return temp.exists().flatMap(exists -> {
+                if (exists.value()) {
+                    return Mono.just(temp);
+                } else {
+                    return temp.create().then(Mono.just(temp));
+                }
+            });
+        });
+    }
 
     BlobBookCollector(ConfigurationAsyncClient client) {
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
@@ -129,7 +169,16 @@ public class BlobBookCollector implements BookCollection {
         }));
     }
 
-    private Mono<Void> saveImage(File imagePath, Author author, String title) {
+    /**
+     * Saves the book's cover image to a Blob Storage
+     *
+     * @param imagePath - the File with the cover image
+     * @param author    - Author of the Book
+     * @param title     - String with the title of the book
+     * @return {@Mono Void}
+     */
+    @Override
+    public Mono<Void> saveImage(File imagePath, Author author, String title) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
             return Mono.error(new IllegalStateException("Error. Wrong file format for image"));
@@ -238,7 +287,15 @@ public class BlobBookCollector implements BookCollection {
         ));
     }
 
-    private Mono<Void> deleteImage(Book book) {
+    /**
+     * Deletes the image cover from the Blob Storage
+     *
+     * @param book - Book with the information for the cover that will be deleted.
+     * @return Mono {@Link Boolean} determines whether image was sucessfully deleted or not
+     * true - Book was deleted
+     * false - Book wasn't deleted
+     */
+    public Mono<Void> deleteImage(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
         Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient
             -> containerAsyncClient.listBlobsFlat().filter(blobItem ->
@@ -332,3 +389,5 @@ public class BlobBookCollector implements BookCollection {
             }));
     }
 }
+
+//QUESTION: Should I make a separate BlobBookCollector constructor?
