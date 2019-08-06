@@ -31,7 +31,7 @@ public class JsonHandlerTest {
     @Before
     public void setUp() {
         try {
-            URI folder = LocalBookCollector.class.getClassLoader().getResource(".").toURI();
+            URI folder = JsonHandlerTest.class.getClassLoader().getResource(".").toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             Assert.fail("");

@@ -28,7 +28,7 @@ public class OptionCheckerTest {
     @Before
     public void setUp() {
         try {
-            URI folder = LocalBookCollector.class.getClassLoader().getResource(".").toURI();
+            URI folder = OptionCheckerTest.class.getClassLoader().getResource(".").toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             Assert.fail("");

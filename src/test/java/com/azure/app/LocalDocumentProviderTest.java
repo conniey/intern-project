@@ -20,23 +20,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LocalBookCollectorTest {
-    private LocalBookCollector localCollector;
+public class LocalDocumentProviderTest {
+    private BookCollector localCollector;
     private String root;
 
     /**
-     * Initializes the LocalBookCollector and determines the
+     * Initializes the LocalDocumentProvider and determines the
      * root path to store all the files.
      */
     @Before
     public void setUp() {
         try {
-            URI folder = LocalBookCollectorTest.class.getClassLoader().getResource(".").toURI();
+            URI folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".").toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             Assert.fail("");
         }
-        localCollector = new LocalBookCollector(root);
+        localCollector = new BookCollector(new LocalDocumentProvider(root),
+            new LocalImageProvider(root));
     }
 
     /**
@@ -47,8 +48,8 @@ public class LocalBookCollectorTest {
         //Arrange
         String expected = "AsOKalsdjfkal";
         //Act
-        localCollector.saveBook("Existing", new Author("Mock", "Author"),
-            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()).block();
+        localCollector.saveBook(new Book("Existing", new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI())).block();
         Flux<Book> noTitles = localCollector.findBook(expected);
         //Assert
         StepVerifier.create(noTitles)
@@ -62,15 +63,15 @@ public class LocalBookCollectorTest {
 
     /**
      * Verifies the implementation of the findBook(String title)
-     * in the LocalBookCollector object for one object.
+     * in the LocalDocumentProvider object for one object.
      */
     @Test
     public void testFindBookOneTitle() {
         //Arrange
         String expected = "Existing";
         //Act
-        localCollector.saveBook(expected, new Author("Mock", "Author"),
-            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()).block();
+        localCollector.saveBook(new Book(expected, new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI())).block();
         Flux<Book> oneBook = localCollector.findBook(expected);
         //Assert
         StepVerifier.create(oneBook)
@@ -91,10 +92,10 @@ public class LocalBookCollectorTest {
         //Arrange
         String expected = "Existing";
         //Act
-        localCollector.saveBook(expected, new Author("Mock", "Author"),
-            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()).block();
-        localCollector.saveBook(expected, new Author("Mock2", "Author"),
-            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI()).block();
+        localCollector.saveBook(new Book(expected, new Author("Mock", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI())).block();
+        localCollector.saveBook(new Book(expected, new Author("Mock2", "Author"),
+            new File(Paths.get(root, "GreatGatsby.gif").toString()).toURI())).block();
         Flux<Book> manyBooks = localCollector.findBook(expected);
         //Assert
         StepVerifier.create(manyBooks)
@@ -117,9 +118,10 @@ public class LocalBookCollectorTest {
     public void testFindAuthorsNoResult() {
         //Arrange
         Author author = new Author("First", "Last");
+        Book book = new Book("Title", author,
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
         //Act
-        localCollector.saveBook("Title", author,
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        localCollector.saveBook(book).block();
         Flux<Book> noAuthors = localCollector.findBook(new Author("Not_asdff", "Available_xcv"));
         //Assert
         StepVerifier.create(noAuthors)
@@ -138,9 +140,10 @@ public class LocalBookCollectorTest {
     public void testFindAuthorsOneResult() {
         //Arrange
         Author author = new Author("First", "Last");
+        Book newBook = new Book("Title", author,
+            new File(Paths.get(root, "Wonder.png").toString()).toURI());
         //Act
-        localCollector.saveBook("Title", author,
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        localCollector.saveBook(newBook).block();
         Flux<Book> oneAuthor = localCollector.findBook(author);
         //Assert
         StepVerifier.create(oneAuthor)
@@ -164,12 +167,12 @@ public class LocalBookCollectorTest {
         //Arrange
         Author author = new Author("First", "Last");
         //Act
-        localCollector.saveBook("Title", author,
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
-        localCollector.saveBook("Wishful", author,
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
-        localCollector.saveBook("Winter", author,
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()).block();
+        localCollector.saveBook(new Book("Title", author,
+            new File(Paths.get(root, "Wonder.png").toString()).toURI())).block();
+        localCollector.saveBook(new Book("Wishful", author,
+            new File(Paths.get(root, "Wonder.png").toString()).toURI())).block();
+        localCollector.saveBook(new Book("Winter", author,
+            new File(Paths.get(root, "Wonder.png").toString()).toURI())).block();
         Flux<Book> manyAuthors = localCollector.findBook(author);
         //Assert
         StepVerifier.create(manyAuthors)
@@ -257,8 +260,8 @@ public class LocalBookCollectorTest {
     @Test
     public void testSavingNewBook() {
         //Act
-        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI()))
+        StepVerifier.create(localCollector.saveBook(new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI())))
             //Assert
             .expectComplete()
             .verify();
@@ -280,10 +283,10 @@ public class LocalBookCollectorTest {
         Book book2 = new Book("Giant Peach_The Return", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Wonder.png").toString()).toURI());
         //Act & Assert
-        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI())).expectComplete().verify();
-        StepVerifier.create(localCollector.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI())).expectComplete().verify();
+        StepVerifier.create(localCollector.saveBook(new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()))).expectComplete().verify();
+        StepVerifier.create(localCollector.saveBook(new Book("Giant Peach_The Return", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()))).expectComplete().verify();
         //Should delete fine, because the same image would have been saved but in a file with a different name
         result = deleteJsonFile(book1);
         result2 = deleteJsonFile(book2);
@@ -309,10 +312,10 @@ public class LocalBookCollectorTest {
         Book book2 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI());
         //Act & Assert
-        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Wonder.png").toString()).toURI())).expectComplete().verify();
-        StepVerifier.create(localCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI())).expectComplete().verify();
+        StepVerifier.create(localCollector.saveBook(new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Wonder.png").toString()).toURI()))).expectComplete().verify();
+        StepVerifier.create(localCollector.saveBook(new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(Paths.get(root, "Gingerbread.jpg").toString()).toURI()))).expectComplete().verify();
         files = Paths.get(root, "lib", "images").toFile().listFiles();
         //Double check size
         Assert.assertEquals(formerLength, files.length);

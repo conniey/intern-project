@@ -6,7 +6,17 @@ package com.azure.app;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import com.azure.data.appconfiguration.models.SettingSelector;
-import com.azure.data.cosmos.*;
+import com.azure.data.cosmos.ConnectionMode;
+import com.azure.data.cosmos.ConnectionPolicy;
+import com.azure.data.cosmos.CosmosClient;
+import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosContainerResponse;
+import com.azure.data.cosmos.CosmosDatabaseResponse;
+import com.azure.data.cosmos.CosmosItemProperties;
+import com.azure.data.cosmos.CosmosItemResponse;
+import com.azure.data.cosmos.FeedOptions;
+import com.azure.data.cosmos.FeedResponse;
+import com.azure.data.cosmos.PartitionKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -21,30 +31,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.List;
 
-interface ImageProvider {
 
-    Mono<String> grabCoverImage(Book book);
-
-    /**
-     * Saves the book's cover image to a Blob Storage
-     *
-     * @param imagePath - the File with the cover image
-     * @param author    - Author of the Book
-     * @param title     - String with the title of the book
-     * @return {@Mono Void}
-     */
-    Mono<Void> saveImage(File imagePath, Author author, String title);
-
-    Mono<Void> deleteImage(Book book);
-}
-
-
-final class CosmosBookCollector implements BookCollection {
+final class CosmosBookCollector implements BookCollector.DocumentProvider {
     private static Logger logger = LoggerFactory.getLogger(CosmosBookCollector.class);
     private Mono<CosmosClient> asyncClient;
     private Mono<CosmosDatabaseResponse> databaseCache;
     private Mono<CosmosContainerResponse> bookCollection;
-    private ImageProvider imageProvider;
 
     CosmosBookCollector() {
     }
@@ -63,7 +55,6 @@ final class CosmosBookCollector implements BookCollection {
                 masterKey = infoList.get(i).value();
             }
         }
-        imageProvider = new BlobBookCollector(client, 0);
         CosmosClient cosmosClient = CosmosClient.builder()
             .endpoint(endpoint)
             .key(masterKey)
@@ -134,7 +125,7 @@ final class CosmosBookCollector implements BookCollection {
         Book book = new Book(title, author, relative);
         return bookCollection.flatMap(collection ->
             collection.container().createItem(book).then()
-        ).then(imageProvider.saveImage(new File(path), author, title));
+        ).then();
     }
 
     @Override
@@ -159,7 +150,7 @@ final class CosmosBookCollector implements BookCollection {
                 Mono<CosmosItemResponse> delete = items.container().getItem(id.results().get(0).id(), "/StoredBooks").delete();
                 return items.container().getItem(id.results().get(0).id(), "/StoredBooks").replace(delete);
             });
-        }).then(imageProvider.deleteImage(book));
+        }).then();
     }
 
     @Override
@@ -202,18 +193,4 @@ final class CosmosBookCollector implements BookCollection {
         });
     }
 
-    @Override
-    public Mono<Boolean> hasBooks() {
-        return getBooks().hasElements();
-    }
-
-    @Override
-    public URI retrieveURI(String path) {
-        return new File(path).toURI();
-    }
-
-    @Override
-    public Mono<String> grabCoverImage(Book book) {
-        return imageProvider.grabCoverImage(book);
-    }
 }

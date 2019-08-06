@@ -19,7 +19,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class BlobBookCollectorTest {
     private BlobBookCollector blobCollector;
-    URL folder = LocalBookCollectorTest.class.getClassLoader().getResource(".");
+    URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
 
     /**
      * Set up the App Configuration to grab the information for the Blob Storage

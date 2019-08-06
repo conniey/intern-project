@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-final class BlobBookCollector implements BookCollection, ImageProvider {
+final class BlobBookCollector implements BookCollection {
     private final Set<String> supportedImageFormats;
     private Mono<StorageAsyncClient> storageClient;
     private Mono<ContainerAsyncClient> imageContainerClient;
@@ -144,6 +144,16 @@ final class BlobBookCollector implements BookCollection, ImageProvider {
         }));
     }
 
+    /**
+     * Saves the book as a JSON file
+     *
+     * @param title  - String containing the title of the book
+     * @param author - Author object of the book
+     * @param path   - File containing the cover image of the book
+     * @return Mono<Boolean> that determines whether the book got saved or not
+     * true - book was successfully saved
+     * false - book wasn't saved </Boolean>
+     */
     @Override
     public Mono<Void> saveBook(String title, Author author, URI path) {
         String extension = FilenameUtils.getExtension(new File(path).getName());
@@ -177,7 +187,6 @@ final class BlobBookCollector implements BookCollection, ImageProvider {
      * @param title     - String with the title of the book
      * @return {@Mono Void}
      */
-    @Override
     public Mono<Void> saveImage(File imagePath, Author author, String title) {
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
@@ -194,6 +203,13 @@ final class BlobBookCollector implements BookCollection, ImageProvider {
         });
     }
 
+    /**
+     * Retrieve valid names for the Blobs made
+     *
+     * @param author   - Author of the book will make up the folders the Blob will be contained in
+     * @param fileName - the title of the main blob
+     * @return String array with all the valid names
+     */
     private String[] getBlobInformation(Author author, String fileName) {
         String blobLastName,
             blobFirstName,

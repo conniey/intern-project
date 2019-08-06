@@ -24,7 +24,7 @@ public class App {
     private static final int INVALID = -1;
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
-    private static BookCollection bookCollector;
+    private static BookCollector bookCollector;
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
     /**
@@ -39,28 +39,26 @@ public class App {
                 + " Please set it.");
             return;
         }
+        bookCollector = new BookCollector(new LocalDocumentProvider(System.getProperty("user.dir")),
+            new LocalImageProvider(System.getProperty("user.dir")));
         ConfigurationAsyncClient client;
         try {
             client = ConfigurationAsyncClient.builder()
                 .credentials(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .build();
-            Mono<BookCollection> bookCollectionMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
+            Mono<BookCollector> bookCollectionMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
                 String storageType = input.value().value();
                 if (storageType.equalsIgnoreCase("Local")) {
-                    return Mono.just(new LocalBookCollector(System.getProperty("user.dir")));
+                    return Mono.just(new BookCollector(new LocalDocumentProvider(System.getProperty("user.dir")),
+                        new LocalImageProvider(System.getProperty("user.dir"))));
                 } else if (storageType.equalsIgnoreCase("BlobStorage")) {
-                    return Mono.just(new BlobBookCollector(client));
-                } else if (storageType.equalsIgnoreCase("Cosmos")) {
-                    return Mono.just(new CosmosBookCollector());
+                    return Mono.just(new BookCollector(client));
                 } else {
                     return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
                 }
             });
             bookCollector = bookCollectionMono.block();
-            if (bookCollector instanceof CosmosBookCollector) {
-                bookCollector = new CosmosBookCollector(client);
-            }
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
             return;
@@ -136,7 +134,8 @@ public class App {
                     } while (!OPTION_CHECKER.validateString(newTitle));
                     newBook = new Book(newTitle, oldBook.getAuthor(), oldBook.getCover());
                     return bookCollector.editBook(oldBook, newBook, 0)
-                        .then(Mono.just("Book was changed."));
+                        .then(Mono.just("Book was changed."))
+                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()));
                 case 2:
                     String author;
                     do {
@@ -216,7 +215,8 @@ public class App {
         System.out.print("4. Save? ");
         choice = getYesOrNo();
         if (choice.equalsIgnoreCase("y")) {
-            return bookCollector.saveBook(title, newAuthor, path).then(Mono.just("Book was successfully saved."));
+            Book newBook = new Book(title, newAuthor, path);
+            return bookCollector.saveBook(newBook).then(Mono.just("Book was successfully saved."));
         }
         return Mono.just("");
     }
