@@ -17,8 +17,8 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
-public class BlobBookCollectorTest {
-    private BlobBookCollector blobCollector;
+public class BookCollector_BlobTest {
+    private BookCollector blobCollector;
     URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
 
     /**
@@ -38,7 +38,7 @@ public class BlobBookCollectorTest {
                 .credentials(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .build();
-            blobCollector = new BlobBookCollector(client);
+            blobCollector = new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             Assert.fail("");
         }
@@ -54,7 +54,7 @@ public class BlobBookCollectorTest {
         Book newBook = new Book("Valid", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act
-        blobCollector.saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover()).block();
+        blobCollector.saveBook(newBook).block();
         //Assert
         Assert.assertTrue(length < blobCollector.getBooks().count().block());
         //Cleanup
@@ -69,7 +69,7 @@ public class BlobBookCollectorTest {
         //Arrange
         Book book = new Book("ASD0a3FHJKL", new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
         int formerLength = blobCollector.findBook(book.getTitle()).count().block().intValue();
-        blobCollector.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
+        blobCollector.saveBook(book).block();
         //Act
         Flux<Book> booksFound = blobCollector.findBook(book.getTitle());
         //Assert
@@ -100,7 +100,7 @@ public class BlobBookCollectorTest {
         //Arrange
         Book book = new Book("ASD0a3FHJKL", new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
         int formerLength = blobCollector.findBook(book.getTitle()).count().block().intValue();
-        blobCollector.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
+        blobCollector.saveBook(book).block();
         //Act
         int length = blobCollector.findBook(book.getTitle()).count().block().intValue();
         //Assert
@@ -135,10 +135,8 @@ public class BlobBookCollectorTest {
         Book book2 = new Book("Giant Peach_The Return", new Author("Ronald", "Dahl"),
             new File(folder.getPath(), "Wonder.png").toURI());
         //Act
-        StepVerifier.create(blobCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(folder.getPath(), "Wonder.png").toURI())).expectComplete().verify();
-        StepVerifier.create(blobCollector.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
-            new File(folder.getPath(), "Wonder.png").toURI())).expectComplete().verify();
+        StepVerifier.create(blobCollector.saveBook(book1)).expectComplete().verify();
+        StepVerifier.create(blobCollector.saveBook(book2)).expectComplete().verify();
         //Assert and Cleanup
         StepVerifier.create(blobCollector.deleteBook(book1))
             .expectComplete() //if not created, will return error
@@ -154,15 +152,15 @@ public class BlobBookCollectorTest {
     @Test
     public void testOverwritingBook() {
         //Arrange
+        Book bookToOverwrite = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(folder.getPath(), "Wonder.png").toURI());
         Book bookToDelete = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File(folder.getPath(), "Gingerbread.jpg").toURI());
         int formerLength;
         //Act & Assert
-        StepVerifier.create(blobCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(folder.getPath(), "Wonder.png").toURI())).expectComplete().verify();
+        StepVerifier.create(blobCollector.saveBook(bookToOverwrite)).expectComplete().verify();
         formerLength = blobCollector.getBooks().count().block().intValue();
-        StepVerifier.create(blobCollector.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(folder.getPath(), "Gingerbread.jpg").toURI())).expectComplete().verify();
+        StepVerifier.create(blobCollector.saveBook(bookToDelete)).expectComplete().verify();
         //Check that the size is the same as before they added the second book
         Assert.assertEquals(formerLength, blobCollector.getBooks().count().block().intValue());
         //Cleanup

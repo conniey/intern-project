@@ -102,7 +102,7 @@ public class BookCollector {
      * @return {@Link Mono} returns a Mono that was successful or has an error
      */
     Mono<Void> saveBook(Book book) {
-        if (book.checkBook()) {
+        if (book.checkBook() && isFile(book.getCover())) {
             return documentProvider.saveBook(book.getTitle(), book.getAuthor(), book.getCover())
                 .then(imageProvider.saveImage(book));
         }
@@ -188,5 +188,16 @@ public class BookCollector {
      */
     Mono<String> grabCoverImage(Book book) {
         return imageProvider.grabCoverImage(book);
+    }
+
+    /**
+     * Determines if an entry is a file
+     */
+    private boolean isFile(URI entry) {
+        if (entry == null) {
+            return false;
+        }
+        File fh = new File(entry);
+        return fh.isFile();
     }
 }

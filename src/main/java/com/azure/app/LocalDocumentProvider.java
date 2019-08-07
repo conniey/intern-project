@@ -227,6 +227,7 @@ public class LocalDocumentProvider implements BookCollector.DocumentProvider {
             && book.getAuthor().getLastName().contentEquals(author.getLastName()));
     }
 
+
     /**
      * Determines if an entry is a file
      */

@@ -10,8 +10,8 @@ public class DeleteWork {
 
     public static void main(String[] args) {
         CosmosClient client = CosmosClient.builder()
-            .endpoint("<<YOUR-ENDPOINT>>")
-            .key("<<KEY>>")
+            .endpoint("https://book221.documents.azure.com:443/")
+            .key("QkO8k11euctLAYJAhoD1pvvjgSj61ACumvROOXcKGyTFAl8b0kkZI4AZYazSkJYoCdf38AJfRoHZ6hOIJOhvwg==")
             .build();
         CosmosContainer container = client.createDatabaseIfNotExists("book-inventory")
             .flatMap(response -> response.database()

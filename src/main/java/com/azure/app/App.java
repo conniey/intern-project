@@ -53,12 +53,15 @@ public class App {
                     return Mono.just(new BookCollector(new LocalDocumentProvider(System.getProperty("user.dir")),
                         new LocalImageProvider(System.getProperty("user.dir"))));
                 } else if (storageType.equalsIgnoreCase("BlobStorage")) {
-                    return Mono.just(new BookCollector(client));
+                    return Mono.just(new BookCollector(new CosmosDocumentProvider(), new BlobImageProvider(client)));
                 } else {
                     return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
                 }
             });
             bookCollector = bookCollectionMono.block();
+            if (bookCollector.getClass().isInstance(new BookCollector(new CosmosDocumentProvider(), new BlobImageProvider(client)))) {
+                bookCollector = new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
+            }
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
             return;

@@ -19,7 +19,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class CosmosBookCollectorTest {
-    private CosmosBookCollector cosmosBC;
+    private BookCollector cosmosBC;
     URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
 
     /**
@@ -39,7 +39,7 @@ public class CosmosBookCollectorTest {
                 .credentials(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .build();
-            cosmosBC = new CosmosBookCollector(client);
+            cosmosBC = new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             Assert.fail("");
         }
@@ -52,7 +52,7 @@ public class CosmosBookCollectorTest {
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
-        StepVerifier.create(cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()))
+        StepVerifier.create(cosmosBC.saveBook(book))
             .expectComplete()
             .verify();
         //Todo: Cleanup when you figure out how to delete
@@ -88,7 +88,7 @@ public class CosmosBookCollectorTest {
         //Arrange
         Book book = new Book("ASD0a3FHJKL", new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
         int formerLength = cosmosBC.findBook(book.getTitle()).count().block().intValue();
-        cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
+        cosmosBC.saveBook(book).block();
         //Act
         int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
         //Assert

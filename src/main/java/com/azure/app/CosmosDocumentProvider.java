@@ -32,16 +32,16 @@ import java.nio.file.Paths;
 import java.util.List;
 
 
-final class CosmosBookCollector implements BookCollector.DocumentProvider {
-    private static Logger logger = LoggerFactory.getLogger(CosmosBookCollector.class);
+final class CosmosDocumentProvider implements BookCollector.DocumentProvider {
+    private static Logger logger = LoggerFactory.getLogger(CosmosDocumentProvider.class);
     private Mono<CosmosClient> asyncClient;
     private Mono<CosmosDatabaseResponse> databaseCache;
     private Mono<CosmosContainerResponse> bookCollection;
 
-    CosmosBookCollector() {
+    CosmosDocumentProvider() {
     }
 
-    CosmosBookCollector(ConfigurationAsyncClient client) {
+    CosmosDocumentProvider(ConfigurationAsyncClient client) {
         ConnectionPolicy policy = new ConnectionPolicy();
         policy.connectionMode(ConnectionMode.DIRECT);
         List<ConfigurationSetting> infoList = client.listSettings(new SettingSelector().keys("COSMOS*")).collectList().block();
@@ -130,7 +130,13 @@ final class CosmosBookCollector implements BookCollector.DocumentProvider {
 
     @Override
     public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
-        return null;
+        if (saveCover == 1) {
+            return deleteBook(oldBook).then(saveBook(newBook.getTitle(), newBook.getAuthor(),
+                newBook.getCover()));
+        } else {
+            return deleteBook(oldBook).then(saveBook(newBook.getTitle(), newBook.getAuthor(),
+                newBook.getCover()));
+        }
     }
 
     @Override

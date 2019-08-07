@@ -13,6 +13,7 @@ import com.azure.storage.common.credentials.SharedKeyCredential;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public class BlobImageProvider implements BookCollector.ImageProvider {
     private final Set<String> supportedImageFormats;
     private Mono<StorageAsyncClient> storageClient;
     private Mono<ContainerAsyncClient> imageContainerClient;
-    private static Logger logger = LoggerFactory.getLogger(BlobBookCollector.class);
+    private static Logger logger = LoggerFactory.getLogger(BlobImageProvider.class);
 
     BlobImageProvider(ConfigurationAsyncClient client) {
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
@@ -61,7 +62,7 @@ public class BlobImageProvider implements BookCollector.ImageProvider {
                 .buildAsyncClient();
         });
         imageContainerClient = storageClient.flatMap(container -> {
-            final ContainerAsyncClient temp = container.getContainerAsyncClient("book-covers");
+            final ContainerAsyncClient temp = container.getContainerAsyncClient("cosmos-book-covers");
             return temp.exists().flatMap(exists -> {
                 if (exists.value()) {
                     return Mono.just(temp);
@@ -72,29 +73,6 @@ public class BlobImageProvider implements BookCollector.ImageProvider {
         });
     }
 
-    /**
-     * Saves the book's cover image to a Blob Storage
-     *
-     * @param imagePath - the File with the cover image
-     * @param author    - Author of the Book
-     * @param title     - String with the title of the book
-     * @return {@Mono Void}
-     */
-    public Mono<Void> saveImage(File imagePath, Author author, String title) {
-        String extension = FilenameUtils.getExtension(imagePath.getName());
-        if (!supportedImageFormats.contains(extension)) {
-            return Mono.error(new IllegalStateException("Error. Wrong file format for image"));
-        }
-        String[] blobInfo = getBlobInformation(author, title + "." + extension);
-        if (blobInfo == null) {
-            return Mono.error(new IllegalArgumentException("Error encoding blob name"));
-        }
-        return imageContainerClient.flatMap(containerAsyncClient -> {
-            final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
-                + "/" + blobInfo[0]);
-            return blockBlobClient.uploadFromFile(imagePath.getAbsolutePath()).then();
-        });
-    }
 
     /**
      * Retrieve valid names for the Blobs made
@@ -126,6 +104,70 @@ public class BlobImageProvider implements BookCollector.ImageProvider {
             return null;
         }
         return new String[]{blobName, blobFirstName, blobLastName};
+    }
+
+    @Override
+    public Mono<Void> saveImage(Book b) {
+        String extension = FilenameUtils.getExtension(new File(b.getCover()).getName());
+        if (!supportedImageFormats.contains(extension)) {
+            return Mono.error(new IllegalStateException("Error. Wrong file format for image"));
+        }
+        String[] blobInfo = getBlobInformation(b.getAuthor(), b.getTitle() + "." + extension);
+        if (blobInfo == null) {
+            return Mono.error(new IllegalArgumentException("Error encoding blob name"));
+        }
+        return imageContainerClient.flatMap(containerAsyncClient -> {
+            final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
+                + "/" + blobInfo[0]);
+            File path = new File(b.getCover());
+            return blockBlobClient.uploadFromFile(path.getAbsolutePath()).then();
+        });
+    }
+
+    @Override
+    public Mono<Void> editImage(Book oldBook, Book newBook, int saveCover) {
+        if (saveCover == 1) {
+            return deleteImage(oldBook).then(saveImage(newBook));
+        } else {
+            String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
+            Flux<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
+                containerAsyncClient.listBlobsFlat().filter(blobItem -> {
+                    assert blobConversion != null;
+                    return blobItem.name().contains(blobConversion[2] + "/"
+                        + blobConversion[1]
+                        + "/" + blobConversion[0] + ".");
+                }));
+            Mono<BlobItem> bookMono = file.hasElements().flatMap(notEmpty -> {
+                if (notEmpty) {
+                    return file.elementAt(0);
+                } else {
+                    return Mono.error(new IllegalStateException("Cover image not found."));
+                }
+            });
+            return imageContainerClient.flatMap(containerAsyncClient ->
+                bookMono.flatMap(blobItem -> {
+                    final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
+                    String property = "java.io.tmpdir";
+                    String tempDir = System.getProperty(property);
+                    String newFileName;
+                    try {
+                        newFileName = URLEncoder.encode(newBook.getTitle(), StandardCharsets.US_ASCII.toString());
+                    } catch (UnsupportedEncodingException e) {
+                        logger.error("Error encoding file: ", e);
+                        return Mono.error(e);
+                    }
+                    String extension = blobItem.name().substring(blobItem.name().lastIndexOf("."));
+                    File newFile = new File(tempDir + newFileName + extension);
+                    try {
+                        newFile.createNewFile();
+                    } catch (IOException e) {
+                        logger.error("Exception creating the file: ", e);
+                        return Mono.error(e);
+                    }
+                    Book saveBook = new Book(newBook.getTitle(), newBook.getAuthor(), newFile.toURI());
+                    return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(deleteImage(oldBook)).then(saveImage(saveBook));
+                }));
+        }
     }
 
     /**
@@ -185,23 +227,5 @@ public class BlobImageProvider implements BookCollector.ImageProvider {
             }));
     }
 
-    @Override
-    public Mono<Void> saveImage(Book b) {
-        String extension = FilenameUtils.getExtension(new File(b.getCover()).getName());
-        String[] blobInfo = getBlobInformation(b.getAuthor(), b.getTitle() + "." + extension);
-        if (blobInfo == null) {
-            return Mono.error(new IllegalArgumentException("Error encoding blob name"));
-        }
-        return imageContainerClient.flatMap(containerAsyncClient -> {
-            final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
-                + "/" + blobInfo[0]);
-            File path = new File(b.getCover());
-            return blockBlobClient.uploadFromFile(path.getAbsolutePath()).then();
-        });
-    }
 
-    @Override
-    public Mono<Void> editImage(Book oldBook, Book newBook, int saveCover) {
-        return null;
-    }
 }
