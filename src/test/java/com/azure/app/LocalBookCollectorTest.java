@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LocalDocumentProviderTest {
+public class LocalBookCollectorTest {
     private BookCollector localCollector;
     private String root;
 
@@ -31,7 +31,7 @@ public class LocalDocumentProviderTest {
     @Before
     public void setUp() {
         try {
-            URI folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".").toURI();
+            URI folder = LocalBookCollectorTest.class.getClassLoader().getResource(".").toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             Assert.fail("");

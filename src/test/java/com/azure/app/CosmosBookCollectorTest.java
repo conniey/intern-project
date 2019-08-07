@@ -19,14 +19,15 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class CosmosBookCollectorTest {
-    private BookCollector cosmosBC;
-    URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
+    private CosmosDocumentProvider cosmosBC;
+    URL folder = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
 
     /**
      * Sets up App Configuration to get the information needed for Cosmos.
      */
     @Before
     public void setup() {
+        System.out.println(System.getenv("AZURE_APPCONFIG"));
         String connectionString = System.getenv("AZURE_APPCONFIG");
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -39,7 +40,7 @@ public class CosmosBookCollectorTest {
                 .credentials(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .build();
-            cosmosBC = new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
+            cosmosBC = new CosmosDocumentProvider(client);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             Assert.fail("");
         }
@@ -52,10 +53,10 @@ public class CosmosBookCollectorTest {
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
-        StepVerifier.create(cosmosBC.saveBook(book))
+        StepVerifier.create(cosmosBC.saveBook(book.getTitle(), book.getAuthor(),
+            book.getCover()))
             .expectComplete()
             .verify();
-        //Todo: Cleanup when you figure out how to delete
     }
 
     /**
@@ -83,12 +84,15 @@ public class CosmosBookCollectorTest {
         cosmosBC.deleteBook(book).block();
     }
 
+    /**
+     * Tests find book
+     */
     @Test
     public void testFindTitle() {
         //Arrange
         Book book = new Book("ASD0a3FHJKL", new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
         int formerLength = cosmosBC.findBook(book.getTitle()).count().block().intValue();
-        cosmosBC.saveBook(book).block();
+        cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         //Act
         int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
         //Assert
@@ -96,6 +100,9 @@ public class CosmosBookCollectorTest {
         //Cleanup
     }
 
+    /**
+     * Tests find book when there are no books that can be found.
+     */
     @Test
     public void testFindNoTitle() {
         //Arrange

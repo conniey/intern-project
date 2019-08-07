@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
@@ -90,6 +93,12 @@ public class BookCollector {
         Mono<Void> deleteImage(Book book);
     }
 
+    /**
+     * Constructor for BookCollector
+     *
+     * @param documentCollection - the implementation for how and where to save the book's information (Local/Cosmos)
+     * @param imageProvider      - the implementation for how and where to save the books' cover images (Local/Blob Storage)
+     */
     public BookCollector(DocumentProvider documentCollection, ImageProvider imageProvider) {
         this.documentProvider = documentCollection;
         this.imageProvider = imageProvider;
