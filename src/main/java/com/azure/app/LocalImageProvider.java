@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import org.apache.commons.io.FilenameUtils;
@@ -145,16 +148,14 @@ public class LocalImageProvider implements BookCollector.ImageProvider {
         } else {
             File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
             newBook = new Book(newBook.getTitle(), newBook.getAuthor(), image.toURI());
-            return saveImage(newBook).then(
-                deleteImage(oldBook));
+            return saveImage(newBook).then(deleteImage(oldBook));
         }
     }
 
     @Override
     public Mono<Void> deleteImage(Book book) {
-        return Mono.just(Paths.get(System.getProperty("user.dir"),
-            book.getCover().getPath()).toFile().delete()).map(result -> {
-            if (result.booleanValue() == false) {
+        return Mono.just(Paths.get(System.getProperty("user.dir"), book.getCover().getPath()).toFile().delete()).map(result -> {
+            if (!result.booleanValue()) {
                 return Mono.error(new IllegalStateException("Image wasn't deleted."));
             } else {
                 deleteEmptyDirectories();
@@ -162,6 +163,4 @@ public class LocalImageProvider implements BookCollector.ImageProvider {
             }
         }).then();
     }
-
-
 }

@@ -48,6 +48,7 @@ public class CosmosBookCollectorTest {
     /**
      * Tests to see that a book can be saved to Cosmos as a JSON file.
      */
+    @Ignore
     @Test
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
@@ -61,6 +62,7 @@ public class CosmosBookCollectorTest {
     /**
      * Tests the getBook method
      */
+    @Ignore
     @Test
     public void testGetBook() {
         Flux<Book> books = cosmosBC.getBooks();
@@ -83,6 +85,10 @@ public class CosmosBookCollectorTest {
         cosmosBC.deleteBook(book).block();
     }
 
+    /**
+     * Tests find
+     */
+    @Ignore
     @Test
     public void testFindTitle() {
         //Arrange
@@ -96,7 +102,11 @@ public class CosmosBookCollectorTest {
         //Cleanup
     }
 
+    /**
+     * Tests find
+     */
     @Test
+    @Ignore
     public void testFindNoTitle() {
         //Arrange
         Book book = new Book("Utterly Ridicious", new Author("IMPOssibleToHaveYOu", "Yep"),
