@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import reactor.core.publisher.Flux;
@@ -25,6 +28,14 @@ public interface DocumentProvider {
      */
     Mono<Void> saveBook(String title, Author author, URI path);
 
+    /**
+     * Overwrites the old book with the contents in the new book
+     *
+     * @param oldBook   - Book object that will be changed
+     * @param newBook   - Book object with the new information to change to
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
     Mono<Void> editBook(Book oldBook, Book newBook, int saveCover);
 
     /**

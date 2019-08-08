@@ -31,8 +31,8 @@ final class BookCollector {
      * @return {@Link Mono} returns a Mono that was successful or has an error
      */
     Mono<Void> saveBook(Book book) {
-        return book.isValid() && isFile(book.getCover()) ?
-            documentProvider.saveBook(book.getTitle(), book.getAuthor(), book.getCover())
+        return book.isValid() && isFile(book.getCover())
+            ? documentProvider.saveBook(book.getTitle(), book.getAuthor(), book.getCover())
                 .then(imageProvider.saveImage(book)) : Mono.error(new IllegalArgumentException("Book can't be saved."));
     }
 
@@ -67,8 +67,8 @@ final class BookCollector {
      * false - Book wasn't deleted
      */
     Mono<Void> deleteBook(Book book) {
-        return book.isValid() ? documentProvider.deleteBook(book).then(imageProvider.deleteImage(book)) :
-            Mono.error(new IllegalArgumentException("Book wasn't deleted."));
+        return book.isValid() ? documentProvider.deleteBook(book).then(imageProvider.deleteImage(book))
+            : Mono.error(new IllegalArgumentException("Book wasn't deleted."));
     }
 
     /**

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import reactor.core.publisher.Mono;
@@ -20,6 +23,14 @@ public interface ImageProvider {
      */
     Mono<Void> saveImage(Book b);
 
+    /**
+     * Overwrites the old image with the new image
+     *
+     * @param oldBook   - Book object that directs to the old image
+     * @param newBook   - Book object with the new image
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
     Mono<Void> editImage(Book oldBook, Book newBook, int saveCover);
 
     /**

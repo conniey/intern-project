@@ -7,6 +7,9 @@ import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -15,19 +18,21 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class CosmosBookCollectorTest {
     private BookCollector cosmosBC;
-    URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
+    URL folder = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
 
     /**
      * Sets up App Configuration to get the information needed for Cosmos.
      */
     @Before
     public void setup() {
+        ObjectMapper mapper = new ObjectMapper();
         String connectionString = System.getenv("AZURE_APPCONFIG");
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -40,9 +45,17 @@ public class CosmosBookCollectorTest {
                 .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
-            cosmosBC = null;// new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
+            CosmosSettings cosmosSettings = mapper.readValue(client.getSetting("COSMOS_INFO").block().value(), CosmosSettings.class);
+            BlobSettings blobSettings = mapper.readValue(client.getSetting("BLOB_INFO").block().value(), BlobSettings.class);
+            cosmosBC = new BookCollector(new CosmosDocumentProvider(cosmosSettings), new BlobImageProvider(blobSettings));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             Assert.fail("");
+        } catch (JsonParseException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
