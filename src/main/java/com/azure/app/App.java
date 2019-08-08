@@ -5,12 +5,15 @@ package com.azure.app;
 
 import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
+import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -25,7 +28,7 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollector bookCollector;
-    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(App.class);
 
     /**
      * Starting point for the library application.
@@ -39,31 +42,7 @@ public class App {
                 + " Please set it.");
             return;
         }
-        bookCollector = new BookCollector(new LocalDocumentProvider(System.getProperty("user.dir")),
-            new LocalImageProvider(System.getProperty("user.dir")));
-        ConfigurationAsyncClient client;
-        try {
-            client = ConfigurationAsyncClient.builder()
-                .credentials(new ConfigurationClientCredentials(connectionString))
-                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
-                .build();
-            Mono<BookCollector> bookCollectionMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
-                String storageType = input.value().value();
-                if (storageType.equalsIgnoreCase("Local")) {
-                    return Mono.just(new BookCollector(new LocalDocumentProvider(System.getProperty("user.dir")),
-                        new LocalImageProvider(System.getProperty("user.dir"))));
-                } else if (storageType.equalsIgnoreCase("BlobStorage")) {
-                    return Mono.just(new BookCollector(new CosmosDocumentProvider(), new BlobImageProvider(client)));
-                } else {
-                    return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognised."));
-                }
-            });
-            bookCollector = bookCollectionMono.block();
-            if (bookCollector.getClass().isInstance(new BookCollector(new CosmosDocumentProvider(), new BlobImageProvider(client)))) {
-                bookCollector = new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
-            }
-        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
-            logger.error("Exception with App Configuration: ", e);
+        if (!setBookCollector(connectionString) || bookCollector == null) {
             return;
         }
         System.out.print("Welcome! ");
@@ -112,6 +91,57 @@ public class App {
         } while (choice != 6);
     }
 
+    private static boolean setBookCollector(String connectionString) {
+        final ObjectMapper mapper = new ObjectMapper();
+        ConfigurationAsyncClient client;
+        try {
+            client = new ConfigurationClientBuilder()
+                .credential(new ConfigurationClientCredentials(connectionString))
+                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
+                .buildAsyncClient();
+            String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(info -> info.value()).block();
+            DocumentProvider document;
+            if (documentProvider.equalsIgnoreCase("Cosmos")) {
+                CosmosSettings cosmosInfo = client.getSetting("COSMOS_INFO").map(info -> {
+                    try {
+                        return (mapper.readValue(info.value(), CosmosSettings.class));
+                    } catch (IOException e) {
+                        logger.error("Invalid information for document storage: ", e);
+                        return null;
+                    }
+                }).block();
+                if (cosmosInfo == null) {
+                    return false;
+                }
+                document = new CosmosDocumentProvider(cosmosInfo);
+            } else {
+                document = new LocalDocumentProvider(System.getProperty("user.dir"));
+            }
+            Mono<ImageProvider> imageProviderMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
+                String storageType = input.value();
+                if (storageType.equalsIgnoreCase("Local")) {
+                    return Mono.just(new LocalImageProvider(System.getProperty("user.dir")));
+                } else if (storageType.equalsIgnoreCase("BlobStorage")) {
+                    return client.getSetting("BLOB_INFO").flatMap(info -> {
+                        try {
+                            return Mono.just(new BlobImageProvider(mapper.readValue(info.value(), BlobSettings.class)));
+                        } catch (IOException e) {
+                            logger.error("Invalid information: ", e);
+                            return Mono.error(new IllegalStateException("Environment variable COSMOS_INFO is not set properly."));
+                        }
+                    });
+                } else {
+                    return Mono.error(new IllegalStateException("Image storage type '" + storageType + "' is not recognized."));
+                }
+            });
+            bookCollector = new BookCollector(document, imageProviderMono.block());
+            return true;
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            logger.error("Exception with App Configuration: ", e);
+            return false;
+        }
+    }
+
     private static Mono<String> edit() {
         Mono<Book> editBook = grabBook("edit");
         return editBook.flatMap(oldBook -> {
@@ -156,7 +186,7 @@ public class App {
                         System.out.println("New Cover (.gif, .jpg, or .png format)?");
                         String filePath = SCANNER.nextLine();
                         newPath = bookCollector.retrieveURI(filePath);
-                    } while (!OPTION_CHECKER.checkImage(System.getProperty("user.dir"), newPath));
+                    } while (!OPTION_CHECKER.checkImage(newPath));
                     newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), newPath);
                     return bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"));
                 default:
@@ -214,7 +244,7 @@ public class App {
                 return Mono.just("");
             }
             path = bookCollector.retrieveURI(filePath);
-        } while (!OPTION_CHECKER.checkImage(System.getProperty("user.dir"), path));
+        } while (!OPTION_CHECKER.checkImage(path));
         System.out.print("4. Save? ");
         choice = getYesOrNo();
         if (choice.equalsIgnoreCase("y")) {
@@ -294,8 +324,8 @@ public class App {
             if (book.getTitle() == null) {
                 return Mono.just("");
             }
-            return bookCollector.deleteBook(book).
-                then(Mono.just("Book was deleted."))
+            return bookCollector.deleteBook(book)
+                .then(Mono.just("Book was deleted."))
                 .onErrorResume(error -> Mono.just("Error. Book wasn't deleted."));
         });
     }
@@ -304,10 +334,10 @@ public class App {
         System.out.printf("Please enter the title of the book %s: ", modifier.contentEquals("delete")
             ? "to delete" : "to edit");
         Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
-        return booksToDelete.collectList().map(list -> {
+        return booksToDelete.collectList().flatMap(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
-                return new Book(null, null, null);
+                return Mono.empty();
             }
             if (list.size() == 1) {
                 System.out.println("Here is a matching book.");
@@ -316,7 +346,7 @@ public class App {
                     ? "delete" : "edit");
                 String choice = getYesOrNo();
                 if (choice.equalsIgnoreCase("Y")) {
-                    return list.get(0);
+                    return Mono.just(list.get(0));
                 }
             } else {
                 System.out.printf("Here are matching books. Enter the number to %s :  (Enter \"Q\" to return to menu.) ",
@@ -326,13 +356,13 @@ public class App {
                     System.out.println("Delete \"" + list.get(choice - 1) + "\"? Enter Y or N.");
                     String delete = SCANNER.nextLine();
                     if (delete.equalsIgnoreCase("y")) {
-                        return list.get(choice - 1);
+                        return Mono.just(list.get(choice - 1));
                     }
                 } else if (modifier.contentEquals("edit")) {
-                    return list.get(choice - 1);
+                    return Mono.just(list.get(choice - 1));
                 }
             }
-            return new Book(null, null, null);
+            return Mono.empty();
         });
     }
 

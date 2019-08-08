@@ -27,7 +27,7 @@ public class BookTest {
         URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
         Book book = new Book("Title", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI());
         //Act and Assert
-        assertTrue(book.checkBook());
+        assertTrue(book.isValid());
     }
 
     //TEST INVALID BOOKS
@@ -69,6 +69,6 @@ public class BookTest {
      */
     @Test
     public void testInvalidBooks() {
-        assertEquals(expected, bInput.checkBook());
+        assertEquals(expected, bInput.isValid());
     }
 }

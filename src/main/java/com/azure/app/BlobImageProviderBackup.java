@@ -1,7 +1,9 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
-import com.azure.storage.blob.BlobServiceAsyncClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.storage.blob.BlockBlobAsyncClient;
 import com.azure.storage.blob.ContainerAsyncClient;
 import com.azure.storage.blob.models.BlobItem;
@@ -20,31 +22,75 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
-public class BlobImageProvider implements ImageProvider {
+//import com.azure.storage.blob.StorageAsyncClient;
+//import com.azure.storage.blob.StorageClient;
+//import com.azure.storage.blob.StorageClientBuilder;
+
+final class BlobImageProviderBackup implements ImageProvider {
     private final Set<String> supportedImageFormats;
+    //   private Mono<StorageAsyncClient> storageClient;
     private Mono<ContainerAsyncClient> imageContainerClient;
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
-    BlobImageProvider(BlobSettings blobSettings) {
+    BlobImageProviderBackup(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),
             blobSettings.getKey());
-        String endpoint = String.format(Locale.ROOT, blobSettings.getUrl());
-        BlobServiceAsyncClient storageAsyncClient = new BlobServiceClientBuilder()
+      /*  String endpoint = String.format(Locale.ROOT, blobSettings.getUrl());
+        StorageAsyncClient storageAsyncClient = new StorageClientBuilder()
             .endpoint(endpoint)
             .credential(credential)
             .buildAsyncClient();
         ContainerAsyncClient container = storageAsyncClient.getContainerAsyncClient("cosmos-book-covers");
         imageContainerClient = container.exists().flatMap(exists -> {
-            if (exists.value()) {
-                return Mono.just(container);
-            } else {
-                return container.create().then(Mono.just(container));
-            }
-        });
+                if (exists.value()) {
+                    return Mono.just(container);
+                } else {
+                    return container.create().then(Mono.just(container));
+                }
+            });*/
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
+    }
+
+    BlobImageProviderBackup(ConfigurationAsyncClient client) {
+        supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
+       /* SettingSelector keys = new SettingSelector().keys("BLOB*");
+        storageClient = client.listSettings(keys).collectList().map(list -> {
+            String accountName = null;
+            String accountKey = null;
+            String url = null;
+            for (ConfigurationSetting configurationSetting : list) {
+                String key = configurationSetting.key();
+                if (key.contentEquals("BLOB_ACCOUNT_NAME")) {
+                    accountName = configurationSetting.value();
+                } else if (key.contentEquals("BLOB_KEY")) {
+                    accountKey = configurationSetting.value();
+                } else {
+                    url = configurationSetting.value();
+                }
+            }
+            assert accountName != null;
+            assert accountKey != null;
+            SharedKeyCredential credential = new SharedKeyCredential(accountName, accountKey);
+            assert url != null;
+            String endPoint = String.format(Locale.ROOT, url);
+            return StorageClient.storageClientBuilder()
+                .endpoint(endPoint)
+                .credential(credential)
+                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
+                .buildAsyncClient();
+        });
+        imageContainerClient = storageClient.flatMap(container -> {
+            final ContainerAsyncClient temp = container.getContainerAsyncClient("cosmos-book-covers");
+            return temp.exists().flatMap(exists -> {
+                if (exists.value()) {
+                    return Mono.just(temp);
+                } else {
+                    return temp.create().then(Mono.just(temp));
+                }
+            });
+        });*/
     }
 
     /**

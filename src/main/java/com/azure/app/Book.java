@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URI;
 import java.util.UUID;
 
-public class Book {
+final class Book {
     @JsonProperty("title")
     private String title;
     @JsonProperty("author")
@@ -62,7 +62,7 @@ public class Book {
      * @return boolean - true if all the fields are valid
      * - false otherwise
      */
-    boolean checkBook() {
+    boolean isValid() {
         if (cover == null) {
             return false;
         }

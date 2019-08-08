@@ -11,7 +11,6 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosContainerResponse;
-import com.azure.data.cosmos.CosmosDatabaseResponse;
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.CosmosItemResponse;
 import com.azure.data.cosmos.FeedOptions;
@@ -31,14 +30,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.List;
 
-
-final class CosmosDocumentProvider implements BookCollector.DocumentProvider {
+final class CosmosDocumentProvider implements DocumentProvider {
     private static Logger logger = LoggerFactory.getLogger(CosmosDocumentProvider.class);
-    private Mono<CosmosClient> asyncClient;
-    private Mono<CosmosDatabaseResponse> databaseCache;
     private Mono<CosmosContainerResponse> bookCollection;
 
-    CosmosDocumentProvider() {
+    CosmosDocumentProvider(CosmosSettings cosmosSettings) {
+        ConnectionPolicy policy = new ConnectionPolicy();
+        policy.connectionMode(ConnectionMode.DIRECT);
+        CosmosClient cosmosClient = CosmosClient.builder()
+            .endpoint(cosmosSettings.host())
+            .key(cosmosSettings.key())
+            .connectionPolicy(policy)
+            .build();
+        String databaseId = "book-inventory";
+        String collectionId = "book-info";
+        String collectionLink = "/StoredBooks";
+        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
     }
 
     CosmosDocumentProvider(ConfigurationAsyncClient client) {
@@ -63,9 +70,7 @@ final class CosmosDocumentProvider implements BookCollector.DocumentProvider {
         String databaseId = "book-inventory";
         String collectionId = "book-info";
         String collectionLink = "/StoredBooks";
-        asyncClient = Mono.just(cosmosClient);
-        databaseCache = asyncClient.flatMap(asyncClient -> asyncClient.createDatabaseIfNotExists(databaseId));
-        bookCollection = databaseCache.flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
+        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
     }
 
 

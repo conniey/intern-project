@@ -5,7 +5,7 @@ package com.azure.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Author {
+final class Author {
     @JsonProperty("lastName")
     private String lastName;
     @JsonProperty("firstName")

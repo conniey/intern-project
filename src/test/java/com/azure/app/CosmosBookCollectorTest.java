@@ -5,6 +5,7 @@ package com.azure.app;
 
 import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
+import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,11 +36,11 @@ public class CosmosBookCollectorTest {
         }
         ConfigurationAsyncClient client;
         try {
-            client = ConfigurationAsyncClient.builder()
-                .credentials(new ConfigurationClientCredentials(connectionString))
+            client = new ConfigurationClientBuilder()
+                .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
-                .build();
-            cosmosBC = new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
+                .buildAsyncClient();
+            cosmosBC = null;// new BookCollector(new CosmosDocumentProvider(client), new BlobImageProvider(client));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             Assert.fail("");
         }
