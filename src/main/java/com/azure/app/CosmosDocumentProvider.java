@@ -3,9 +3,6 @@
 
 package com.azure.app;
 
-import com.azure.data.appconfiguration.ConfigurationAsyncClient;
-import com.azure.data.appconfiguration.models.ConfigurationSetting;
-import com.azure.data.appconfiguration.models.SettingSelector;
 import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.CosmosClient;
@@ -47,32 +44,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
         String collectionLink = "/StoredBooks";
         bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
     }
-
-    CosmosDocumentProvider(ConfigurationAsyncClient client) {
-        ConnectionPolicy policy = new ConnectionPolicy();
-        policy.connectionMode(ConnectionMode.DIRECT);
-        List<ConfigurationSetting> infoList = client.listSettings(new SettingSelector().keys("COSMOS*")).collectList().block();
-        String endpoint = null;
-        String masterKey = null;
-        for (int i = 0; i < infoList.size(); i++) {
-            String key = infoList.get(i).key();
-            if (key.contentEquals("COSMOS_HOST")) {
-                endpoint = infoList.get(i).value();
-            } else {
-                masterKey = infoList.get(i).value();
-            }
-        }
-        CosmosClient cosmosClient = CosmosClient.builder()
-            .endpoint(endpoint)
-            .key(masterKey)
-            .connectionPolicy(policy)
-            .build();
-        String databaseId = "book-inventory";
-        String collectionId = "book-info";
-        String collectionLink = "/StoredBooks";
-        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
-    }
-
 
     @Override
     public Flux<Book> getBooks() {

@@ -96,6 +96,7 @@ public class CosmosBookCollectorTest {
     public void testDeleteBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
+        cosmosBC.saveBook(book).block();
         cosmosBC.deleteBook(book).block();
     }
 
