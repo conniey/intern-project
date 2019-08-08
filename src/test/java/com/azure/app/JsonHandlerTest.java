@@ -6,6 +6,7 @@ package com.azure.app;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +16,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class JsonHandlerTest {
@@ -31,13 +35,13 @@ public class JsonHandlerTest {
     @Before
     public void setUp() {
         try {
-            URI folder = JsonHandlerTest.class.getClassLoader().getResource(".").toURI();
+            URI folder = Objects.requireNonNull(JsonHandlerTest.class.getClassLoader().getResource(".")).toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(JsonHandlerTest.class).error("Error in setting up JsonHandlerTest: ", e);
             Assert.fail("");
         }
     }
-
 
     /**
      * Tests serialization of a valid book.
@@ -105,7 +109,7 @@ public class JsonHandlerTest {
         //Arrange and Act
         Book result = jsonHandler.fromJSONtoBook(Paths.get(root, "Kingdom Keepers VIII.json").toFile());
         //Assert
-        assertTrue(result != null);
+        assertNotNull(result);
     }
 
     /**
@@ -115,9 +119,8 @@ public class JsonHandlerTest {
     public void testFromJSONtoBookInvalid() {
         //Arrange and Act
         Book result = jsonHandler.fromJSONtoBook(new File(Paths.get(root, "asdfasdf").toString()));
-
         //Assert
-        assertTrue(result == null);
+        assertNull(result);
     }
 
     /**
@@ -125,7 +128,7 @@ public class JsonHandlerTest {
      */
     private void deleteJsonFile(File files, Book book) {
         try (Stream<Path> walk = Files.walk(Paths.get(files.getAbsolutePath()))) {
-            List<String> result = walk.map(x -> x.toString()).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
+            List<String> result = walk.map(Path::toString).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
             for (String file : result) {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
@@ -135,7 +138,7 @@ public class JsonHandlerTest {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(JsonHandlerTest.class).error("Error deleting files: ", e);
         }
     }
 
@@ -144,8 +147,10 @@ public class JsonHandlerTest {
      */
     private void deleteEmptyDirectories() {
         File[] files = new File(Constants.JSON_PATH).listFiles();
+        assert files != null;
         clearFiles(files);
         File[] imageFiles = new File(Constants.IMAGE_PATH).listFiles();
+        assert imageFiles != null;
         clearFiles(imageFiles);
     }
 
@@ -158,7 +163,7 @@ public class JsonHandlerTest {
     private void clearFiles(File[] files) {
         for (File file : files) {
             if (file.isDirectory()) {
-                clearFiles(file.listFiles());
+                clearFiles(Objects.requireNonNull(file.listFiles()));
             }
             if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
                 file.delete();

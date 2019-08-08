@@ -6,6 +6,7 @@ package com.azure.app;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -34,6 +35,7 @@ public class LocalBookCollectorTest {
             URI folder = LocalBookCollectorTest.class.getClassLoader().getResource(".").toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
+            LoggerFactory.getLogger(LocalBookCollectorTest.class).error("Error in setting up the LocalBookCollectorTest: ", e);
             Assert.fail("");
         }
         localCollector = new BookCollector(new LocalDocumentProvider(root),
@@ -221,7 +223,7 @@ public class LocalBookCollectorTest {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LoggerFactory.getLogger(LocalBookCollectorTest.class).error("Error deleting json file: ", e);
         }
         return delete;
     }

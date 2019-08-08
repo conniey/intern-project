@@ -42,7 +42,8 @@ final class CosmosDocumentProvider implements DocumentProvider {
         String databaseId = "book-inventory";
         String collectionId = "book-info";
         String collectionLink = "/StoredBooks";
-        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
+        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient ->
+            databaseClient.database().createContainerIfNotExists(collectionId, collectionLink)).cache();
     }
 
     @Override

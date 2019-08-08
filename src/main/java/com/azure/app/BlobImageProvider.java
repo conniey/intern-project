@@ -46,7 +46,7 @@ final class BlobImageProvider implements ImageProvider {
             } else {
                 return container.create().then(Mono.just(container));
             }
-        });
+        }).cache();
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
     }
 

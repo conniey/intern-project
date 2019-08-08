@@ -3,37 +3,19 @@
 
 package com.azure.app;
 
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class OptionCheckerTest {
     private OptionChecker optionChecker = new OptionChecker();
     private URL folder = OptionCheckerTest.class.getClassLoader().getResource(".");
-    private String root;
-
-    /**
-     * Sets up a String containing the location of
-     * where to look for the images saved in the test folders.
-     */
-    @Before
-    public void setUp() {
-        try {
-            URI folder = OptionCheckerTest.class.getClassLoader().getResource(".").toURI();
-            root = Paths.get(folder).toString();
-        } catch (URISyntaxException e) {
-            Assert.fail("");
-        }
-    }
 
     /**
      * Verifies that a png image can be read
@@ -154,7 +136,7 @@ public class OptionCheckerTest {
         //Act
         result = optionChecker.checkOption("6", 5);
         //Assert
-        assertTrue(result == -1);
+        assertEquals(result, -1);
     }
 
     /**
@@ -170,7 +152,7 @@ public class OptionCheckerTest {
         //Act
         result = optionChecker.checkOption("-100", 5);
         //Assert
-        assertTrue(result == -1);
+        assertEquals(result, -1);
     }
 
     /**
@@ -186,7 +168,7 @@ public class OptionCheckerTest {
         //Act
         result = optionChecker.checkOption("asdf asdf", 5);
         //Assert
-        assertTrue(result == -1);
+        assertEquals(result, -1);
     }
 
     /**
@@ -206,8 +188,8 @@ public class OptionCheckerTest {
         result = optionChecker.checkOption("q", 5);
         result2 = optionChecker.checkOption("Q", 5);
         //Assert
-        assertTrue(result == 0); //Since 0 is also not an option that the user can otherwise pick, it indicates return to menu
-        assertTrue(result2 == 0);
+        assertEquals(0, result); //Since 0 is also not an option that the user can otherwise pick, it indicates return to menu
+        assertEquals(0, result2);
     }
 
     /**

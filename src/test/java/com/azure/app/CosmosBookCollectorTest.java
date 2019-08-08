@@ -7,13 +7,12 @@ import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -48,14 +47,8 @@ public class CosmosBookCollectorTest {
             CosmosSettings cosmosSettings = mapper.readValue(client.getSetting("COSMOS_INFO").block().value(), CosmosSettings.class);
             BlobSettings blobSettings = mapper.readValue(client.getSetting("BLOB_INFO").block().value(), BlobSettings.class);
             cosmosBC = new BookCollector(new CosmosDocumentProvider(cosmosSettings), new BlobImageProvider(blobSettings));
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            Assert.fail("");
-        } catch (JsonParseException e) {
-            e.printStackTrace();
-        } catch (JsonMappingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | IOException e) {
+            LoggerFactory.getLogger(BlobImageProviderTest.class).error("Error in setting up the CosmosBookCollector: ", e);
         }
     }
 

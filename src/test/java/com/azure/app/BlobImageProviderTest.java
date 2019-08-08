@@ -5,16 +5,21 @@ package com.azure.app;
 
 import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
+import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import reactor.test.StepVerifier;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 public class BlobImageProviderTest {
     private BlobImageProvider blobCollector;
@@ -25,6 +30,7 @@ public class BlobImageProviderTest {
      */
     @Before
     public void setup() {
+        ObjectMapper mapper = new ObjectMapper();
         String connectionString = System.getenv("AZURE_APPCONFIG");
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -33,13 +39,15 @@ public class BlobImageProviderTest {
         }
         ConfigurationAsyncClient client;
         try {
-            client = ConfigurationAsyncClient.builder()
-                .credentials(new ConfigurationClientCredentials(connectionString))
+            client = new ConfigurationClientBuilder()
+                .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
-                .build();
-            blobCollector = new BlobImageProvider(client);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                .buildAsyncClient();
+            BlobSettings blobSettings = mapper.readValue(Objects.requireNonNull(client.getSetting("BLOB_INFO").block()).value(), BlobSettings.class);
+            blobCollector = new BlobImageProvider(blobSettings);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | IOException e) {
             Assert.fail("");
+            LoggerFactory.getLogger(BlobImageProviderTest.class).error("Error in setting up the BlobImageProvider: ", e);
         }
     }
 
@@ -58,4 +66,20 @@ public class BlobImageProviderTest {
         //Cleanup
         blobCollector.deleteImage(newBook).block();
     }
+
+    /**
+     * Checks that deleting a book works
+     */
+    @Test
+    public void deleteImageTest() {
+        //Arrange
+        Book book = new Book("Valid", new Author("Work", "Harder"),
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
+        blobCollector.saveImage(book).block();
+        //Act
+        StepVerifier.create(blobCollector.deleteImage(book))
+            //Assert & Cleanup
+            .verifyComplete();
+    }
 }
+
