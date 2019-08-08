@@ -29,7 +29,7 @@ import java.util.Set;
 final class BlobImageProvider implements ImageProvider {
     private final Set<String> supportedImageFormats;
     private Mono<ContainerAsyncClient> imageContainerClient;
-    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(BlobImageProvider.class);
 
     BlobImageProvider(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),

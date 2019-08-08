@@ -32,7 +32,7 @@ final class BlobImageProviderBackup implements ImageProvider {
     private final Set<String> supportedImageFormats;
     //   private Mono<StorageAsyncClient> storageClient;
     private Mono<ContainerAsyncClient> imageContainerClient;
-    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(BlobImageProviderBackup.class);
 
     BlobImageProviderBackup(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),
