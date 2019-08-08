@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -99,13 +100,13 @@ final class LocalDocumentProvider implements DocumentProvider {
         URI saved = relativePath.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
-        duplicateBook(book, imageFile, imagePath);
+        duplicateBook(book);
         if (book.isValid()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
             if (bookSaved) {
-                return Mono.empty().then();
+                return Mono.empty();
             } else {
                 return Mono.error(new IllegalStateException("Unsuccessful save"));
             }
@@ -127,9 +128,9 @@ final class LocalDocumentProvider implements DocumentProvider {
     /**
      * Deletes the old book if the new book has a the same title and author
      *
-     * @param bookToCompare
+     * @param bookToCompare - Book object that's going to be checked
      */
-    private void duplicateBook(Book bookToCompare, File imagePath, File newImage) {
+    private void duplicateBook(Book bookToCompare) {
         //Checks to see if the book has a duplicate, if so it'll delete it so it can be overwritten
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
@@ -183,6 +184,7 @@ final class LocalDocumentProvider implements DocumentProvider {
      */
     private void deleteEmptyDirectories() {
         File[] files = new File(Constants.JSON_PATH).listFiles();
+        assert files != null;
         clearFiles(files);
     }
 
@@ -198,7 +200,7 @@ final class LocalDocumentProvider implements DocumentProvider {
                 return;
             } else {
                 if (file.isDirectory()) {
-                    clearFiles(file.listFiles());
+                    clearFiles(Objects.requireNonNull(file.listFiles()));
                 }
                 if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
                     file.delete();
