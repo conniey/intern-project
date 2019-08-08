@@ -2,7 +2,7 @@ package com.azure.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class BlobSettings {
+final class BlobSettings {
     @JsonProperty("blobUrl")
     private String blobUrl;
 
@@ -12,15 +12,15 @@ public class BlobSettings {
     @JsonProperty("blobAccountName")
     private String blobAccountName;
 
-    public String getUrl() {
+    String getUrl() {
         return blobUrl;
     }
 
-    public String getKey() {
+    String getKey() {
         return blobKey;
     }
 
-    public String getAccountName() {
+    String getAccountName() {
         return blobAccountName;
     }
 

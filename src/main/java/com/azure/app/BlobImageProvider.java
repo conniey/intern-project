@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-public class BlobImageProvider implements ImageProvider {
+final class BlobImageProvider implements ImageProvider {
     private final Set<String> supportedImageFormats;
     private Mono<ContainerAsyncClient> imageContainerClient;
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);

@@ -45,7 +45,14 @@ final class BookCollector {
         return documentProvider.getBooks();
     }
 
-
+    /**
+     * Overwrites the old book with the contents in the new book
+     *
+     * @param oldBook   - Book object that will be changed
+     * @param newBook   - Book object with the new information to change to
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
     Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
         return documentProvider.editBook(oldBook, newBook, saveCover).
             then(imageProvider.editImage(oldBook, newBook, saveCover));
@@ -116,7 +123,12 @@ final class BookCollector {
     }
 
     /**
-     * Determines if an entry is a file
+     * Determines if a URI input is a file.
+     *
+     * @param entry - the URI to be checked
+     * @return - boolean that determines if it's a valid file or not
+     * true - if it's valid
+     * false - if it's not valid
      */
     static boolean isFile(URI entry) {
         return entry != null && new File(entry).isFile();
