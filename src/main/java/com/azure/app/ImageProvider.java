@@ -5,7 +5,7 @@ package com.azure.app;
 
 import reactor.core.publisher.Mono;
 
-public interface ImageProvider {
+interface ImageProvider {
     /**
      * Grab a String containing the absolute path to the book's cover location
      * If it's in Azure Database storage, the cover will be downloaded to the temporary directory.

@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 
-public interface DocumentProvider {
+interface DocumentProvider {
     /**
      * Returns the Flux of Book objects
      *
