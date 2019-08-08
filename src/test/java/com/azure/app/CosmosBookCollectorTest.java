@@ -5,7 +5,11 @@ package com.azure.app;
 
 import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
+import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -14,12 +18,13 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class CosmosBookCollectorTest {
-    private CosmosDocumentProvider cosmosBC;
+    private BookCollector cosmosBC;
     URL folder = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
 
     /**
@@ -27,7 +32,7 @@ public class CosmosBookCollectorTest {
      */
     @Before
     public void setup() {
-        System.out.println(System.getenv("AZURE_APPCONFIG"));
+        ObjectMapper mapper = new ObjectMapper();
         String connectionString = System.getenv("AZURE_APPCONFIG");
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -36,32 +41,42 @@ public class CosmosBookCollectorTest {
         }
         ConfigurationAsyncClient client;
         try {
-            client = ConfigurationAsyncClient.builder()
-                .credentials(new ConfigurationClientCredentials(connectionString))
+            client = new ConfigurationClientBuilder()
+                .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
-                .build();
-            cosmosBC = new CosmosDocumentProvider(client);
+                .buildAsyncClient();
+            CosmosSettings cosmosSettings = mapper.readValue(client.getSetting("COSMOS_INFO").block().value(), CosmosSettings.class);
+            BlobSettings blobSettings = mapper.readValue(client.getSetting("BLOB_INFO").block().value(), BlobSettings.class);
+            cosmosBC = new BookCollector(new CosmosDocumentProvider(cosmosSettings), new BlobImageProvider(blobSettings));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             Assert.fail("");
+        } catch (JsonParseException e) {
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     /**
      * Tests to see that a book can be saved to Cosmos as a JSON file.
      */
+    @Ignore
     @Test
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
-        StepVerifier.create(cosmosBC.saveBook(book.getTitle(), book.getAuthor(),
-            book.getCover()))
+        StepVerifier.create(cosmosBC.saveBook(book))
             .expectComplete()
             .verify();
+        //Todo: Cleanup when you figure out how to delete
     }
 
     /**
      * Tests the getBook method
      */
+    @Ignore
     @Test
     public void testGetBook() {
         Flux<Book> books = cosmosBC.getBooks();
@@ -81,18 +96,20 @@ public class CosmosBookCollectorTest {
     public void testDeleteBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
+        cosmosBC.saveBook(book).block();
         cosmosBC.deleteBook(book).block();
     }
 
     /**
-     * Tests find book
+     * Tests find
      */
+    @Ignore
     @Test
     public void testFindTitle() {
         //Arrange
         Book book = new Book("ASD0a3FHJKL", new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
         int formerLength = cosmosBC.findBook(book.getTitle()).count().block().intValue();
-        cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
+        cosmosBC.saveBook(book).block();
         //Act
         int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
         //Assert
@@ -101,9 +118,10 @@ public class CosmosBookCollectorTest {
     }
 
     /**
-     * Tests find book when there are no books that can be found.
+     * Tests find
      */
     @Test
+    @Ignore
     public void testFindNoTitle() {
         //Arrange
         Book book = new Book("Utterly Ridicious", new Author("IMPOssibleToHaveYOu", "Yep"),

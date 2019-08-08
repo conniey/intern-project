@@ -8,7 +8,7 @@ import org.apache.commons.io.FilenameUtils;
 import java.io.File;
 import java.net.URI;
 
-class OptionChecker {
+final class OptionChecker {
     /**
      * Checks the user's string and makes sure its valid.
      *
@@ -38,8 +38,8 @@ class OptionChecker {
      * @return - boolean : true - if image path is correct
      * false - otherwise.
      */
-    boolean checkImage(String root, URI image) {
-        if (!new LocalDocumentProvider(root).isFile(image)) {
+    boolean checkImage(URI image) {
+        if (!BookCollector.isFile(image)) {
             System.out.println("Invalid image path.");
             return false;
         }

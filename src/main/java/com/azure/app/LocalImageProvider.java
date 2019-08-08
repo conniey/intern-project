@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LocalImageProvider implements BookCollector.ImageProvider {
+final class LocalImageProvider implements ImageProvider {
     private final Set<String> supportedImageFormats;
     private List<File> jsonFiles;
     private String root;
@@ -148,15 +148,14 @@ public class LocalImageProvider implements BookCollector.ImageProvider {
         } else {
             File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
             newBook = new Book(newBook.getTitle(), newBook.getAuthor(), image.toURI());
-            return saveImage(newBook).then(
-                deleteImage(oldBook));
+            return saveImage(newBook).then(deleteImage(oldBook));
         }
     }
 
     @Override
     public Mono<Void> deleteImage(Book book) {
         return Mono.just(Paths.get(System.getProperty("user.dir"), book.getCover().getPath()).toFile().delete()).map(result -> {
-            if (!result) {
+            if (!result.booleanValue()) {
                 return Mono.error(new IllegalStateException("Image wasn't deleted."));
             } else {
                 deleteEmptyDirectories();
@@ -164,6 +163,4 @@ public class LocalImageProvider implements BookCollector.ImageProvider {
             }
         }).then();
     }
-
-
 }

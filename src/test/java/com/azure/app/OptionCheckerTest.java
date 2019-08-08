@@ -44,7 +44,7 @@ public class OptionCheckerTest {
         //Arrange
         File pngPath = new File(folder.getPath() + "Wonder.png");
         //Act
-        boolean pngCheck = optionChecker.checkImage(root, pngPath.toURI());
+        boolean pngCheck = optionChecker.checkImage(pngPath.toURI());
         //Assert
         assertTrue(pngCheck);
     }
@@ -57,7 +57,7 @@ public class OptionCheckerTest {
         //Arrange
         File jpgPath = new File(folder.getPath() + "KK8.jpg");
         //Act
-        boolean jpgCheck = optionChecker.checkImage(root, jpgPath.toURI());
+        boolean jpgCheck = optionChecker.checkImage(jpgPath.toURI());
         //Assert
         assertTrue(jpgCheck);
     }
@@ -70,7 +70,7 @@ public class OptionCheckerTest {
         //Arrange
         File gifPath = new File(folder.getPath() + "GreatGatsby.gif");
         //Act
-        boolean gifCheck = optionChecker.checkImage(root, gifPath.toURI());
+        boolean gifCheck = optionChecker.checkImage(gifPath.toURI());
         //Assert
         assertTrue(gifCheck);
     }
@@ -83,7 +83,7 @@ public class OptionCheckerTest {
         //Arrange
         File randomPath = new File(folder.getPath() + "Test.docx");
         //Act
-        boolean check = optionChecker.checkImage(root, randomPath.toURI());
+        boolean check = optionChecker.checkImage(randomPath.toURI());
         //Assert
         assertFalse(check);
     }

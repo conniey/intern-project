@@ -9,97 +9,17 @@ import reactor.core.publisher.Mono;
 import java.io.File;
 import java.net.URI;
 
-public class BookCollector {
+final class BookCollector {
     private ImageProvider imageProvider;
     private DocumentProvider documentProvider;
-
-    interface DocumentProvider {
-        /**
-         * Returns the Flux of Book objects
-         *
-         * @return Flux<Book> the flux with all the book information </Book>
-         */
-        Flux<Book> getBooks();
-
-        /**
-         * Saves the book as a JSON file
-         *
-         * @param title  - String containing the title of the book
-         * @param author - Author object of the book
-         * @param path   - File containing the cover image of the book
-         * @return Mono<Boolean> that determines whether the book got saved or not
-         * true - book was successfully saved
-         * false - book wasn't saved </Boolean>
-         */
-        Mono<Void> saveBook(String title, Author author, URI path);
-
-        Mono<Void> editBook(Book oldBook, Book newBook, int saveCover);
-
-        /**
-         * Deletes the book and the file based off its information.
-         *
-         * @param book - Book that'll be deleted
-         * @return Mono<Boolean> determines whether or not book was successfully deleted </Boolean>
-         * true - Book was deleted
-         * false - Book wasn't deleted
-         */
-        Mono<Void> deleteBook(Book book);
-
-        /**
-         * Filters out the book based on the specified title.
-         *
-         * @param title - String of the book title the user is looking for
-         * @return - Flux of Book objects with that title
-         */
-        Flux<Book> findBook(String title);
-
-        /**
-         * Filters out the books based on the specified author.
-         *
-         * @param author - Contains the name of the author the user is looking for
-         * @return - Flux of Book objects by that author
-         */
-        Flux<Book> findBook(Author author);
-    }
-
-    interface ImageProvider {
-        /**
-         * Grab a String containing the absolute path to the book's cover location
-         * If it's in Azure Database storage, the cover will be downloaded to the temporary directory.
-         *
-         * @param book - Book object of whose cover you want to retrieve
-         * @return {@Link Mono} holds a String of the absolute path
-         */
-        Mono<String> grabCoverImage(Book book);
-
-        /**
-         * Saves the book's cover image to a Blob Storage
-         *
-         * @param b - Book object with the cover image to save
-         * @return {@Mono Void}
-         */
-        Mono<Void> saveImage(Book b);
-
-        Mono<Void> editImage(Book oldBook, Book newBook, int saveCover);
-
-        /**
-         * Deletes the image cover from the Blob Storage
-         *
-         * @param book - Book with the information for the cover that will be deleted.
-         * @return Mono {@Link Boolean} determines whether image was sucessfully deleted or not
-         * true - Book was deleted
-         * false - Book wasn't deleted
-         */
-        Mono<Void> deleteImage(Book book);
-    }
 
     /**
      * Constructor for BookCollector
      *
-     * @param documentCollection - the implementation for how and where to save the book's information (Local/Cosmos)
-     * @param imageProvider      - the implementation for how and where to save the books' cover images (Local/Blob Storage)
+     * @param documentCollection - the implementation for saving the text files of Books (Local or Cosmos)
+     * @param imageProvider      - the implementation for saving the book cover images (Local or Blob Storage)
      */
-    public BookCollector(DocumentProvider documentCollection, ImageProvider imageProvider) {
+    BookCollector(DocumentProvider documentCollection, ImageProvider imageProvider) {
         this.documentProvider = documentCollection;
         this.imageProvider = imageProvider;
     }
@@ -111,11 +31,9 @@ public class BookCollector {
      * @return {@Link Mono} returns a Mono that was successful or has an error
      */
     Mono<Void> saveBook(Book book) {
-        if (book.checkBook() && isFile(book.getCover())) {
-            return documentProvider.saveBook(book.getTitle(), book.getAuthor(), book.getCover())
-                .then(imageProvider.saveImage(book));
-        }
-        return Mono.error(new IllegalArgumentException("Book can't be saved."));
+        return book.isValid() && isFile(book.getCover())
+            ? documentProvider.saveBook(book.getTitle(), book.getAuthor(), book.getCover())
+                .then(imageProvider.saveImage(book)) : Mono.error(new IllegalArgumentException("Book can't be saved."));
     }
 
     /**
@@ -127,7 +45,14 @@ public class BookCollector {
         return documentProvider.getBooks();
     }
 
-
+    /**
+     * Overwrites the old book with the contents in the new book
+     *
+     * @param oldBook   - Book object that will be changed
+     * @param newBook   - Book object with the new information to change to
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
     Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
         return documentProvider.editBook(oldBook, newBook, saveCover).
             then(imageProvider.editImage(oldBook, newBook, saveCover));
@@ -142,10 +67,8 @@ public class BookCollector {
      * false - Book wasn't deleted
      */
     Mono<Void> deleteBook(Book book) {
-        if (book.checkBook()) {
-            return documentProvider.deleteBook(book).then(imageProvider.deleteImage(book));
-        }
-        return Mono.error(new IllegalArgumentException("Book wasn't deleted."));
+        return book.isValid() ? documentProvider.deleteBook(book).then(imageProvider.deleteImage(book))
+            : Mono.error(new IllegalArgumentException("Book wasn't deleted."));
     }
 
     /**
@@ -175,6 +98,7 @@ public class BookCollector {
      * false - if there are no books
      */
     Mono<Boolean> hasBooks() {
+        assert getBooks().hasElements().block() != null;
         return getBooks().hasElements();
     }
 
@@ -200,13 +124,14 @@ public class BookCollector {
     }
 
     /**
-     * Determines if an entry is a file
+     * Determines if a URI input is a file.
+     *
+     * @param entry - the URI to be checked
+     * @return - boolean that determines if it's a valid file or not
+     * true - if it's valid
+     * false - if it's not valid
      */
-    private boolean isFile(URI entry) {
-        if (entry == null) {
-            return false;
-        }
-        File fh = new File(entry);
-        return fh.isFile();
+    static boolean isFile(URI entry) {
+        return entry != null && new File(entry).isFile();
     }
 }

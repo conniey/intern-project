@@ -16,7 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-class JsonHandler {
+final class JsonHandler {
     private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
 
     /**
@@ -93,7 +93,7 @@ class JsonHandler {
      * false if Book wasn't successfully converted to JSON file
      */
     boolean writeJSON(Book book, String root) {
-        if (book.checkBook()) {
+        if (book.isValid()) {
             final Path fullBookPath = Paths.get(root, Constants.JSON_PATH, book.getAuthor().getLastName(),
                 book.getAuthor().getFirstName());
             final File bookFile = fullBookPath.toFile();

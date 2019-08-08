@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LocalDocumentProvider implements BookCollector.DocumentProvider {
+final class LocalDocumentProvider implements DocumentProvider {
     private Flux<Book> jsonBooks;
     private List<File> jsonFiles;
     private String root;
@@ -100,7 +100,7 @@ public class LocalDocumentProvider implements BookCollector.DocumentProvider {
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
         duplicateBook(book, imageFile, imagePath);
-        if (book.checkBook()) {
+        if (book.isValid()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
@@ -228,17 +228,5 @@ public class LocalDocumentProvider implements BookCollector.DocumentProvider {
     public Flux<Book> findBook(Author author) {
         return jsonBooks.filter(book -> author.getFirstName().contentEquals(book.getAuthor().getFirstName())
             && book.getAuthor().getLastName().contentEquals(author.getLastName()));
-    }
-
-
-    /**
-     * Determines if an entry is a file
-     */
-    boolean isFile(URI entry) {
-        if (entry == null) {
-            return false;
-        }
-        File fh = new File(entry);
-        return fh.isFile();
     }
 }
