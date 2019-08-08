@@ -92,22 +92,4 @@ final class JsonHandler {
             return false;
         }
     }
-
-    /**
-     * Converts a Book object to a JSON file and stores it in a file.
-     *
-     * @param book - the Book object that's going to be converted to a JSON filE
-     * @return file - if it was successfully converted, file should contain book's contents via JSON format
-     * otherwise, it returns null
-     */
-    byte[] writeJSON(Book book) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            return mapper.writeValueAsBytes(book);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 }
