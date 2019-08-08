@@ -98,6 +98,7 @@ final class BookCollector {
      * false - if there are no books
      */
     Mono<Boolean> hasBooks() {
+        assert getBooks().hasElements().block() != null;
         return getBooks().hasElements();
     }
 

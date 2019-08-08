@@ -7,6 +7,7 @@ import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
+import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,7 @@ public class App {
                     final Mono<String> savedBookMono = addBook()
                         .onErrorResume(error -> Mono.just("Book wasn't saved. Error:" + error.toString()));
                     final String description = savedBookMono.block();
+                    assert description != null;
                     if (!description.isEmpty()) {
                         System.out.println("Status: " + description);
                     }
@@ -99,8 +101,9 @@ public class App {
                 .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
-            String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(info -> info.value()).block();
+            String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
             DocumentProvider document;
+            assert documentProvider != null;
             if (documentProvider.equalsIgnoreCase("Cosmos")) {
                 CosmosSettings cosmosInfo = client.getSetting("COSMOS_INFO").map(info -> {
                     try {

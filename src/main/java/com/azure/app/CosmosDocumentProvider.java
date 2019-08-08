@@ -174,5 +174,4 @@ final class CosmosDocumentProvider implements DocumentProvider {
             });
         });
     }
-
 }
