@@ -113,13 +113,8 @@ final class BlobImageProvider implements ImageProvider {
                         + blobConversion[1]
                         + "/" + blobConversion[0] + ".");
                 }));
-            Mono<BlobItem> bookMono = file.hasElements().flatMap(notEmpty -> {
-                if (notEmpty) {
-                    return file.elementAt(0);
-                } else {
-                    return Mono.error(new IllegalStateException("Cover image not found."));
-                }
-            });
+            Mono<BlobItem> bookMono = file.hasElements().flatMap(notEmpty -> notEmpty ? file.elementAt(0)
+                : Mono.error(new IllegalStateException("Cover image not found.")));
             return imageContainerClient.flatMap(containerAsyncClient ->
                 bookMono.flatMap(blobItem -> {
                     final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
