@@ -40,13 +40,8 @@ final class BlobImageProvider implements ImageProvider {
             .credential(credential)
             .buildAsyncClient();
         ContainerAsyncClient container = storageAsyncClient.getContainerAsyncClient("book-covers");
-        imageContainerClient = container.exists().flatMap(exists -> {
-            if (exists.value()) {
-                return Mono.just(container);
-            } else {
-                return container.create().then(Mono.just(container));
-            }
-        }).cache();
+        imageContainerClient = container.exists().flatMap(exists -> exists.value() ? Mono.just(container)
+            : container.create().then(Mono.just(container))).cache();
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
     }
 
@@ -190,12 +185,7 @@ final class BlobImageProvider implements ImageProvider {
             blobItem.name().contains(blobConversion[2] + "/"
                 + blobConversion[1]
                 + "/" + blobConversion[0] + ".")));
-        return findFiles.hasElements().flatMap(exists -> {
-            if (exists) {
-                return findFiles.elementAt(0);
-            } else {
-                return Mono.error(new IllegalStateException("Cannot find the image."));
-            }
-        });
+        return findFiles.hasElements().flatMap(exists -> exists ? findFiles.elementAt(0)
+            : Mono.error(new IllegalStateException("Cannot find the image.")));
     }
 }

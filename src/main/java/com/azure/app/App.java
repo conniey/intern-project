@@ -69,18 +69,12 @@ public class App {
                     System.out.println(edit().block());
                     break;
                 case 4:
-                    if (bookCollector.hasBooks().block()) {
-                        System.out.print(findBook().block());
-                    } else {
-                        System.out.println("There are no books to find.");
-                    }
+                    System.out.println(bookCollector.hasBooks().block() ? findBook().block() :
+                        "There are no books to find.");
                     break;
                 case 5:
-                    if (bookCollector.hasBooks().block()) {
-                        System.out.println(deleteBook().block());
-                    } else {
-                        System.out.println("There are no books to delete");
-                    }
+                    System.out.println(bookCollector.hasBooks().block() ? deleteBook().block() :
+                        "There are no books to delete.");
                     break;
                 case 6:
                     System.out.println("Goodbye.");
