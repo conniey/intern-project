@@ -126,7 +126,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
             new FeedOptions().enableCrossPartitionQuery(true)).elementAt(0).block();
         CosmosItem item = cosmosContainer.getItem(block.results().get(0).id(), new PartitionKey("/StoredBooks"));
-        item.read().block();
+        item.delete().block();
         return bookCollection.flatMap(items -> {
             Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \""
                     + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
