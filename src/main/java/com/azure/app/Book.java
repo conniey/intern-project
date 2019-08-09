@@ -6,14 +6,17 @@ package com.azure.app;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.net.URI;
+import java.util.UUID;
 
-public class Book {
+final class Book {
     @JsonProperty("title")
     private String title;
     @JsonProperty("author")
     private Author author;
     @JsonProperty("cover")
     private URI cover;
+    @JsonProperty("id")
+    private String id;
 
     Book() {
     }
@@ -23,6 +26,7 @@ public class Book {
         this.title = title;
         this.author = author;
         this.cover = cover;
+        id = UUID.randomUUID().toString();
     }
 
     /**
@@ -55,10 +59,11 @@ public class Book {
     /**
      * Checks to the book's fields to make sure they're correct
      *
-     * @return boolean - true if all the fields are valid
-     * - false otherwise
+     * @return boolean
+     * true - if all the fields are valid
+     * false - otherwise
      */
-    boolean checkBook() {
+    boolean isValid() {
         if (cover == null) {
             return false;
         }
@@ -80,7 +85,7 @@ public class Book {
      */
     @Override
     public String toString() {
-        return author + " -" + " " + getTitle();
+        return author + " - " + getTitle();
     }
 
     /**
