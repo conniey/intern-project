@@ -15,6 +15,7 @@ import com.azure.data.cosmos.FeedResponse;
 import com.azure.data.cosmos.PartitionKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -169,7 +170,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
                     return book.getObject(Book.class);
                 } catch (IOException e) {
                     logger.error("Failed to de-serialize: ", e);
-                    return null;
+                    throw Exceptions.propagate(e);
                 }
             });
         });
