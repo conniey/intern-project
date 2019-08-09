@@ -38,7 +38,6 @@ public class BookCollectorTest {
             {new Book("Title", new Author("", "Bad"), new File(folder.getPath() + "KK8.jpg").toURI())}, // No first name
             {new Book("Title", new Author("", ""), new File(folder.getPath() + "KK8.jpg").toURI())}, // Empty author
             {new Book("Title", new Author("Good", "Author"), null)}, // null File
-            {new Book("Title", new Author("Good", "Author"), new File("zxcv").toURI())} //Illegal file
         });
     }
 
@@ -70,6 +69,4 @@ public class BookCollectorTest {
         StepVerifier.create(bookCollector.deleteBook(bInput))
             .verifyError();
     }
-
-
 }

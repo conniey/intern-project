@@ -26,7 +26,7 @@ import static org.junit.Assert.assertEquals;
 
 public class CosmosBookCollectorTest {
     private CosmosDocumentProvider cosmosBC;
-    URL folder = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
+    private static final URL FOLDER = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
 
     /**
      * Sets up App Configuration to get the information needed for Cosmos.
@@ -59,25 +59,13 @@ public class CosmosBookCollectorTest {
     @Test
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
-            new File(folder.getPath() + "GreatGatsby.gif").toURI());
+            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
         StepVerifier.create(cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()))
             .expectComplete()
             .verify();
     }
 
-    /**
-     * Tests the getBook method
-     */
-    @Test
-    public void testGetBook() {
-        Flux<Book> books = cosmosBC.getBooks();
-        books.collectList().map(list -> {
-            for (int i = 0; i < list.size(); i++) {
-                System.out.println(list.get(i));
-            }
-            return list;
-        }).block();
-    }
+
 
     /**
      * Tests deletion.
@@ -86,7 +74,7 @@ public class CosmosBookCollectorTest {
     @Test
     public void testDeleteBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
-            new File(folder.getPath() + "GreatGatsby.gif").toURI());
+            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
         cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         cosmosBC.deleteBook(book).block();
     }
@@ -98,7 +86,7 @@ public class CosmosBookCollectorTest {
     public void testFindTitle() {
         //Arrange
         String title = "ASD0a3FHJKL";
-        Book book = new Book(title, new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
+        Book book = new Book(title, new Author("Crazy", "Writer"), new File(FOLDER.getPath(), "GreatGatsby.gif").toURI());
         cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         //Act
         Flux<Book> length = cosmosBC.findBook(title);
@@ -116,7 +104,7 @@ public class CosmosBookCollectorTest {
     public void testFindNoTitle() {
         //Arrange
         Book book = new Book("Utterly Ridicious", new Author("IMPOssibleToHaveYOu", "Yep"),
-            new File(folder.getPath(), "GreatGatsby.gif").toURI());
+            new File(FOLDER.getPath(), "GreatGatsby.gif").toURI());
         //Act
         int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
         //Assert
@@ -139,7 +127,20 @@ public class CosmosBookCollectorTest {
             .assertNext(bookCopy -> {
                 assertEquals(author.getLastName(), bookCopy.getAuthor().getLastName());
                 assertEquals(author.getFirstName(), bookCopy.getAuthor().getFirstName());
-            }).expectComplete()
-            .verify();
+            }).verifyComplete();
+    }
+
+    /**
+     * Tests find
+     */
+    @Test
+    public void testFindNoAuthor() {
+        //Arrange
+        Book book = new Book("Utterly Ridicious", new Author("IMPOssibleToHaveYOu", "Yep"),
+            new File(FOLDER.getPath(), "GreatGatsby.gif").toURI());
+        //Act
+        int length = cosmosBC.findBook(book.getAuthor()).count().block().intValue();
+        //Assert
+        Assert.assertTrue(length == 0);
     }
 }

@@ -29,7 +29,7 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollector bookCollector;
-    private static Logger logger = LoggerFactory.getLogger(App.class);
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     /**
      * Starting point for the library application.
@@ -93,6 +93,14 @@ public class App {
         } while (choice != 6);
     }
 
+    /**
+     * Sets up the BookCollector with the document and image storage.
+     *
+     * @param connectionString - the value from App Configuration to determine where to store the text and image files
+     * @return - boolean that determines whether the setup was successful
+     * true - successful
+     * false - unsuccessful
+     */
     private static boolean setBookCollector(String connectionString) {
         ConfigurationAsyncClient client;
         try {

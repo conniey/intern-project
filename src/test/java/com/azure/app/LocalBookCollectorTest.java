@@ -273,7 +273,7 @@ public class LocalBookCollectorTest {
     }
 
     /**
-     * Tests saving a two different books by the same author AND with the same cover
+     * Tests saving two different books by the same author AND with the same cover
      */
     @Test
     public void testSavingDifferentBooksWithSameCover() {
