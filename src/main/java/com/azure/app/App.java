@@ -94,55 +94,73 @@ public class App {
     }
 
     private static boolean setBookCollector(String connectionString) {
-        final ObjectMapper mapper = new ObjectMapper();
         ConfigurationAsyncClient client;
         try {
             client = new ConfigurationClientBuilder()
                 .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
-            String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
-            DocumentProvider document;
-            assert documentProvider != null;
-            if (documentProvider.equalsIgnoreCase("Cosmos")) {
-                CosmosSettings cosmosInfo = client.getSetting("COSMOS_INFO").map(info -> {
-                    try {
-                        return (mapper.readValue(info.value(), CosmosSettings.class));
-                    } catch (IOException e) {
-                        logger.error("Invalid information for document storage: ", e);
-                        return null;
-                    }
-                }).block();
-                if (cosmosInfo == null) {
-                    return false;
-                }
-                document = new CosmosDocumentProvider(cosmosInfo);
-            } else {
-                document = new LocalDocumentProvider(System.getProperty("user.dir"));
+            DocumentProvider document = selectDocumentProvider(client);
+            if (document == null) {
+                return false;
             }
-            Mono<ImageProvider> imageProviderMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
-                String storageType = input.value();
-                if (storageType.equalsIgnoreCase("Local")) {
-                    return Mono.just(new LocalImageProvider(System.getProperty("user.dir")));
-                } else if (storageType.equalsIgnoreCase("BlobStorage")) {
-                    return client.getSetting("BLOB_INFO").flatMap(info -> {
-                        try {
-                            return Mono.just(new BlobImageProvider(mapper.readValue(info.value(), BlobSettings.class)));
-                        } catch (IOException e) {
-                            logger.error("Invalid information: ", e);
-                            return Mono.error(new IllegalStateException("Environment variable COSMOS_INFO is not set properly."));
-                        }
-                    });
-                } else {
-                    return Mono.error(new IllegalStateException("Image storage type '" + storageType + "' is not recognized."));
-                }
-            });
-            bookCollector = new BookCollector(document, imageProviderMono.block());
+            ImageProvider imageProvider;
+            try {
+                imageProvider = selectImageProvider(client);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.err.println("Could not set up image storage provider. Please check your settings: " + e.getMessage());
+                logger.error("Error couldn't set up Image Provider: ", e);
+                return false;
+            }
+            bookCollector = new BookCollector(document, imageProvider);
             return true;
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             logger.error("Exception with App Configuration: ", e);
             return false;
         }
+    }
+
+    private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client) {
+        final ObjectMapper mapper = new ObjectMapper();
+        String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
+        assert documentProvider != null;
+        if (documentProvider.equalsIgnoreCase("Cosmos")) {
+            CosmosSettings cosmosInfo = client.getSetting("COSMOS_INFO").map(info -> {
+                try {
+                    return (mapper.readValue(info.value(), CosmosSettings.class));
+                } catch (IOException e) {
+                    logger.error("Invalid information for document storage: ", e);
+                    return null;
+                }
+            }).block();
+            if (cosmosInfo == null) {
+                return null;
+            }
+            return new CosmosDocumentProvider(cosmosInfo);
+        } else {
+            return new LocalDocumentProvider(System.getProperty("user.dir"));
+        }
+    }
+
+    private static ImageProvider selectImageProvider(ConfigurationAsyncClient client) {
+        final ObjectMapper mapper = new ObjectMapper();
+        return client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
+            String storageType = input.value();
+            if (storageType.equalsIgnoreCase("Local")) {
+                return Mono.just(new LocalImageProvider(System.getProperty("user.dir")));
+            } else if (storageType.equalsIgnoreCase("BlobStorage")) {
+                return client.getSetting("BLOB_INFO").flatMap(info -> {
+                    try {
+                        return Mono.just(new BlobImageProvider(mapper.readValue(info.value(), BlobSettings.class)));
+                    } catch (IOException e) {
+                        logger.error("Invalid information: ", e);
+                        return Mono.error(new IllegalStateException("Environment variable COSMOS_INFO is not set properly."));
+                    }
+                });
+            } else {
+                return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognized."));
+            }
+        }).block();
     }
 
     private static Mono<String> edit() {

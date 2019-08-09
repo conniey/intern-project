@@ -8,6 +8,7 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosContainerResponse;
+import com.azure.data.cosmos.CosmosItem;
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.CosmosItemResponse;
 import com.azure.data.cosmos.FeedOptions;
@@ -124,7 +125,8 @@ final class CosmosDocumentProvider implements DocumentProvider {
         FeedResponse<CosmosItemProperties> block = cosmosContainer.queryItems("SELECT * FROM Book b WHERE b.title = \""
                 + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
             new FeedOptions().enableCrossPartitionQuery(true)).elementAt(0).block();
-        cosmosContainer.getItem(block.results().get(0).id(), new PartitionKey("/StoredBooks")).delete().block();
+        CosmosItem item = cosmosContainer.getItem(block.results().get(0).id(), new PartitionKey("/StoredBooks"));
+        item.read().block();
         return bookCollection.flatMap(items -> {
             Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \""
                     + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",

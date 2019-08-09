@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -37,28 +36,6 @@ final class JsonHandler {
             logger.error("Error mapping JSON file: ", e);
         } catch (IOException e) {
             logger.error("Error while reading JSON file: ", e);
-        }
-        return null;
-    }
-
-    /**
-     * Converts a an array of bytes back to a Book object
-     *
-     * @param byteBuffer - the ByteBuffers holds the byte information to be converted
-     * @return Book - created from the array of bytes
-     */
-    Book fromJSONtoBook(ByteBuffer byteBuffer) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            Book b = mapper.readValue(byteBuffer.array(), Book.class);
-            return b;
-        } catch (JsonGenerationException e) {
-            logger.error("Error generating byte array: ", e);
-        } catch (JsonMappingException e) {
-            logger.error("Error mapping byte array: ", e);
-        } catch (IOException e) {
-            logger.error("Error while reading from byte array: ", e);
         }
         return null;
     }

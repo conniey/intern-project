@@ -23,12 +23,6 @@ public class BookCollectorTest {
         bookCollector = new BookCollector(mockedDocument, mockedImage);
     }
 
-    @Test
-    public void saveGoodBook() {
-        Book validBook = new Book("Count", new Author("Dove", "Cameron"), new File("Complete.png").toURI());
-        StepVerifier.create(bookCollector.saveBook(validBook)).verifyComplete();
-    }
-
     /**
      * Gathers the data for the Book object that'll be tested
      *
@@ -63,8 +57,19 @@ public class BookCollectorTest {
      * Verifies that none of the parameters pass the checkBook test
      */
     @Test
-    public void testInvalidBooks() {
+    public void testSavingInvalidBooks() {
         StepVerifier.create(bookCollector.saveBook(bInput))
             .verifyError();
     }
+
+    /**
+     * Verifies that none of the parameters will pass to deletion.
+     */
+    @Test
+    public void testDeletingBooks() {
+        StepVerifier.create(bookCollector.deleteBook(bInput))
+            .verifyError();
+    }
+
+
 }

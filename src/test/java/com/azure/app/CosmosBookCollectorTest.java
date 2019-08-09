@@ -22,8 +22,10 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+import static org.junit.Assert.assertEquals;
+
 public class CosmosBookCollectorTest {
-    private BookCollector cosmosBC;
+    private CosmosDocumentProvider cosmosBC;
     URL folder = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
 
     /**
@@ -45,8 +47,7 @@ public class CosmosBookCollectorTest {
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
             CosmosSettings cosmosSettings = mapper.readValue(client.getSetting("COSMOS_INFO").block().value(), CosmosSettings.class);
-            BlobSettings blobSettings = mapper.readValue(client.getSetting("BLOB_INFO").block().value(), BlobSettings.class);
-            cosmosBC = new BookCollector(new CosmosDocumentProvider(cosmosSettings), new BlobImageProvider(blobSettings));
+            cosmosBC = new CosmosDocumentProvider(cosmosSettings);
         } catch (NoSuchAlgorithmException | InvalidKeyException | IOException e) {
             LoggerFactory.getLogger(BlobImageProviderTest.class).error("Error in setting up the CosmosBookCollector: ", e);
         }
@@ -55,21 +56,18 @@ public class CosmosBookCollectorTest {
     /**
      * Tests to see that a book can be saved to Cosmos as a JSON file.
      */
-    @Ignore
     @Test
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
-        StepVerifier.create(cosmosBC.saveBook(book))
+        StepVerifier.create(cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()))
             .expectComplete()
             .verify();
-        //Todo: Cleanup when you figure out how to delete
     }
 
     /**
      * Tests the getBook method
      */
-    @Ignore
     @Test
     public void testGetBook() {
         Flux<Book> books = cosmosBC.getBooks();
@@ -89,32 +87,32 @@ public class CosmosBookCollectorTest {
     public void testDeleteBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
-        cosmosBC.saveBook(book).block();
+        cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         cosmosBC.deleteBook(book).block();
     }
 
     /**
      * Tests find
      */
-    @Ignore
     @Test
     public void testFindTitle() {
         //Arrange
-        Book book = new Book("ASD0a3FHJKL", new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
-        int formerLength = cosmosBC.findBook(book.getTitle()).count().block().intValue();
-        cosmosBC.saveBook(book).block();
+        String title = "ASD0a3FHJKL";
+        Book book = new Book(title, new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
+        cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         //Act
-        int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
+        Flux<Book> length = cosmosBC.findBook(title);
         //Assert
-        Assert.assertTrue(formerLength + 1 == length);
-        //Cleanup
+        StepVerifier.create(length)
+            .assertNext(expected -> assertEquals(expected.getTitle(), title))
+            .verifyComplete();
+        //Cleanup...eventally....
     }
 
     /**
      * Tests find
      */
     @Test
-    @Ignore
     public void testFindNoTitle() {
         //Arrange
         Book book = new Book("Utterly Ridicious", new Author("IMPOssibleToHaveYOu", "Yep"),
@@ -123,5 +121,25 @@ public class CosmosBookCollectorTest {
         int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
         //Assert
         Assert.assertTrue(length == 0);
+    }
+
+    /**
+     * Test find
+     */
+    @Test
+    public void testFindAuthor() {
+        //Arrange
+        Author author = new Author("HAJKSDFAard", "Kadmklasnock");
+        Book book = new Book("abdeidoapsd", author, new File("Rip.png").toURI());
+        cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
+        //Act
+        Flux<Book> foundBook = cosmosBC.findBook(author);
+        //Assert
+        StepVerifier.create(foundBook)
+            .assertNext(bookCopy -> {
+                assertEquals(author.getLastName(), bookCopy.getAuthor().getLastName());
+                assertEquals(author.getFirstName(), bookCopy.getAuthor().getFirstName());
+            }).expectComplete()
+            .verify();
     }
 }

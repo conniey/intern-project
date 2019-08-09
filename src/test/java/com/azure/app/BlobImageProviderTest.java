@@ -23,7 +23,7 @@ import java.util.Objects;
 
 public class BlobImageProviderTest {
     private BlobImageProvider blobCollector;
-    URL folder = BlobImageProviderTest.class.getClassLoader().getResource(".");
+    private static final URL FOLDER = BlobImageProviderTest.class.getClassLoader().getResource(".");
 
     /**
      * Set up the App Configuration to grab the information for the Blob Storage
@@ -58,7 +58,7 @@ public class BlobImageProviderTest {
     public void saveImageTest() {
         //Arrange
         Book newBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(folder.getPath() + "GreatGatsby.gif").toURI());
+            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
         //Act
         StepVerifier.create(blobCollector.saveImage(newBook))
             //Assert
@@ -74,7 +74,7 @@ public class BlobImageProviderTest {
     public void deleteImageTest() {
         //Arrange
         Book book = new Book("Valid", new Author("Work", "Harder"),
-            new File(folder.getPath() + "GreatGatsby.gif").toURI());
+            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(book).block();
         //Act
         StepVerifier.create(blobCollector.deleteImage(book))
@@ -82,4 +82,3 @@ public class BlobImageProviderTest {
             .verifyComplete();
     }
 }
-

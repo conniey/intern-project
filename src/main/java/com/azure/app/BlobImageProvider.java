@@ -82,9 +82,21 @@ final class BlobImageProvider implements ImageProvider {
         return new String[]{blobName, blobFirstName, blobLastName};
     }
 
+   /* private Mono<Void> duplicateImage(Book b) {
+        return imageContainerClient.flatMap(container ->
+            container.listBlobsFlat().flatMap(blobs -> {
+                if (blobs.name().contains(b.getTitle() + ".") && blobs.name().contains(b.getAuthor().getLastName())
+                    && blobs.name().contains(b.getAuthor().getFirstName())) {
+                    BlockBlobAsyncClient blobClient = container.getBlockBlobAsyncClient(blobs.name());
+                  return blobClient.delete();
+                }
+            }
+        ));
+    }*/
+
     @Override
     public Mono<Void> saveImage(Book b) {
-        String extension = FilenameUtils.getExtension(new File(b.getCover()).getName());
+        final String extension = FilenameUtils.getExtension(new File(b.getCover()).getName());
         if (!supportedImageFormats.contains(extension)) {
             return Mono.error(new IllegalStateException("Error. Wrong file format for image"));
         }

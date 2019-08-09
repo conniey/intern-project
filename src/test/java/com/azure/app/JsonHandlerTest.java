@@ -105,7 +105,7 @@ public class JsonHandlerTest {
      * Tests the deserialization of a JSON file to a book
      */
     @Test
-    public void testFromJSONtoBookValid() {
+    public void testDeserializingValidFile() {
         //Arrange and Act
         Book result = jsonHandler.fromJSONtoBook(Paths.get(root, "Kingdom Keepers VIII.json").toFile());
         //Assert
@@ -116,7 +116,7 @@ public class JsonHandlerTest {
      * Tests the deserialization of a bad JSON file.
      */
     @Test
-    public void testFromJSONtoBookInvalid() {
+    public void testDeserializingInvalidFile() {
         //Arrange and Act
         Book result = jsonHandler.fromJSONtoBook(new File(Paths.get(root, "asdfasdf").toString()));
         //Assert
