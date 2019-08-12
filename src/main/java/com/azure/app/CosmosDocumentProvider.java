@@ -156,7 +156,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
         return cosmosBooks.sort(this::compare);
     }
 
-
     /**
      * Converts the items in the Cosmos container into Book objects
      *
