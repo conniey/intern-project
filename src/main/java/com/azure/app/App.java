@@ -31,6 +31,7 @@ public class App {
     private static BookCollector bookCollector;
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
+
     /**
      * Starting point for the library application.
      *
@@ -76,6 +77,7 @@ public class App {
                     System.out.println(bookCollector.hasBooks().block() ? deleteBook().block()
                         : "There are no books to delete.");
                     break;
+
                 case 6:
                     System.out.println("Goodbye.");
                     break;
