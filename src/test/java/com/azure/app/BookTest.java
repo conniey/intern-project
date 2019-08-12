@@ -23,18 +23,13 @@ public class BookTest {
     @Test
     public void testGoodBookChecker() {
         //Arrange
-<<<<<<< HEAD
         final URL folder = BookTest.class.getClassLoader().getResource(".");
-=======
-        URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         Book book = new Book("Title", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI());
         //Act and Assert
         assertTrue(book.isValid());
     }
 
     //TEST INVALID BOOKS
-
     /**
      * Gathers the data for the Book object that'll be tested
      *
@@ -43,11 +38,7 @@ public class BookTest {
     @Parameterized.Parameters
     public static Collection<Book[]> data() {
         //Arrange
-<<<<<<< HEAD
         final URL folder = BookTest.class.getClassLoader().getResource(".");
-=======
-        URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         return Arrays.asList(new Book[][]{
             {new Book("", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI())},
             {new Book("Title", new Author("Good", ""), new File(folder.getPath() + "KK8.jpg").toURI())},

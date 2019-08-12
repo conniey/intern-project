@@ -35,11 +35,7 @@ public class JsonHandlerTest {
     @Before
     public void setUp() {
         try {
-<<<<<<< HEAD
             URI folder = Objects.requireNonNull(JsonHandlerTest.class.getClassLoader().getResource(".")).toURI();
-=======
-            URI folder = JsonHandlerTest.class.getClassLoader().getResource(".").toURI();
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(JsonHandlerTest.class).error("Error in setting up JsonHandlerTest: ", e);
