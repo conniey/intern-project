@@ -10,6 +10,7 @@ import com.azure.data.appconfiguration.credentials.ConfigurationClientCredential
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import reactor.test.StepVerifier;
@@ -29,6 +30,7 @@ public class BlobImageProviderTest {
      * Set up the App Configuration to grab the information for the Blob Storage
      */
     @Before
+    @Ignore
     public void setup() {
         ObjectMapper mapper = new ObjectMapper();
         String connectionString = System.getenv("AZURE_APPCONFIG");
@@ -55,6 +57,7 @@ public class BlobImageProviderTest {
      * Verifies that you can save an image.
      */
     @Test
+    @Ignore
     public void saveImageTest() {
         //Arrange
         Book newBook = new Book("Valid", new Author("Work", "Hard"),
@@ -71,6 +74,7 @@ public class BlobImageProviderTest {
      * Tests that you can edit an image if the user decides to change the book's title
      */
     @Test
+    @Ignore
     public void editTitleImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
@@ -90,6 +94,7 @@ public class BlobImageProviderTest {
      * Tests that you can edit an image if the user decided to change the book's author
      */
     @Test
+    @Ignore
     public void editAuthorImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
@@ -109,6 +114,7 @@ public class BlobImageProviderTest {
      * Tests that you can edit an image if the user decided to change the book's cover image
      */
     @Test
+    @Ignore
     public void editCoverImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
@@ -128,6 +134,7 @@ public class BlobImageProviderTest {
      * Checks that deleting an image that exists works
      */
     @Test
+    @Ignore
     public void deleteImageTest() {
         //Arrange
         Book book = new Book("Valid", new Author("Work", "Harder"),
@@ -143,6 +150,7 @@ public class BlobImageProviderTest {
      * Tests that you cannot delete an image that doesn't exist
      */
     @Test
+    @Ignore
     public void testDeletingNonexistantImage() {
         //Arrange
         Book book = new Book("Completetly Random", new Author("asdfasdf", "qeryuio"),
@@ -155,6 +163,7 @@ public class BlobImageProviderTest {
      * Tests overwriting image
      */
     @Test
+    @Ignore
     public void testOverwritingImage() {
         //Arrange
         Book book = new Book("Valid", new Author("Work", "Harder"),
@@ -173,6 +182,7 @@ public class BlobImageProviderTest {
      * Tests saving same image by different title but same author
      */
     @Test
+    @Ignore
     public void testSavingSameImageDifferentTitle() {
         //Arrange
         Book book = new Book("Miracle", new Author("Work", "Harder"),
@@ -191,6 +201,7 @@ public class BlobImageProviderTest {
      * Tests saving same image by different authors
      */
     @Test
+    @Ignore
     public void testSavingSameImageDifferentAuthor() {
         //Arrange
         Book book = new Book("Miracle", new Author("Brother", "Harder"),
