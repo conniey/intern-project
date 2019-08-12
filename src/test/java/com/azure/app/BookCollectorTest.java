@@ -46,9 +46,7 @@ public class BookCollectorTest {
             {new Book("Title", new Author("Good", "Author"), null)}, // null File
         });
     }
-
     private Book bInput;
-
     /**
      * Constructor for the BookCollectorTest to pass the parameters
      *
