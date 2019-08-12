@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,7 +29,7 @@ final class LocalDocumentProvider implements DocumentProvider {
     private List<File> jsonFiles;
     private String root;
     private final OptionChecker optionChecker = new OptionChecker();
-    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(LocalDocumentProvider.class);
 
     LocalDocumentProvider(String root) {
         this.root = root;
@@ -99,13 +100,13 @@ final class LocalDocumentProvider implements DocumentProvider {
         URI saved = relativePath.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
-        duplicateBook(book, imageFile, imagePath);
+        duplicateBook(book);
         if (book.isValid()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
             if (bookSaved) {
-                return Mono.empty().then();
+                return Mono.empty();
             } else {
                 return Mono.error(new IllegalStateException("Unsuccessful save"));
             }
@@ -113,6 +114,14 @@ final class LocalDocumentProvider implements DocumentProvider {
         return Mono.error(new IllegalStateException("Unsuccessful save"));
     }
 
+    /**
+     * Overwrites the old book with the contents in the new book
+     *
+     * @param oldBook   - Book object that will be changed
+     * @param newBook   - Book object with the new information to change to
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
     @Override
     public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
         if (saveCover == 1) { // Overwriting/changing cover
@@ -127,9 +136,9 @@ final class LocalDocumentProvider implements DocumentProvider {
     /**
      * Deletes the old book if the new book has a the same title and author
      *
-     * @param bookToCompare
+     * @param bookToCompare - Book object that's going to be checked
      */
-    private void duplicateBook(Book bookToCompare, File imagePath, File newImage) {
+    private void duplicateBook(Book bookToCompare) {
         //Checks to see if the book has a duplicate, if so it'll delete it so it can be overwritten
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
@@ -168,6 +177,11 @@ final class LocalDocumentProvider implements DocumentProvider {
         return Mono.error(new IllegalStateException(""));
     }
 
+    /**
+     * Retrieves the files on book information from the local directory
+     *
+     * @return a List of Files
+     */
     private List<File> retrieveJsonFiles() {
         try (Stream<Path> walk = Files.walk(Paths.get(Constants.JSON_PATH))) {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith(".json"))
@@ -183,6 +197,7 @@ final class LocalDocumentProvider implements DocumentProvider {
      */
     private void deleteEmptyDirectories() {
         File[] files = new File(Constants.JSON_PATH).listFiles();
+        assert files != null;
         clearFiles(files);
     }
 
@@ -198,7 +213,7 @@ final class LocalDocumentProvider implements DocumentProvider {
                 return;
             } else {
                 if (file.isDirectory()) {
-                    clearFiles(file.listFiles());
+                    clearFiles(Objects.requireNonNull(file.listFiles()));
                 }
                 if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
                     file.delete();
