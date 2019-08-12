@@ -80,6 +80,7 @@ final class BlobImageProvider implements ImageProvider {
     private Mono<Void> duplicateImages(Book b) {
         return deleteImage(b).onErrorResume(error -> Mono.empty());
     }
+
     @Override
     public Mono<Void> saveImage(Book b) {
         final String extension = FilenameUtils.getExtension(new File(b.getCover()).getName());
@@ -92,10 +93,10 @@ final class BlobImageProvider implements ImageProvider {
         }
         return duplicateImages(b) //just in case this book already exists, this should delete the old file
             .then(imageContainerClient.flatMap(containerAsyncClient -> {
-            final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
-                + "/" + blobInfo[0]);
-            File path = new File(b.getCover());
-            return blockBlobClient.uploadFromFile(path.getAbsolutePath()).then();
+                final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
+                    + "/" + blobInfo[0]);
+                File path = new File(b.getCover());
+                return blockBlobClient.uploadFromFile(path.getAbsolutePath()).then();
             }));
     }
 

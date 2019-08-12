@@ -126,6 +126,7 @@ public class CosmosBookCollectorTest {
                 assertEquals(author.getLastName(), bookCopy.getAuthor().getLastName());
                 assertEquals(author.getFirstName(), bookCopy.getAuthor().getFirstName());
             }).verifyComplete();
+        //Since delete doesn't work, you'll have to manually delete the item from your Cosmos storage
     }
 
     /**

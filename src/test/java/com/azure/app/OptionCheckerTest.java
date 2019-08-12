@@ -83,7 +83,6 @@ public class OptionCheckerTest {
         assertFalse(check);
     }
 
-
     /**
      * Verifies that an author with at least a first and last name can be entered
      */

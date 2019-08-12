@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 package com.azure.app;
 
 import org.junit.Before;
@@ -16,6 +19,9 @@ import java.util.Collection;
 public class BookCollectorTest {
     BookCollector bookCollector;
 
+    /**
+     * Sets up the BookCollector object
+     */
     @Before
     public void setUp() {
         ImageProvider mockedImage = Mockito.mock(ImageProvider.class);

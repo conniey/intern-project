@@ -29,7 +29,7 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollector bookCollector;
-    private static final Logger logger = LoggerFactory.getLogger(App.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     /**
      * Starting point for the library application.
@@ -69,12 +69,12 @@ public class App {
                     System.out.println(edit().block());
                     break;
                 case 4:
-                    System.out.println(bookCollector.hasBooks().block() ? findBook().block() :
-                        "There are no books to find.");
+                    System.out.println(bookCollector.hasBooks().block() ? findBook().block()
+                        : "There are no books to find.");
                     break;
                 case 5:
-                    System.out.println(bookCollector.hasBooks().block() ? deleteBook().block() :
-                        "There are no books to delete.");
+                    System.out.println(bookCollector.hasBooks().block() ? deleteBook().block()
+                        : "There are no books to delete.");
                     break;
                 case 6:
                     System.out.println("Goodbye.");
@@ -111,13 +111,13 @@ public class App {
                 imageProvider = selectImageProvider(client);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 System.err.println("Could not set up image storage provider. Please check your settings: " + e.getMessage());
-                logger.error("Error couldn't set up Image Provider: ", e);
+                LOGGER.error("Error couldn't set up Image Provider: ", e);
                 return false;
             }
             bookCollector = new BookCollector(document, imageProvider);
             return true;
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
-            logger.error("Exception with App Configuration: ", e);
+            LOGGER.error("Exception with App Configuration: ", e);
             return false;
         }
     }
@@ -131,7 +131,7 @@ public class App {
                 try {
                     return (mapper.readValue(info.value(), CosmosSettings.class));
                 } catch (IOException e) {
-                    logger.error("Invalid information for document storage: ", e);
+                    LOGGER.error("Invalid information for document storage: ", e);
                     return null;
                 }
             }).block();
@@ -155,7 +155,7 @@ public class App {
                     try {
                         return Mono.just(new BlobImageProvider(mapper.readValue(info.value(), BlobSettings.class)));
                     } catch (IOException e) {
-                        logger.error("Invalid information: ", e);
+                        LOGGER.error("Invalid information: ", e);
                         return Mono.error(new IllegalStateException("Environment variable COSMOS_INFO is not set properly."));
                     }
                 });
