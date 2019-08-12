@@ -7,12 +7,14 @@ import com.azure.data.cosmos.ConnectionMode;
 import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosContainer;
+import com.azure.data.cosmos.CosmosContainerProperties;
 import com.azure.data.cosmos.CosmosContainerResponse;
+import com.azure.data.cosmos.CosmosDatabase;
 import com.azure.data.cosmos.CosmosItemProperties;
-import com.azure.data.cosmos.CosmosItemResponse;
 import com.azure.data.cosmos.FeedOptions;
 import com.azure.data.cosmos.FeedResponse;
-import com.azure.data.cosmos.PartitionKey;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.Exceptions;
@@ -31,7 +33,8 @@ import java.util.List;
 
 final class CosmosDocumentProvider implements DocumentProvider {
     private static Logger logger = LoggerFactory.getLogger(CosmosDocumentProvider.class);
-    private Mono<CosmosContainerResponse> bookCollection;
+    private Mono<CosmosContainer> bookCollection;
+    private String partitionKey = "/StoredBooks";
 
     CosmosDocumentProvider(CosmosSettings cosmosSettings) {
         ConnectionPolicy policy = new ConnectionPolicy();
@@ -43,8 +46,12 @@ final class CosmosDocumentProvider implements DocumentProvider {
             .build();
         String databaseId = "book-inventory";
         String collectionId = "book-info";
-        String collectionLink = "/StoredBooks";
-        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
+        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId)
+            .flatMap(response -> {
+                final CosmosDatabase database = response.database();
+                final CosmosContainerProperties properties = new CosmosContainerProperties(collectionId, "/id");
+                return database.createContainerIfNotExists(properties).map(CosmosContainerResponse::container);
+            }).cache();
     }
 
     /**
@@ -55,7 +62,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
     @Override
     public Flux<Book> getBooks() {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
-            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM all",
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.queryItems("SELECT * FROM all",
                 new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
@@ -92,9 +99,18 @@ final class CosmosDocumentProvider implements DocumentProvider {
         URI saved = relativeFile.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
-        return bookCollection.flatMap(collection ->
-            collection.container().createItem(book).then()
-        ).then();
+        return duplicateImages(book).then(bookCollection.flatMap(collection ->
+            collection.createItem(book).then()
+        ));
+    }
+
+    /**
+     * Tries to delete the book if there's another copy.
+     *
+     * @param b - Book object that may have a potential duplicate
+     */
+    private Mono<Void> duplicateImages(Book b) {
+        return deleteBook(b).onErrorResume(error -> Mono.empty());
     }
 
     /**
@@ -126,20 +142,25 @@ final class CosmosDocumentProvider implements DocumentProvider {
      */
     @Override
     public Mono<Void> deleteBook(Book book) {
-        CosmosContainer cosmosContainer = bookCollection.map(CosmosContainerResponse::container).block();
+        final ObjectMapper mapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         String title = book.getTitle();
         Author author = book.getAuthor();
-        FeedResponse<CosmosItemProperties> block = cosmosContainer.queryItems("SELECT * FROM Book b WHERE b.title = \""
-                + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
-            new FeedOptions().enableCrossPartitionQuery(true)).elementAt(0).block();
-        cosmosContainer.getItem(block.results().get(0).id(), new PartitionKey("/StoredBooks")).delete().block();
         return bookCollection.flatMap(items -> {
-            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \""
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.queryItems("SELECT * FROM Book b WHERE b.title = \""
                     + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
                 new FeedOptions().enableCrossPartitionQuery(true));
-            return containerItems.elementAt(0).map(id -> {
-                Mono<CosmosItemResponse> delete = items.container().getItem(id.results().get(0).id(), "/StoredBooks").delete();
-                return items.container().getItem(id.results().get(0).id(), "/StoredBooks").replace(delete);
+            return containerItems.elementAt(0).map(response -> response.results()).flatMap(results -> {
+                if (results.isEmpty()) {
+                    throw Exceptions.propagate(new IllegalArgumentException("Should have at least one book."));
+                }
+                CosmosItemProperties properties = results.get(0);
+                try {
+                    Book theBook = mapper.readValue(properties.toJson(), Book.class);
+                    return bookCollection.flatMap(container -> container.getItem(theBook.id(), theBook.id()).delete());
+                } catch (IOException e) {
+                    throw Exceptions.propagate(e);
+                }
             });
         }).then();
     }
@@ -153,7 +174,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
     @Override
     public Flux<Book> findBook(String title) {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
-            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \""
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.queryItems("SELECT * FROM Book b WHERE b.title = \""
                 + title + "\"", new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
@@ -171,7 +192,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
     @Override
     public Flux<Book> findBook(Author author) {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
-            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.author.lastName =\""
+            Flux<FeedResponse<CosmosItemProperties>> containerItems = items.queryItems("SELECT * FROM Book b WHERE b.author.lastName =\""
                 + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"", new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
@@ -184,7 +205,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
      * Converts the items in the Cosmos container into Book objects
      *
      * @param containerItems - the query with the Cosmos items under a specific criteria
-     * @return
+     * @return Flux of Book with the specific books
      */
     private Flux<Book> queryBooks(Flux<FeedResponse<CosmosItemProperties>> containerItems) {
         return containerItems.flatMap(item -> {
