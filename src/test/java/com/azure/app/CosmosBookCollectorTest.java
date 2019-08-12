@@ -95,7 +95,8 @@ public class CosmosBookCollectorTest {
         StepVerifier.create(length)
             .assertNext(expected -> assertEquals(expected.getTitle(), title))
             .verifyComplete();
-        //Cleanup...eventally....
+        //Cleanup!
+        cosmosBC.deleteBook(book).block();
     }
 
     /**
@@ -110,7 +111,7 @@ public class CosmosBookCollectorTest {
         //Act
         int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
         //Assert
-        Assert.assertTrue(length == 0);
+        assertEquals(0, length);
     }
 
     /**
@@ -132,6 +133,7 @@ public class CosmosBookCollectorTest {
                 assertEquals(author.getFirstName(), bookCopy.getAuthor().getFirstName());
             }).verifyComplete();
         //Since delete doesn't work, you'll have to manually delete the item from your Cosmos storage
+        cosmosBC.deleteBook(book).block();
     }
 
     /**
@@ -147,5 +149,49 @@ public class CosmosBookCollectorTest {
         int length = cosmosBC.findBook(book.getAuthor()).count().block().intValue();
         //Assert
         Assert.assertTrue(length == 0);
+    }
+
+    /**
+     * Tests saving two different books by the same author AND with the same cover
+     */
+    @Test
+    @Ignore
+    public void testSavingDifferentBooksWithSameCover() {
+        //Arrange
+        boolean result;
+        boolean result2;
+        Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(FOLDER.getPath(), "Wonder.png").toURI());
+        Book book2 = new Book("Giant Peach_The Return", new Author("Ronald", "Dahl"),
+            new File(FOLDER.getPath(), "Wonder.png").toURI());
+        //Act & Assert
+        StepVerifier.create(cosmosBC.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(FOLDER.getPath(), "Wonder.png").toURI())).expectComplete().verify();
+        StepVerifier.create(cosmosBC.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
+            new File(FOLDER.getPath(), "Wonder.png").toURI())).expectComplete().verify();
+        //Cleanup
+        cosmosBC.deleteBook(book1).block();
+        cosmosBC.deleteBook(book2).block();
+    }
+
+    /**
+     * Tests overwriting the same book but with a different cover image
+     */
+    @Test
+    @Ignore
+    public void testOverwritingBook() {
+        //Arrange
+        Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(FOLDER.getPath(), "Wonder.png").toURI());
+        Book book2 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(FOLDER.getPath(), "Gingerbread.jpg").toURI());
+        //Act & Assert
+        StepVerifier.create(cosmosBC.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File("Wonder.png").toURI())).expectComplete().verify();
+        StepVerifier.create(cosmosBC.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
+            new File(FOLDER.getPath(), "Gingerbread.jpg").toURI())).expectComplete().verify();
+        //Cleanup
+        cosmosBC.deleteBook(book1).block();
+        cosmosBC.deleteBook(book2).block();
     }
 }

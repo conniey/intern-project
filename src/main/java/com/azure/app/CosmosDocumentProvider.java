@@ -150,7 +150,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
             Flux<FeedResponse<CosmosItemProperties>> containerItems = items.queryItems("SELECT * FROM Book b WHERE b.title = \""
                     + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
                 new FeedOptions().enableCrossPartitionQuery(true));
-            return containerItems.elementAt(0).map(response -> response.results()).flatMap(results -> {
+            return containerItems.single().map(response -> response.results()).flatMap(results -> {
                 if (results.isEmpty()) {
                     throw Exceptions.propagate(new IllegalArgumentException("Should have at least one book."));
                 }

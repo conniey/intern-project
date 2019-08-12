@@ -355,8 +355,8 @@ public class App {
     private static Mono<Book> grabBook(String modifier) {
         System.out.printf("Please enter the title of the book %s: ", modifier.contentEquals("delete")
             ? "to delete" : "to edit");
-        Flux<Book> booksToDelete = bookCollector.findBook(SCANNER.nextLine());
-        return booksToDelete.collectList().flatMap(list -> {
+        Flux<Book> bookToGrab = bookCollector.findBook(SCANNER.nextLine());
+        return bookToGrab.collectList().flatMap(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books with that title.");
                 return Mono.empty();
