@@ -228,6 +228,7 @@
       <artifactId>azure-cosmos</artifactId>
       <version>3.1.0</version>
     </dependency>
+
     <!-- Junit -->
     <dependency>
       <groupId>org.junit.platform</groupId>
