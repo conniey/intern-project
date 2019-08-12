@@ -65,8 +65,6 @@ public class CosmosBookCollectorTest {
             .verify();
     }
 
-
-
     /**
      * Tests deletion.
      */

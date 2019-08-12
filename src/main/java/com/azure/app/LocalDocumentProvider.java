@@ -114,6 +114,14 @@ final class LocalDocumentProvider implements DocumentProvider {
         return Mono.error(new IllegalStateException("Unsuccessful save"));
     }
 
+    /**
+     * Overwrites the old book with the contents in the new book
+     *
+     * @param oldBook   - Book object that will be changed
+     * @param newBook   - Book object with the new information to change to
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
     @Override
     public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
         if (saveCover == 1) { // Overwriting/changing cover
@@ -169,6 +177,11 @@ final class LocalDocumentProvider implements DocumentProvider {
         return Mono.error(new IllegalStateException(""));
     }
 
+    /**
+     * Retrieves the files on book information from the local directory
+     *
+     * @return a List of Files
+     */
     private List<File> retrieveJsonFiles() {
         try (Stream<Path> walk = Files.walk(Paths.get(Constants.JSON_PATH))) {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith(".json"))

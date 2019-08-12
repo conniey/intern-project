@@ -90,7 +90,7 @@ final class BlobImageProvider implements ImageProvider {
         if (blobInfo == null) {
             return Mono.error(new IllegalArgumentException("Error encoding blob name"));
         }
-        return duplicateImages(b) //just in case this book already exists, this should delete the old file s
+        return duplicateImages(b) //just in case this book already exists, this should delete the old file
             .then(imageContainerClient.flatMap(containerAsyncClient -> {
             final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
                 + "/" + blobInfo[0]);
@@ -179,6 +179,12 @@ final class BlobImageProvider implements ImageProvider {
             }));
     }
 
+    /**
+     * Locates the specified image based on author and title
+     *
+     * @param blobConversion - String array containing the necessary information
+     * @return - a single blob item of the image - there should never be more than one because duplicateImage should prevent that
+     */
     private Mono<BlobItem> locateImage(String[] blobConversion) {
         Flux<BlobItem> findFiles = imageContainerClient.flatMapMany(containerAsyncClient
             -> containerAsyncClient.listBlobsFlat().filter(blobItem ->

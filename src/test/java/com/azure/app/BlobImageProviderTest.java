@@ -52,7 +52,7 @@ public class BlobImageProviderTest {
     }
 
     /**
-     * Checks that saving a book works
+     * Verifies that you can save an image.
      */
     @Test
     public void saveImageTest() {
