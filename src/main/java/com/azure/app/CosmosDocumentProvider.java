@@ -8,10 +8,6 @@ import com.azure.data.cosmos.ConnectionPolicy;
 import com.azure.data.cosmos.CosmosClient;
 import com.azure.data.cosmos.CosmosContainer;
 import com.azure.data.cosmos.CosmosContainerResponse;
-<<<<<<< HEAD
-import com.azure.data.cosmos.CosmosItem;
-=======
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
 import com.azure.data.cosmos.CosmosItemProperties;
 import com.azure.data.cosmos.CosmosItemResponse;
 import com.azure.data.cosmos.FeedOptions;
@@ -30,6 +26,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 
 final class CosmosDocumentProvider implements DocumentProvider {
@@ -47,9 +44,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
         String databaseId = "book-inventory";
         String collectionId = "book-info";
         String collectionLink = "/StoredBooks";
-<<<<<<< HEAD
-        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient ->
-            databaseClient.database().createContainerIfNotExists(collectionId, collectionLink)).cache();
+        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
     }
 
     /**
@@ -57,11 +52,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
      *
      * @return Flux<Book> the flux with all the book information </Book>
      */
-=======
-        bookCollection = cosmosClient.createDatabaseIfNotExists(databaseId).flatMap(databaseClient -> databaseClient.database().createContainerIfNotExists(collectionId, collectionLink));
-    }
-
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     @Override
     public Flux<Book> getBooks() {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
@@ -69,36 +59,11 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
-        return cosmosBooks.sort(this::compare);
+        return cosmosBooks.sort(Comparator.comparing((Book obj) -> obj.getAuthor().getLastName())
+            .thenComparing(obj -> obj.getAuthor().getFirstName())
+            .thenComparing(Book::getTitle));
     }
 
-    /**
-     * Compares the two books for sorting purposes based of
-     * last name then first name then title.
-     *
-     * @param obj1 - Book object
-     * @param obj2 - Book object
-     * @return integer with the 'smallest' book
-     */
-    private int compare(Book obj1, Book obj2) {
-        String lastName1 = obj1.getAuthor().getLastName();
-        String lastName2 = obj2.getAuthor().getLastName();
-        int i = lastName1.compareTo(lastName2);
-        if (i != 0) {
-            return i;
-        }
-        String firstName1 = obj1.getAuthor().getFirstName();
-        String firstName2 = obj2.getAuthor().getFirstName();
-        i = firstName1.compareTo(firstName2);
-        if (i != 0) {
-            return i;
-        }
-        String title = obj1.getTitle();
-        String title2 = obj2.getTitle();
-        return title.compareTo(title2);
-    }
-
-<<<<<<< HEAD
     /**
      * Saves the book as a JSON file
      *
@@ -109,8 +74,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
      * true - book was successfully saved
      * false - book wasn't saved </Boolean>
      */
-=======
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     @Override
     public Mono<Void> saveBook(String title, Author author, URI path) {
         String extension = path.getPath().substring(path.getPath().lastIndexOf('.'));
@@ -134,7 +97,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
         ).then();
     }
 
-<<<<<<< HEAD
     /**
      * Overwrites the old book with the contents in the new book
      *
@@ -143,8 +105,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
      * @param saveCover - determines whether or not the user wants to keep the same cover
      * @return {@Link Mono}
      */
-=======
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     @Override
     public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
         if (saveCover == 1) {
@@ -156,7 +116,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
         }
     }
 
-<<<<<<< HEAD
     /**
      * Deletes the book and the file based off its information.
      *
@@ -165,8 +124,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
      * true - Book was deleted
      * false - Book wasn't deleted
      */
-=======
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     @Override
     public Mono<Void> deleteBook(Book book) {
         CosmosContainer cosmosContainer = bookCollection.map(CosmosContainerResponse::container).block();
@@ -175,12 +132,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
         FeedResponse<CosmosItemProperties> block = cosmosContainer.queryItems("SELECT * FROM Book b WHERE b.title = \""
                 + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
             new FeedOptions().enableCrossPartitionQuery(true)).elementAt(0).block();
-<<<<<<< HEAD
-        CosmosItem item = cosmosContainer.getItem(block.results().get(0).id(), new PartitionKey("/StoredBooks"));
-        item.delete().block();
-=======
         cosmosContainer.getItem(block.results().get(0).id(), new PartitionKey("/StoredBooks")).delete().block();
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         return bookCollection.flatMap(items -> {
             Flux<FeedResponse<CosmosItemProperties>> containerItems = items.container().queryItems("SELECT * FROM Book b WHERE b.title = \""
                     + title + "\" AND b.author.lastName =\"" + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"",
@@ -192,15 +144,12 @@ final class CosmosDocumentProvider implements DocumentProvider {
         }).then();
     }
 
-<<<<<<< HEAD
     /**
      * Filters out the book based on the specified title.
      *
      * @param title - String of the book title the user is looking for
      * @return - Flux of Book objects with that title
      */
-=======
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     @Override
     public Flux<Book> findBook(String title) {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
@@ -208,18 +157,17 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 + title + "\"", new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
-        return cosmosBooks.sort(this::compare);
+        return cosmosBooks.sort(Comparator.comparing((Book obj) -> obj.getAuthor().getLastName())
+            .thenComparing(obj -> obj.getAuthor().getFirstName())
+            .thenComparing(Book::getTitle));
     }
 
-<<<<<<< HEAD
     /**
      * Filters out the books based on the specified author.
      *
      * @param author - Contains the name of the author the user is looking for
      * @return - Flux of Book objects by that author
      */
-=======
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     @Override
     public Flux<Book> findBook(Author author) {
         Flux<Book> cosmosBooks = bookCollection.flatMapMany(items -> {
@@ -227,7 +175,9 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"", new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
-        return cosmosBooks.sort(this::compare);
+        return cosmosBooks.sort(Comparator.comparing((Book obj) -> obj.getAuthor().getLastName())
+            .thenComparing(obj -> obj.getAuthor().getFirstName())
+            .thenComparing(Book::getTitle));
     }
 
     /**

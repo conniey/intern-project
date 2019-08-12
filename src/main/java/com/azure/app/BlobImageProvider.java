@@ -29,7 +29,7 @@ import java.util.Set;
 final class BlobImageProvider implements ImageProvider {
     private final Set<String> supportedImageFormats;
     private Mono<ContainerAsyncClient> imageContainerClient;
-    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BlobImageProvider.class);
 
     BlobImageProvider(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),
@@ -71,7 +71,7 @@ final class BlobImageProvider implements ImageProvider {
                 blobName = blobName.replace(apostrophe, "'");
             }
         } catch (UnsupportedEncodingException e) {
-            logger.error("Error encoding names: ", e);
+            LOGGER.error("Error encoding names: ", e);
             return null;
         }
         return new String[]{blobName, blobFirstName, blobLastName};
@@ -116,7 +116,7 @@ final class BlobImageProvider implements ImageProvider {
                     try {
                         newFileName = URLEncoder.encode(newBook.getTitle(), StandardCharsets.US_ASCII.toString());
                     } catch (UnsupportedEncodingException e) {
-                        logger.error("Error encoding file: ", e);
+                        LOGGER.error("Error encoding file: ", e);
                         return Mono.error(e);
                     }
                     String extension = blobItem.name().substring(blobItem.name().lastIndexOf("."));
@@ -124,7 +124,7 @@ final class BlobImageProvider implements ImageProvider {
                     try {
                         newFile.createNewFile();
                     } catch (IOException e) {
-                        logger.error("Exception creating the file: ", e);
+                        LOGGER.error("Exception creating the file: ", e);
                         return Mono.error(e);
                     }
                     Book saveBook = new Book(newBook.getTitle(), newBook.getAuthor(), newFile.toURI());
@@ -172,7 +172,7 @@ final class BlobImageProvider implements ImageProvider {
                 try {
                     newFile.createNewFile();
                 } catch (IOException e) {
-                    logger.error("Exception creating the file: ", e);
+                    LOGGER.error("Exception creating the file: ", e);
                     return Mono.error(e);
                 }
                 return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(Mono.fromCallable(() ->

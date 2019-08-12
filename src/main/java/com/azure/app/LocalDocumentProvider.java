@@ -20,10 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-<<<<<<< HEAD:src/main/java/com/azure/app/LocalDocumentProvider.java
 import java.util.Objects;
-=======
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6:src/main/java/com/azure/app/LocalBookCollector.java
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,13 +29,13 @@ final class LocalDocumentProvider implements DocumentProvider {
     private List<File> jsonFiles;
     private String root;
     private final OptionChecker optionChecker = new OptionChecker();
-    private static Logger logger = LoggerFactory.getLogger(LocalDocumentProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalDocumentProvider.class);
 
     LocalDocumentProvider(String root) {
         this.root = root;
         File directoryJSON = new File(Paths.get(root, Constants.JSON_PATH).toString());
         if (!directoryJSON.exists() && !directoryJSON.mkdirs()) {
-            logger.error("Couldn't create non-existent JSON directory: " + directoryJSON.getAbsolutePath());
+            LOGGER.error("Couldn't create non-existent JSON directory: " + directoryJSON.getAbsolutePath());
         }
         jsonBooks = initializeBooks().cache();
         jsonFiles = retrieveJsonFiles();
@@ -66,7 +63,7 @@ final class LocalDocumentProvider implements DocumentProvider {
                 .filter(f -> f.toFile().getName().endsWith(".json"))
                 .map(path -> Constants.SERIALIZER.fromJSONtoBook(new File(path.toString())));
         } catch (IOException e) {
-            logger.error("Error making Flux: ", e);
+            LOGGER.error("Error making Flux: ", e);
             return Flux.error(e);
         }
     }
@@ -89,13 +86,13 @@ final class LocalDocumentProvider implements DocumentProvider {
             author.getFirstName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.exists() && !imageFile.mkdirs()) {
-            logger.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
+            LOGGER.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
         }
         String blobTitle;
         try {
             blobTitle = URLEncoder.encode(title.replace(' ', '-'), StandardCharsets.US_ASCII.toString());
         } catch (UnsupportedEncodingException e) {
-            logger.error("Error encoding: ", e);
+            LOGGER.error("Error encoding: ", e);
             return Mono.error(e);
         }
         File relativePath = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(),
@@ -103,11 +100,7 @@ final class LocalDocumentProvider implements DocumentProvider {
         URI saved = relativePath.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
-<<<<<<< HEAD:src/main/java/com/azure/app/LocalDocumentProvider.java
         duplicateBook(book);
-=======
-        duplicateBook(book, imageFile, imagePath);
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6:src/main/java/com/azure/app/LocalBookCollector.java
         if (book.isValid()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
@@ -119,17 +112,6 @@ final class LocalDocumentProvider implements DocumentProvider {
             }
         }
         return Mono.error(new IllegalStateException("Unsuccessful save"));
-    }
-
-    @Override
-    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) { // Overwriting/changing cover
-            return saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover());
-        } else {
-            File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
-            return saveBook(newBook.getTitle(), newBook.getAuthor(), image.toURI()).then(
-                deleteBook(oldBook));
-        }
     }
 
     /**
@@ -205,7 +187,7 @@ final class LocalDocumentProvider implements DocumentProvider {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith(".json"))
                 .collect(Collectors.toList());
         } catch (IOException e) {
-            logger.error("Exception deleting book file.", e);
+            LOGGER.error("Exception deleting book file.", e);
             return Collections.emptyList();
         }
     }
