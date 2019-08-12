@@ -36,7 +36,7 @@ final class OptionChecker {
      *
      * @param image - File with the supposed image
      * @return - boolean : true - if image path is correct
-     * false - otherwise.
+     * false - otherwise
      */
     boolean checkImage(URI image) {
         if (!BookCollector.isFile(image)) {
@@ -152,7 +152,7 @@ final class OptionChecker {
                 System.out.println("Enter a numerical value. ");
             }
         }
-        // returns -1 which corresponds as INVALID in the App main
+        // returns -1 which corresponds as INVALID in the App class
         return -1;
     }
 }

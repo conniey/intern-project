@@ -76,7 +76,6 @@ public class App {
                     System.out.println(bookCollector.hasBooks().block() ? deleteBook().block()
                         : "There are no books to delete.");
                     break;
-
                 case 6:
                     System.out.println("Goodbye.");
                     break;
@@ -124,8 +123,7 @@ public class App {
         }
     }
 
-    private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client,
-                                                           ObjectMapper mapper) {
+    private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client, ObjectMapper mapper) {
         String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
         assert documentProvider != null;
         if (documentProvider.equalsIgnoreCase("Cosmos")) {
@@ -146,8 +144,7 @@ public class App {
         }
     }
 
-    private static ImageProvider selectImageProvider(ConfigurationAsyncClient client,
-                                                     ObjectMapper mapper) {
+    private static ImageProvider selectImageProvider(ConfigurationAsyncClient client, ObjectMapper mapper) {
         return client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
             String storageType = input.value();
             if (storageType.equalsIgnoreCase("Local")) {
@@ -421,4 +418,3 @@ public class App {
         return new String[]{firstName.toString(), lastName};
     }
 }
-
