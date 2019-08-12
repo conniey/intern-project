@@ -41,53 +41,6 @@ final class JsonHandler {
     }
 
     /**
-<<<<<<< HEAD
-=======
-     * Converts a an array of bytes back to a Book object
-     *
-     * @param byteBuffer - the ByteBuffers holds the byte information to be converted
-     * @return Book - created from the array of bytes
-     */
-    Book fromJSONtoBook(ByteBuffer byteBuffer) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            Book b = mapper.readValue(byteBuffer.array(), Book.class);
-            return b;
-        } catch (JsonGenerationException e) {
-            logger.error("Error generating byte array: ", e);
-        } catch (JsonMappingException e) {
-            logger.error("Error mapping byte array: ", e);
-        } catch (IOException e) {
-            logger.error("Error while reading from byte array: ", e);
-        }
-        return null;
-    }
-
-    /**
-     * Converts a JSON string back to a Book object
-     *
-     * @param json - String with the book information JSON format
-     * @return Book - created from the JSON string
-     */
-    Book fromJSONtoBook(String json) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(SerializationFeature.INDENT_OUTPUT);
-            Book b = mapper.readValue(json, Book.class);
-            return b;
-        } catch (JsonGenerationException e) {
-            logger.error("Error generating JSON file: ", e);
-        } catch (JsonMappingException e) {
-            logger.error("Error mapping JSON file: ", e);
-        } catch (IOException e) {
-            logger.error("Error while reading JSON file: ", e);
-        }
-        return null;
-    }
-
-    /**
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
      * Converts a Book object a json object and stores it in a file.
      *
      * @param book - the Book object that's going to be converted to a json file

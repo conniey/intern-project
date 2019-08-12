@@ -76,7 +76,6 @@ public class App {
                     System.out.println(bookCollector.hasBooks().block() ? deleteBook().block()
                         : "There are no books to delete.");
                     break;
-
                 case 6:
                     System.out.println("Goodbye.");
                     break;
@@ -421,4 +420,3 @@ public class App {
         return new String[]{firstName.toString(), lastName};
     }
 }
-
