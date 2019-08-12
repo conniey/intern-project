@@ -26,6 +26,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 
 final class CosmosDocumentProvider implements DocumentProvider {
@@ -58,33 +59,9 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
-        return cosmosBooks.sort(this::compare);
-    }
-
-    /**
-     * Compares the two books for sorting purposes based of
-     * last name then first name then title.
-     *
-     * @param obj1 - Book object
-     * @param obj2 - Book object
-     * @return integer with the 'smallest' book
-     */
-    private int compare(Book obj1, Book obj2) {
-        String lastName1 = obj1.getAuthor().getLastName();
-        String lastName2 = obj2.getAuthor().getLastName();
-        int i = lastName1.compareTo(lastName2);
-        if (i != 0) {
-            return i;
-        }
-        String firstName1 = obj1.getAuthor().getFirstName();
-        String firstName2 = obj2.getAuthor().getFirstName();
-        i = firstName1.compareTo(firstName2);
-        if (i != 0) {
-            return i;
-        }
-        String title = obj1.getTitle();
-        String title2 = obj2.getTitle();
-        return title.compareTo(title2);
+        return cosmosBooks.sort(Comparator.comparing((Book obj) -> obj.getAuthor().getLastName())
+            .thenComparing(obj -> obj.getAuthor().getFirstName())
+            .thenComparing(Book::getTitle));
     }
 
     /**
@@ -180,7 +157,9 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 + title + "\"", new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
-        return cosmosBooks.sort(this::compare);
+        return cosmosBooks.sort(Comparator.comparing((Book obj) -> obj.getAuthor().getLastName())
+            .thenComparing(obj -> obj.getAuthor().getFirstName())
+            .thenComparing(Book::getTitle));
     }
 
     /**
@@ -196,7 +175,9 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 + author.getLastName() + "\" AND b.author.firstName = \"" + author.getFirstName() + "\"", new FeedOptions().enableCrossPartitionQuery(true));
             return queryBooks(containerItems);
         });
-        return cosmosBooks.sort(this::compare);
+        return cosmosBooks.sort(Comparator.comparing((Book obj) -> obj.getAuthor().getLastName())
+            .thenComparing(obj -> obj.getAuthor().getFirstName())
+            .thenComparing(Book::getTitle));
     }
 
     /**

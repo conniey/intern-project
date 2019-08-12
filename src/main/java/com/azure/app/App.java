@@ -31,7 +31,6 @@ public class App {
     private static BookCollector bookCollector;
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
-
     /**
      * Starting point for the library application.
      *
@@ -99,18 +98,19 @@ public class App {
      */
     private static boolean setBookCollector(String connectionString) {
         ConfigurationAsyncClient client;
+        final ObjectMapper mapper = new ObjectMapper();
         try {
             client = new ConfigurationClientBuilder()
                 .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
-            DocumentProvider document = selectDocumentProvider(client);
+            DocumentProvider document = selectDocumentProvider(client, mapper);
             if (document == null) {
                 return false;
             }
             ImageProvider imageProvider;
             try {
-                imageProvider = selectImageProvider(client);
+                imageProvider = selectImageProvider(client, mapper);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 System.err.println("Could not set up image storage provider. Please check your settings: " + e.getMessage());
                 LOGGER.error("Error couldn't set up Image Provider: ", e);
@@ -124,8 +124,8 @@ public class App {
         }
     }
 
-    private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client) {
-        final ObjectMapper mapper = new ObjectMapper();
+    private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client,
+                                                           ObjectMapper mapper) {
         String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
         assert documentProvider != null;
         if (documentProvider.equalsIgnoreCase("Cosmos")) {
@@ -146,8 +146,8 @@ public class App {
         }
     }
 
-    private static ImageProvider selectImageProvider(ConfigurationAsyncClient client) {
-        final ObjectMapper mapper = new ObjectMapper();
+    private static ImageProvider selectImageProvider(ConfigurationAsyncClient client,
+                                                     ObjectMapper mapper) {
         return client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
             String storageType = input.value();
             if (storageType.equalsIgnoreCase("Local")) {
