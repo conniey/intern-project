@@ -29,7 +29,11 @@ public class App {
     private static final Scanner SCANNER = new Scanner(System.in);
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollector bookCollector;
+<<<<<<< HEAD
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+=======
+    private static Logger logger = LoggerFactory.getLogger(App.class);
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
 
     /**
      * Starting point for the library application.
@@ -67,6 +71,7 @@ public class App {
                     break;
                 case 3:
                     System.out.println(edit().block());
+<<<<<<< HEAD
                     break;
                 case 4:
                     System.out.println(bookCollector.hasBooks().block() ? findBook().block()
@@ -76,6 +81,23 @@ public class App {
                     System.out.println(bookCollector.hasBooks().block() ? deleteBook().block()
                         : "There are no books to delete.");
                     break;
+=======
+                    break;
+                case 4:
+                    if (bookCollector.hasBooks().block()) {
+                        System.out.print(findBook().block());
+                    } else {
+                        System.out.println("There are no books to find.");
+                    }
+                    break;
+                case 5:
+                    if (bookCollector.hasBooks().block()) {
+                        System.out.println(deleteBook().block());
+                    } else {
+                        System.out.println("There are no books to delete");
+                    }
+                    break;
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
                 case 6:
                     System.out.println("Goodbye.");
                     break;
@@ -87,6 +109,7 @@ public class App {
         } while (choice != 6);
     }
 
+<<<<<<< HEAD
     /**
      * Sets up the BookCollector with the document and image storage.
      *
@@ -96,12 +119,17 @@ public class App {
      * false - unsuccessful
      */
     private static boolean setBookCollector(String connectionString) {
+=======
+    private static boolean setBookCollector(String connectionString) {
+        final ObjectMapper mapper = new ObjectMapper();
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         ConfigurationAsyncClient client;
         try {
             client = new ConfigurationClientBuilder()
                 .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
+<<<<<<< HEAD
             DocumentProvider document = selectDocumentProvider(client);
             if (document == null) {
                 return false;
@@ -163,6 +191,50 @@ public class App {
                 return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognized."));
             }
         }).block();
+=======
+            String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
+            DocumentProvider document;
+            assert documentProvider != null;
+            if (documentProvider.equalsIgnoreCase("Cosmos")) {
+                CosmosSettings cosmosInfo = client.getSetting("COSMOS_INFO").map(info -> {
+                    try {
+                        return (mapper.readValue(info.value(), CosmosSettings.class));
+                    } catch (IOException e) {
+                        logger.error("Invalid information for document storage: ", e);
+                        return null;
+                    }
+                }).block();
+                if (cosmosInfo == null) {
+                    return false;
+                }
+                document = new CosmosDocumentProvider(cosmosInfo);
+            } else {
+                document = new LocalDocumentProvider(System.getProperty("user.dir"));
+            }
+            Mono<ImageProvider> imageProviderMono = client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
+                String storageType = input.value();
+                if (storageType.equalsIgnoreCase("Local")) {
+                    return Mono.just(new LocalImageProvider(System.getProperty("user.dir")));
+                } else if (storageType.equalsIgnoreCase("BlobStorage")) {
+                    return client.getSetting("BLOB_INFO").flatMap(info -> {
+                        try {
+                            return Mono.just(new BlobImageProvider(mapper.readValue(info.value(), BlobSettings.class)));
+                        } catch (IOException e) {
+                            logger.error("Invalid information: ", e);
+                            return Mono.error(new IllegalStateException("Environment variable COSMOS_INFO is not set properly."));
+                        }
+                    });
+                } else {
+                    return Mono.error(new IllegalStateException("Image storage type '" + storageType + "' is not recognized."));
+                }
+            });
+            bookCollector = new BookCollector(document, imageProviderMono.block());
+            return true;
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            logger.error("Exception with App Configuration: ", e);
+            return false;
+        }
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     }
 
     private static Mono<String> edit() {

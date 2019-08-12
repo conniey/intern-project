@@ -221,6 +221,15 @@
       <groupId>com.azure</groupId>
       <artifactId>azure-storage-blob</artifactId>
       <version>12.0.0-preview.2</version>
+<<<<<<< HEAD
+=======
+    </dependency>
+
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>azure-cosmos</artifactId>
+      <version>3.0.1</version>
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     </dependency>
 
     <dependency>

@@ -29,7 +29,11 @@ import java.util.Set;
 final class BlobImageProvider implements ImageProvider {
     private final Set<String> supportedImageFormats;
     private Mono<ContainerAsyncClient> imageContainerClient;
+<<<<<<< HEAD
     private static Logger logger = LoggerFactory.getLogger(BlobImageProvider.class);
+=======
+    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
 
     BlobImageProvider(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),
@@ -39,9 +43,20 @@ final class BlobImageProvider implements ImageProvider {
             .endpoint(endpoint)
             .credential(credential)
             .buildAsyncClient();
+<<<<<<< HEAD
         ContainerAsyncClient container = storageAsyncClient.getContainerAsyncClient("book-covers");
         imageContainerClient = container.exists().flatMap(exists -> exists.value() ? Mono.just(container)
             : container.create().then(Mono.just(container))).cache();
+=======
+        ContainerAsyncClient container = storageAsyncClient.getContainerAsyncClient("cosmos-book-covers");
+        imageContainerClient = container.exists().flatMap(exists -> {
+            if (exists.value()) {
+                return Mono.just(container);
+            } else {
+                return container.create().then(Mono.just(container));
+            }
+        });
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
     }
 
@@ -53,6 +68,7 @@ final class BlobImageProvider implements ImageProvider {
      * @return String array with all the valid names
      */
     private String[] getBlobInformation(Author author, String fileName) {
+<<<<<<< HEAD
         String blobLastName = author.getLastName().replace(' ', '-');
         String blobFirstName = author.getFirstName().replace(' ', '-');
         String blobName = fileName.replace(' ', '-');
@@ -60,6 +76,15 @@ final class BlobImageProvider implements ImageProvider {
             blobLastName = URLEncoder.encode(blobLastName, StandardCharsets.US_ASCII.toString());
             blobName = URLEncoder.encode(blobName, StandardCharsets.US_ASCII.toString());
             blobFirstName = URLEncoder.encode(blobFirstName, StandardCharsets.US_ASCII.toString());
+=======
+        String blobLastName,
+            blobFirstName,
+            blobName;
+        try {
+            blobLastName = URLEncoder.encode(author.getLastName().toLowerCase(), StandardCharsets.US_ASCII.toString());
+            blobName = URLEncoder.encode(fileName, StandardCharsets.US_ASCII.toString());
+            blobFirstName = URLEncoder.encode(author.getFirstName().toLowerCase(), StandardCharsets.US_ASCII.toString());
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
             String apostrophe = URLEncoder.encode("'", StandardCharsets.US_ASCII.toString());
             if (blobFirstName.contains(apostrophe)) {
                 blobFirstName = blobFirstName.replace(apostrophe, "'");
@@ -77,6 +102,7 @@ final class BlobImageProvider implements ImageProvider {
         return new String[]{blobName, blobFirstName, blobLastName};
     }
 
+<<<<<<< HEAD
     private Mono<Void> duplicateImages(Book b) {
         return deleteImage(b).onErrorResume(error -> Mono.empty());
     }
@@ -84,6 +110,11 @@ final class BlobImageProvider implements ImageProvider {
     @Override
     public Mono<Void> saveImage(Book b) {
         final String extension = FilenameUtils.getExtension(new File(b.getCover()).getName());
+=======
+    @Override
+    public Mono<Void> saveImage(Book b) {
+        String extension = FilenameUtils.getExtension(new File(b.getCover()).getName());
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         if (!supportedImageFormats.contains(extension)) {
             return Mono.error(new IllegalStateException("Error. Wrong file format for image"));
         }
@@ -91,6 +122,7 @@ final class BlobImageProvider implements ImageProvider {
         if (blobInfo == null) {
             return Mono.error(new IllegalArgumentException("Error encoding blob name"));
         }
+<<<<<<< HEAD
         return duplicateImages(b) //just in case this book already exists, this should delete the old file
             .then(imageContainerClient.flatMap(containerAsyncClient -> {
                 final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
@@ -98,15 +130,39 @@ final class BlobImageProvider implements ImageProvider {
                 File path = new File(b.getCover());
                 return blockBlobClient.uploadFromFile(path.getAbsolutePath()).then();
             }));
+=======
+        return imageContainerClient.flatMap(containerAsyncClient -> {
+            final BlockBlobAsyncClient blockBlobClient = containerAsyncClient.getBlockBlobAsyncClient(blobInfo[2] + "/" + blobInfo[1]
+                + "/" + blobInfo[0]);
+            File path = new File(b.getCover());
+            return blockBlobClient.uploadFromFile(path.getAbsolutePath()).then();
+        });
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
     }
 
     @Override
     public Mono<Void> editImage(Book oldBook, Book newBook, int saveCover) {
+<<<<<<< HEAD
         if (saveCover == 1) { //don't want to change image
             return deleteImage(oldBook).then(saveImage(newBook));
         } else {
             String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
             Mono<BlobItem> bookMono = locateImage(blobConversion);
+=======
+        if (saveCover == 1) {
+            return deleteImage(oldBook).then(saveImage(newBook));
+        } else {
+            String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
+            Flux<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
+                containerAsyncClient.listBlobsFlat().filter(blobItem -> {
+                    assert blobConversion != null;
+                    return blobItem.name().contains(blobConversion[2] + "/"
+                        + blobConversion[1]
+                        + "/" + blobConversion[0] + ".");
+                }));
+            Mono<BlobItem> bookMono = file.hasElements().flatMap(notEmpty -> notEmpty ? file.elementAt(0)
+                : Mono.error(new IllegalStateException("Cover image not found.")));
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
             return imageContainerClient.flatMap(containerAsyncClient ->
                 bookMono.flatMap(blobItem -> {
                     final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
@@ -143,7 +199,15 @@ final class BlobImageProvider implements ImageProvider {
      */
     public Mono<Void> deleteImage(Book book) {
         String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
+<<<<<<< HEAD
         Mono<BlobItem> file = locateImage(blobConversion);
+=======
+        Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient
+            -> containerAsyncClient.listBlobsFlat().filter(blobItem ->
+            blobItem.name().contains(blobConversion[2] + "/"
+                + blobConversion[1]
+                + "/" + blobConversion[0] + "."))).elementAt(0);
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         return imageContainerClient.flatMap(containerAsyncClient ->
             file.flatMap(blobItem -> {
                 final BlockBlobAsyncClient blob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
@@ -160,8 +224,19 @@ final class BlobImageProvider implements ImageProvider {
      */
     @Override
     public Mono<String> grabCoverImage(Book book) {
+<<<<<<< HEAD
         String[] blobInfo = getBlobInformation(book.getAuthor(), book.getTitle());
         Mono<BlobItem> file = locateImage(blobInfo);
+=======
+        String[] blobConversion = getBlobInformation(book.getAuthor(), book.getTitle());
+        Mono<BlobItem> file = imageContainerClient.flatMapMany(containerAsyncClient ->
+            containerAsyncClient.listBlobsFlat().filter(blobItem -> {
+                assert blobConversion != null;
+                return blobItem.name().contains(blobConversion[2] + "/"
+                    + blobConversion[1]
+                    + "/" + blobConversion[0] + ".");
+            })).elementAt(0);
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
         return imageContainerClient.flatMap(containerAsyncClient ->
             file.flatMap(blobItem -> {
                 final BlockBlobAsyncClient blockBlob = containerAsyncClient.getBlockBlobAsyncClient(blobItem.name());
@@ -179,6 +254,7 @@ final class BlobImageProvider implements ImageProvider {
                     newFile.getAbsolutePath() + "\n\tThis was downloaded and saved to the user's TEMP folder."));
             }));
     }
+<<<<<<< HEAD
 
     /**
      * Locates the specified image based on author and title
@@ -195,4 +271,6 @@ final class BlobImageProvider implements ImageProvider {
         return findFiles.hasElements().flatMap(exists -> exists ? findFiles.elementAt(0)
             : Mono.error(new IllegalStateException("Cannot find the image.")));
     }
+=======
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
 }

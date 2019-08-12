@@ -28,7 +28,11 @@ final class LocalImageProvider implements ImageProvider {
     private List<File> jsonFiles;
     private String root;
     private final OptionChecker optionChecker = new OptionChecker();
+<<<<<<< HEAD
     private static Logger logger = LoggerFactory.getLogger(LocalImageProvider.class);
+=======
+    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+>>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
 
     LocalImageProvider(String root) {
         this.root = root;
