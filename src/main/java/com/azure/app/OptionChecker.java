@@ -3,10 +3,12 @@
 
 package com.azure.app;
 
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.File;
 import java.net.URI;
 
-class OptionChecker {
+final class OptionChecker {
     /**
      * Checks the user's string and makes sure its valid.
      *
@@ -34,10 +36,10 @@ class OptionChecker {
      *
      * @param image - File with the supposed image
      * @return - boolean : true - if image path is correct
-     * false - otherwise.
+     * false - otherwise
      */
-    boolean checkImage(String root, URI image) {
-        if (!new LocalBookCollector(root).isFile(image)) {
+    boolean checkImage(URI image) {
+        if (!BookCollector.isFile(image)) {
             System.out.println("Invalid image path.");
             return false;
         }
@@ -104,6 +106,7 @@ class OptionChecker {
         if (f == null) {
             return false;
         }
+        String extension = FilenameUtils.getExtension(f.getAbsolutePath());
         String filePath = f.getName();
         String fileFirstName = f.getParentFile().getName();
         String fileLastName = f.getParentFile().getParentFile().getName();
@@ -117,9 +120,10 @@ class OptionChecker {
         if (tempLastName.endsWith(".")) {
             tempLastName = tempLastName.substring(0, tempLastName.lastIndexOf("."));
         }
+        String title = b.getTitle().replace(' ', '-');
         return fileLastName.contentEquals(tempLastName)
             && fileFirstName.contentEquals(tempFirstName)
-            && filePath.contentEquals(b.getTitle() + ".json");
+            && filePath.contentEquals(b.getTitle() + "." + extension);
     }
 
     /**
@@ -148,7 +152,7 @@ class OptionChecker {
                 System.out.println("Enter a numerical value. ");
             }
         }
-        // returns -1 which corresponds as INVALID in the App main
+        // returns -1 which corresponds as INVALID in the App class
         return -1;
     }
 }

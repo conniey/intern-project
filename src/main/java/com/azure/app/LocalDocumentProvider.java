@@ -9,37 +9,30 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-final class LocalBookCollector implements BookCollection {
-    private final Set<String> supportedImageFormats;
+final class LocalDocumentProvider implements DocumentProvider {
     private Flux<Book> jsonBooks;
     private List<File> jsonFiles;
     private String root;
     private final OptionChecker optionChecker = new OptionChecker();
-    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
+    private static Logger logger = LoggerFactory.getLogger(LocalDocumentProvider.class);
 
-    LocalBookCollector(String root) {
+    LocalDocumentProvider(String root) {
         this.root = root;
-        supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
-        File directory = new File(Paths.get(root, Constants.IMAGE_PATH).toString());
-        if (!directory.exists() && !directory.mkdirs()) {
-            logger.error("Couldn't create non-existent JSON directory: " + directory.getAbsolutePath());
-        }
         File directoryJSON = new File(Paths.get(root, Constants.JSON_PATH).toString());
         if (!directoryJSON.exists() && !directoryJSON.mkdirs()) {
             logger.error("Couldn't create non-existent JSON directory: " + directoryJSON.getAbsolutePath());
@@ -48,6 +41,11 @@ final class LocalBookCollector implements BookCollection {
         jsonFiles = retrieveJsonFiles();
     }
 
+    /**
+     * Returns the Flux of Book objects
+     *
+     * @return Flux<Book> the flux with all the book information </Book>
+     */
     @Override
     public Flux<Book> getBooks() {
         return jsonBooks;
@@ -83,21 +81,32 @@ final class LocalBookCollector implements BookCollection {
     @Override
     public Mono<Void> saveBook(String title, Author author, URI path) {
         File imagePath = new File(path);
+        String extension = FilenameUtils.getExtension(imagePath.getAbsolutePath());
         final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(),
             author.getFirstName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.exists() && !imageFile.mkdirs()) {
             logger.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
         }
-        URI savedImage = saveImage(imageFile, imagePath, title);
-        Book book = new Book(title, author, savedImage);
-        duplicateBook(book, imageFile, imagePath);
-        if (book.checkBook()) {
+        String blobTitle;
+        try {
+            blobTitle = URLEncoder.encode(title.replace(' ', '-'), StandardCharsets.US_ASCII.toString());
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Error encoding: ", e);
+            return Mono.error(e);
+        }
+        File relativePath = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(),
+            blobTitle + "." + extension).toFile();
+        URI saved = relativePath.toURI();
+        URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
+        Book book = new Book(title, author, relative);
+        duplicateBook(book);
+        if (book.isValid()) {
             boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
             if (bookSaved) {
-                return Mono.empty().then();
+                return Mono.empty();
             } else {
                 return Mono.error(new IllegalStateException("Unsuccessful save"));
             }
@@ -106,11 +115,30 @@ final class LocalBookCollector implements BookCollection {
     }
 
     /**
+     * Overwrites the old book with the contents in the new book
+     *
+     * @param oldBook   - Book object that will be changed
+     * @param newBook   - Book object with the new information to change to
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
+    @Override
+    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
+        if (saveCover == 1) { // Overwriting/changing cover
+            return saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover());
+        } else {
+            File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
+            return saveBook(newBook.getTitle(), newBook.getAuthor(), image.toURI()).then(
+                deleteBook(oldBook));
+        }
+    }
+
+    /**
      * Deletes the old book if the new book has a the same title and author
      *
-     * @param bookToCompare
+     * @param bookToCompare - Book object that's going to be checked
      */
-    private void duplicateBook(Book bookToCompare, File imagePath, File newImage) {
+    private void duplicateBook(Book bookToCompare) {
         //Checks to see if the book has a duplicate, if so it'll delete it so it can be overwritten
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
@@ -118,33 +146,10 @@ final class LocalBookCollector implements BookCollection {
                 Book imageToDelete = Constants.SERIALIZER.fromJSONtoBook(x);
                 Paths.get(System.getProperty("user.dir"),
                     imageToDelete.getCover().getPath()).toFile().delete();
-                saveImage(imagePath, newImage, bookToCompare.getTitle());
                 return true;
             }
             return false;
         });
-    }
-
-    private URI saveImage(File directory, File imagePath, String title) {
-        String extension = FilenameUtils.getExtension(imagePath.getName());
-        if (!supportedImageFormats.contains(extension)) {
-            logger.error("Error. Wrong image format.");
-            return null;
-        }
-        try {
-            BufferedImage bufferedImage = ImageIO.read(imagePath);
-            String safeTitle = title.replace(' ', '-');
-            File image = new File(Paths.get(directory.getPath(), safeTitle + "." + extension).toString());
-            if (ImageIO.write(bufferedImage, extension, image)) {
-                URI saved = image.toURI();
-                URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
-                return relative;
-            }
-        } catch (IOException ex) {
-            logger.error("Error saving image: ", ex);
-            return null;
-        }
-        return null;
     }
 
     /**
@@ -156,7 +161,7 @@ final class LocalBookCollector implements BookCollection {
      * false - Book wasn't deleted
      */
     @Override
-    public Mono<Boolean> deleteBook(Book bookToCompare) {
+    public Mono<Void> deleteBook(Book bookToCompare) {
         boolean delete = jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
@@ -165,15 +170,18 @@ final class LocalBookCollector implements BookCollection {
             return result;
         });
         if (delete) {
-            new File(Paths.get(System.getProperty("user.dir"),
-                bookToCompare.getCover().getPath()).toString()).delete();
             deleteEmptyDirectories();
             jsonBooks = initializeBooks().cache();
-            return Mono.just(true);
+            return Mono.empty();
         }
-        return Mono.just(false);
+        return Mono.error(new IllegalStateException(""));
     }
 
+    /**
+     * Retrieves the files on book information from the local directory
+     *
+     * @return a List of Files
+     */
     private List<File> retrieveJsonFiles() {
         try (Stream<Path> walk = Files.walk(Paths.get(Constants.JSON_PATH))) {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith(".json"))
@@ -189,9 +197,8 @@ final class LocalBookCollector implements BookCollection {
      */
     private void deleteEmptyDirectories() {
         File[] files = new File(Constants.JSON_PATH).listFiles();
+        assert files != null;
         clearFiles(files);
-        File[] imageFiles = new File(Constants.IMAGE_PATH).listFiles();
-        clearFiles(imageFiles);
     }
 
     /**
@@ -206,7 +213,7 @@ final class LocalBookCollector implements BookCollection {
                 return;
             } else {
                 if (file.isDirectory()) {
-                    clearFiles(file.listFiles());
+                    clearFiles(Objects.requireNonNull(file.listFiles()));
                 }
                 if (file.length() == 0 && !file.getAbsolutePath().endsWith(".json")) {
                     file.delete();
@@ -236,48 +243,5 @@ final class LocalBookCollector implements BookCollection {
     public Flux<Book> findBook(Author author) {
         return jsonBooks.filter(book -> author.getFirstName().contentEquals(book.getAuthor().getFirstName())
             && book.getAuthor().getLastName().contentEquals(author.getLastName()));
-    }
-
-    /**
-     * Determines whether the Flux is empty or not
-     */
-    @Override
-    public Mono<Boolean> hasBooks() {
-        return jsonBooks.hasElements();
-    }
-
-    /**
-     * Determines if an entry is a file
-     */
-    boolean isFile(URI entry) {
-        if (entry == null) {
-            return false;
-        }
-        File fh = new File(entry);
-        return fh.isFile();
-    }
-
-    /**
-     * Converts a string to a File and then returns the file as a uri for the
-     * Book image
-     *
-     * @param path - String containing the image file the user entered
-     * @return URI - created from the converted file
-     */
-    @Override
-    public URI retrieveURI(String path) {
-        return new File(path).toURI();
-    }
-
-    /**
-     * Grab a String containing the absolute path to the book's cover location
-     * If it's in Azure Database storage, the cover will be downloaded to the temporary directory.
-     *
-     * @param book - Book object of whose cover you want to retrieve
-     * @return {@Link Mono} holds a String of the absolute path
-     */
-    @Override
-    public Mono<String> grabCoverImage(Book book) {
-        return Mono.just(Paths.get(System.getProperty("user.dir"), book.getCover().getPath()).toString());
     }
 }

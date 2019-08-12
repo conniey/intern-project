@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 
-interface BookCollection {
+interface DocumentProvider {
     /**
      * Returns the Flux of Book objects
      *
@@ -29,6 +29,16 @@ interface BookCollection {
     Mono<Void> saveBook(String title, Author author, URI path);
 
     /**
+     * Overwrites the old book with the contents in the new book
+     *
+     * @param oldBook   - Book object that will be changed
+     * @param newBook   - Book object with the new information to change to
+     * @param saveCover - determines whether or not the user wants to keep the same cover
+     * @return {@Link Mono}
+     */
+    Mono<Void> editBook(Book oldBook, Book newBook, int saveCover);
+
+    /**
      * Deletes the book and the file based off its information.
      *
      * @param book - Book that'll be deleted
@@ -36,7 +46,7 @@ interface BookCollection {
      * true - Book was deleted
      * false - Book wasn't deleted
      */
-    Mono<Boolean> deleteBook(Book book);
+    Mono<Void> deleteBook(Book book);
 
     /**
      * Filters out the book based on the specified title.
@@ -53,29 +63,4 @@ interface BookCollection {
      * @return - Flux of Book objects by that author
      */
     Flux<Book> findBook(Author author);
-
-    /**
-     * Determines whether the collection has books or not.
-     *
-     * @return {@Link Mono<Boolean>} - true if there are books
-     * false - if there are no books
-     */
-    Mono<Boolean> hasBooks();
-
-    /**
-     * Converts the path to a file and then returns the URI to that path
-     *
-     * @param path - String containing the image file the user entered
-     * @return URI of the image path
-     */
-    URI retrieveURI(String path);
-
-    /**
-     * Grab a String containing the absolute path to the book's cover location
-     * If it's in Azure Database storage, the cover will be downloaded to the temporary directory.
-     *
-     * @param book - Book object of whose cover you want to retrieve
-     * @return {@Link Mono} holds a String of the absolute path
-     */
-    Mono<String> grabCoverImage(Book book);
 }
