@@ -66,14 +66,17 @@ public class App {
                     }
                     break;
                 case 3:
-                    System.out.println(edit().block());
+                    System.out.println(bookCollector.hasBooks().block() ? edit()
+                        .onErrorResume(error -> Mono.just(error.getMessage())).block()
+                        : "There are no books to delete.");
                     break;
                 case 4:
                     System.out.println(bookCollector.hasBooks().block() ? findBook().block()
                         : "There are no books to find.");
                     break;
                 case 5:
-                    System.out.println(bookCollector.hasBooks().block() ? deleteBook().block()
+                    System.out.println(bookCollector.hasBooks().block() ? deleteBook()
+                        .onErrorResume(error -> Mono.just(error.getMessage())).block()
                         : "There are no books to delete.");
                     break;
                 case 6:
@@ -343,7 +346,7 @@ public class App {
 
     private static Mono<String> deleteBook() {
         return grabBook("delete").flatMap(book -> {
-            if (book.getTitle() == null) {
+            if (book == null || book.getTitle() == null) {
                 return Mono.just("");
             }
             return bookCollector.deleteBook(book)
@@ -358,8 +361,7 @@ public class App {
         Flux<Book> bookToGrab = bookCollector.findBook(SCANNER.nextLine());
         return bookToGrab.collectList().flatMap(list -> {
             if (list.isEmpty()) {
-                System.out.println("There are no books with that title.");
-                return Mono.empty();
+                return Mono.error(new IllegalStateException("There are no books with that title."));
             }
             if (list.size() == 1) {
                 System.out.println("Here is a matching book.");
