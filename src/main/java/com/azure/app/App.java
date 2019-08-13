@@ -315,7 +315,7 @@ public class App {
         }
         return booksToFind.collectList().flatMap(list -> {
             if (list.isEmpty()) {
-                System.out.printf("There are no books %s.\n", option.contentEquals("title") ? "with that title"
+                System.out.printf("There are no books %s.", option.contentEquals("title") ? "with that title"
                     : "by that author");
             } else if (list.size() == 1) {
                 System.out.printf("Here is a book %s %s.\n", option.contentEquals("title") ? "titled"
@@ -356,7 +356,7 @@ public class App {
     }
 
     private static Mono<Book> grabBook(String modifier) {
-        System.out.printf("Please enter the title of the book %s: ", modifier.contentEquals("delete")
+        System.out.printf("Please enter the title of the book %s:\n", modifier.contentEquals("delete")
             ? "to delete" : "to edit");
         Flux<Book> bookToGrab = bookCollector.findBook(SCANNER.nextLine());
         return bookToGrab.collectList().flatMap(list -> {
