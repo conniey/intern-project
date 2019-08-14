@@ -39,7 +39,7 @@ public class JsonHandlerTest {
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(JsonHandlerTest.class).error("Error in setting up JsonHandlerTest: ", e);
-            Assert.fail("");
+            Assert.fail("Failed to set up the JSON handler.");
         }
     }
 

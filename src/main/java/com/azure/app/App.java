@@ -71,8 +71,8 @@ public class App {
                         : "There are no books to delete.");
                     break;
                 case 4:
-                    System.out.println(bookCollector.hasBooks().block() ? findBook().block()
-                        : "There are no books to find.");
+                    System.out.print(bookCollector.hasBooks().block() ? findBook().block()
+                        : "There are no books to find.\n");
                     break;
                 case 5:
                     System.out.println(bookCollector.hasBooks().block() ? deleteBook()
@@ -170,9 +170,6 @@ public class App {
     private static Mono<String> edit() {
         Mono<Book> editBook = grabBook("edit");
         return editBook.flatMap(oldBook -> {
-            if (oldBook.getTitle() == null) {
-                return Mono.just("");
-            }
             System.out.println("What would you like to change?");
             System.out.println("1. Title?");
             System.out.println("2. Author?");
@@ -231,8 +228,7 @@ public class App {
     }
 
     private static Mono<Void> listBooks() {
-        Flux<Book> book = bookCollector.getBooks();
-        return book.collectList().map(list -> {
+        return bookCollector.getBooks().collectList().map(list -> {
             if (list.isEmpty()) {
                 System.out.println("There are no books.");
                 return list;
@@ -318,7 +314,7 @@ public class App {
                 System.out.printf("There are no books %s.", option.contentEquals("title") ? "with that title"
                     : "by that author");
             } else if (list.size() == 1) {
-                System.out.printf("Here is a book %s %s.\n", option.contentEquals("title") ? "titled"
+                System.out.printf("Here is a book %s %s.%n", option.contentEquals("title") ? "titled"
                     : "by", input);
                 System.out.println(" * " + list.get(0));
                 System.out.println("Would you like to view it?");
@@ -330,7 +326,7 @@ public class App {
                 }
             } else {
                 System.out.printf("Here are books %s %s. Please enter the number you wish to view."
-                    + " (Enter \"Q\" to return to menu.)\n", option.contentEquals("title") ? "titled"
+                    + " (Enter \"Q\" to return to menu.)%n", option.contentEquals("title") ? "titled"
                     : "by", input);
                 int choice = getBook(list);
                 int bookNum = choice - 1;
@@ -345,21 +341,15 @@ public class App {
     }
 
     private static Mono<String> deleteBook() {
-        return grabBook("delete").flatMap(book -> {
-            if (book == null || book.getTitle() == null) {
-                return Mono.just("");
-            }
-            return bookCollector.deleteBook(book)
-                .then(Mono.just("Book was deleted."))
-                .onErrorResume(error -> Mono.just("Error. Book wasn't deleted."));
-        });
+        return grabBook("delete").flatMap(book -> bookCollector.deleteBook(book)
+            .then(Mono.just("Book was deleted."))
+            .onErrorResume(error -> Mono.just("Error. Book wasn't deleted.")));
     }
 
     private static Mono<Book> grabBook(String modifier) {
-        System.out.printf("Please enter the title of the book %s:\n", modifier.contentEquals("delete")
+        System.out.printf("Please enter the title of the book %s:%n", modifier.contentEquals("delete")
             ? "to delete" : "to edit");
-        Flux<Book> bookToGrab = bookCollector.findBook(SCANNER.nextLine());
-        return bookToGrab.collectList().flatMap(list -> {
+        return bookCollector.findBook(SCANNER.nextLine()).collectList().flatMap(list -> {
             if (list.isEmpty()) {
                 return Mono.error(new IllegalStateException("There are no books with that title."));
             }

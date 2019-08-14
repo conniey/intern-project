@@ -36,7 +36,7 @@ public class LocalBookCollectorTest {
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(LocalBookCollectorTest.class).error("Error in setting up the LocalBookCollectorTest: ", e);
-            Assert.fail("");
+            Assert.fail("Failed to set up the local book collector.");
         }
         localCollector = new BookCollector(new LocalDocumentProvider(root),
             new LocalImageProvider(root));
