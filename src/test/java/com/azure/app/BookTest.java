@@ -17,21 +17,19 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class BookTest {
-
     /**
      * Verifies that the correct information was passed to the Book object
      */
     @Test
     public void testGoodBookChecker() {
         //Arrange
-        URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
+        final URL folder = BookTest.class.getClassLoader().getResource(".");
         Book book = new Book("Title", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI());
         //Act and Assert
         assertTrue(book.isValid());
     }
 
     //TEST INVALID BOOKS
-
     /**
      * Gathers the data for the Book object that'll be tested
      *
@@ -40,7 +38,7 @@ public class BookTest {
     @Parameterized.Parameters
     public static Collection<Book[]> data() {
         //Arrange
-        URL folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".");
+        final URL folder = BookTest.class.getClassLoader().getResource(".");
         return Arrays.asList(new Book[][]{
             {new Book("", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI())},
             {new Book("Title", new Author("Good", ""), new File(folder.getPath() + "KK8.jpg").toURI())},

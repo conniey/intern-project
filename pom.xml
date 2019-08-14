@@ -226,7 +226,7 @@
     <dependency>
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmos</artifactId>
-      <version>3.0.1</version>
+      <version>3.1.0</version>
     </dependency>
 
     <!-- Junit -->
@@ -236,6 +236,7 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 </project>
 
