@@ -46,7 +46,7 @@ public class BlobImageProviderTest {
             BlobSettings blobSettings = mapper.readValue(Objects.requireNonNull(client.getSetting("BLOB_INFO").block()).value(), BlobSettings.class);
             blobCollector = new BlobImageProvider(blobSettings);
         } catch (NoSuchAlgorithmException | InvalidKeyException | IOException e) {
-            Assert.fail("");
+            Assert.fail("Failed to initialize the Blob Image Provider.");
             LoggerFactory.getLogger(BlobImageProviderTest.class).error("Error in setting up the BlobImageProvider: ", e);
         }
     }

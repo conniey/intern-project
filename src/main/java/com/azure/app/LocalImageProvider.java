@@ -28,18 +28,14 @@ final class LocalImageProvider implements ImageProvider {
     private List<File> jsonFiles;
     private String root;
     private final OptionChecker optionChecker = new OptionChecker();
-<<<<<<< HEAD
-    private static Logger logger = LoggerFactory.getLogger(LocalImageProvider.class);
-=======
-    private static Logger logger = LoggerFactory.getLogger(JsonHandler.class);
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalImageProvider.class);
 
     LocalImageProvider(String root) {
         this.root = root;
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
         File directory = new File(Paths.get(root, Constants.IMAGE_PATH).toString());
         if (!directory.exists() && !directory.mkdirs()) {
-            logger.error("Couldn't create non-existent JSON directory: " + directory.getAbsolutePath());
+            LOGGER.error("Couldn't create non-existent JSON directory: " + directory.getAbsolutePath());
         }
         jsonFiles = retrieveJsonFiles();
     }
@@ -70,7 +66,7 @@ final class LocalImageProvider implements ImageProvider {
                 || f.getName().endsWith("jpg"))
                 .collect(Collectors.toList());
         } catch (IOException e) {
-            logger.error("Exception acquiring image file.", e);
+            LOGGER.error("Exception acquiring image file.", e);
             return Collections.emptyList();
         }
     }
@@ -123,12 +119,12 @@ final class LocalImageProvider implements ImageProvider {
             book.getAuthor().getFirstName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.exists() && !imageFile.mkdirs()) {
-            logger.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
+            LOGGER.error("Couldn't create directories for: " + imageFile.getAbsolutePath());
         }
         duplicateImage(book, imagePath);
         String extension = FilenameUtils.getExtension(imagePath.getName());
         if (!supportedImageFormats.contains(extension)) {
-            logger.error("Error. Wrong image format.");
+            LOGGER.error("Error. Wrong image format.");
             return Mono.error(new IllegalArgumentException("Wrong image format"));
         }
         try {
@@ -139,7 +135,7 @@ final class LocalImageProvider implements ImageProvider {
                 return Mono.empty().then();
             }
         } catch (IOException ex) {
-            logger.error("Error saving image: ", ex);
+            LOGGER.error("Error saving image: ", ex);
             return Mono.error(ex);
         }
         return Mono.error(new IllegalArgumentException("Error saving cover image"));

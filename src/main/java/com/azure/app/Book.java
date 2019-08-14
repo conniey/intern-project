@@ -56,6 +56,15 @@ final class Book {
         return cover;
     }
 
+
+    String id() {
+        return id;
+    }
+
+    String title() {
+        return title;
+    }
+
     /**
      * Checks to the book's fields to make sure they're correct
      *

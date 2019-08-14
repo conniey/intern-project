@@ -16,24 +16,6 @@ import static org.junit.Assert.assertTrue;
 public class OptionCheckerTest {
     private OptionChecker optionChecker = new OptionChecker();
     private URL folder = OptionCheckerTest.class.getClassLoader().getResource(".");
-<<<<<<< HEAD
-=======
-    private String root;
-
-    /**
-     * Sets up a String containing the location of
-     * where to look for the images saved in the test folders.
-     */
-    @Before
-    public void setUp() {
-        try {
-            URI folder = OptionCheckerTest.class.getClassLoader().getResource(".").toURI();
-            root = Paths.get(folder).toString();
-        } catch (URISyntaxException e) {
-            Assert.fail("");
-        }
-    }
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6
 
     /**
      * Verifies that a png image can be read

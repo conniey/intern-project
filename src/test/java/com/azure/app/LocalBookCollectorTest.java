@@ -21,11 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-<<<<<<< HEAD:src/test/java/com/azure/app/LocalBookCollectorTest.java
 public class LocalBookCollectorTest {
-=======
-public class LocalDocumentProviderTest {
->>>>>>> 610c5ed95752fce00be79839723fb68ac620ddf6:src/test/java/com/azure/app/LocalDocumentProviderTest.java
     private BookCollector localCollector;
     private String root;
 
@@ -36,11 +32,11 @@ public class LocalDocumentProviderTest {
     @Before
     public void setUp() {
         try {
-            URI folder = LocalDocumentProviderTest.class.getClassLoader().getResource(".").toURI();
+            URI folder = LocalBookCollectorTest.class.getClassLoader().getResource(".").toURI();
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(LocalBookCollectorTest.class).error("Error in setting up the LocalBookCollectorTest: ", e);
-            Assert.fail("");
+            Assert.fail("Failed to set up the local book collector.");
         }
         localCollector = new BookCollector(new LocalDocumentProvider(root),
             new LocalImageProvider(root));
@@ -327,3 +323,4 @@ public class LocalDocumentProviderTest {
         Assert.assertEquals(formerLength, files.length);
     }
 }
+
