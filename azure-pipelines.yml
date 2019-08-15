@@ -22,7 +22,11 @@ steps:
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.8'
     jdkArchitectureOption: 'x64'
-
+- task: AzureKeyVault@1
+  inputs:
+    azureSubscription: 'Visual Studio Enterprise(3ba55b6c-303d-4efc-a07d-7482e08f6ed3)'
+    KeyVaultName: 'ReaderParadise'
+    SecretsFilter: '*'
 - task: Maven@3
   displayName: 'Run tests'
   inputs:
@@ -34,3 +38,4 @@ steps:
     jdkArchitectureOption: 'x64'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    AZURE_APPCONFIG: '$(AZURE_APPCONFIG)'
