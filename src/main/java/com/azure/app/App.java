@@ -30,7 +30,6 @@ public class App {
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollector bookCollector;
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
-
     /**
      * Starting point for the library application.
      *
