@@ -10,7 +10,6 @@ import com.azure.data.appconfiguration.credentials.ConfigurationClientCredential
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -68,7 +67,6 @@ public class CosmosBookCollectorTest {
     /**
      * Tests deletion.
      */
-    @Ignore
     @Test
     public void testDeleteBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
@@ -111,7 +109,7 @@ public class CosmosBookCollectorTest {
     }
 
     /**
-     * Test find
+     * Test find author when there's at least one
      */
     @Test
     public void testFindAuthor() {
@@ -171,7 +169,6 @@ public class CosmosBookCollectorTest {
      * Tests overwriting the same book but with a different cover image
      */
     @Test
-    @Ignore
     public void testOverwritingBook() {
         //Arrange
         Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
@@ -185,6 +182,6 @@ public class CosmosBookCollectorTest {
             new File(FOLDER.getPath(), "Gingerbread.jpg").toURI())).expectComplete().verify();
         //Cleanup
         cosmosBC.deleteBook(book1).block();
-        cosmosBC.deleteBook(book2).block();
+        StepVerifier.create(cosmosBC.deleteBook(book2)).verifyError();
     }
 }

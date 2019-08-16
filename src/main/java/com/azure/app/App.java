@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -30,13 +29,14 @@ public class App {
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollector bookCollector;
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final KeyVaultStorage VAULT = new KeyVaultStorage();
     /**
      * Starting point for the library application.
      *
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        String connectionString = System.getenv("AZURE_APPCONFIG");
+        String connectionString = VAULT.getConnectionString().block();
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
                 + " Please set it.");
@@ -129,14 +129,7 @@ public class App {
         String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
         assert documentProvider != null;
         if (documentProvider.equalsIgnoreCase("Cosmos")) {
-            CosmosSettings cosmosInfo = client.getSetting("COSMOS_INFO").map(info -> {
-                try {
-                    return (mapper.readValue(info.value(), CosmosSettings.class));
-                } catch (IOException e) {
-                    LOGGER.error("Invalid information for document storage: ", e);
-                    return null;
-                }
-            }).block();
+            CosmosSettings cosmosInfo = VAULT.getCosmosInformation().block();
             if (cosmosInfo == null) {
                 return null;
             }
@@ -152,14 +145,11 @@ public class App {
             if (storageType.equalsIgnoreCase("Local")) {
                 return Mono.just(new LocalImageProvider(System.getProperty("user.dir")));
             } else if (storageType.equalsIgnoreCase("BlobStorage")) {
-                return client.getSetting("BLOB_INFO").flatMap(info -> {
-                    try {
-                        return Mono.just(new BlobImageProvider(mapper.readValue(info.value(), BlobSettings.class)));
-                    } catch (IOException e) {
-                        LOGGER.error("Invalid information: ", e);
-                        return Mono.error(new IllegalStateException("Environment variable COSMOS_INFO is not set properly."));
-                    }
-                });
+                BlobSettings blobSettings = VAULT.getBlobInformation().block();
+                if (blobSettings == null) {
+                    return null;
+                }
+                return Mono.just(new BlobImageProvider(blobSettings));
             } else {
                 return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognized."));
             }

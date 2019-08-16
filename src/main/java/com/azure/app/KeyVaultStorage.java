@@ -1,0 +1,57 @@
+package com.azure.app;
+
+import com.azure.identity.credential.DefaultAzureCredential;
+import com.azure.identity.credential.DefaultAzureCredentialBuilder;
+import com.azure.security.keyvault.secrets.SecretAsyncClient;
+import com.azure.security.keyvault.secrets.SecretClientBuilder;
+import com.azure.security.keyvault.secrets.models.Secret;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Mono;
+
+import java.io.IOException;
+
+public class KeyVaultStorage {
+    private SecretAsyncClient secretAsyncClient;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+    KeyVaultStorage() {
+        DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
+        secretAsyncClient = new SecretClientBuilder()
+            .endpoint("https://readerparadise.vault.azure.net/")
+            .credential(credential)
+            .buildAsyncClient();
+    }
+
+    public Mono<BlobSettings> getBlobInformation() {
+        Mono<Secret> secret = secretAsyncClient.getSecret("BLOB-INFO");
+        return secret.flatMap(value -> {
+            try {
+                return Mono.just(MAPPER.readValue(value.value(), BlobSettings.class));
+            } catch (IOException e) {
+                LOGGER.error("Error setting up Blob Settings: ", e);
+                return Mono.empty();
+            }
+        });
+    }
+
+    public Mono<CosmosSettings> getCosmosInformation() {
+        Mono<Secret> secret = secretAsyncClient.getSecret("COSMOS-INFO");
+        return secret.flatMap(value -> {
+            try {
+                return Mono.just(MAPPER.readValue(value.value(), CosmosSettings.class));
+            } catch (IOException e) {
+                LOGGER.error("Error setting up Cosmos Settings: ", e);
+                return Mono.empty();
+            }
+        });
+    }
+
+    public Mono<String> getConnectionString() {
+        Mono<Secret> secret = secretAsyncClient.getSecret("AZURE-APPCONFIG");
+        return secret.map(Secret::value);
+    }
+
+}
