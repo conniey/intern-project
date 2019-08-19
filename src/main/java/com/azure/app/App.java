@@ -113,7 +113,6 @@ public class App {
      */
     private static boolean setBookCollector(String connectionString) {
         ConfigurationAsyncClient client;
-        final ObjectMapper mapper = new ObjectMapper();
         try {
             client = new ConfigurationClientBuilder()
                 .credential(new ConfigurationClientCredentials(connectionString))
