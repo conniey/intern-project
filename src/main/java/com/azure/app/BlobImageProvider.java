@@ -102,7 +102,7 @@ final class BlobImageProvider implements ImageProvider {
 
     @Override
     public Mono<Void> editImage(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) { //don't want to change image
+        if (saveCover == 1) { // User selected 3 - change image
             return deleteImage(oldBook).then(saveImage(newBook));
         } else {
             String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());

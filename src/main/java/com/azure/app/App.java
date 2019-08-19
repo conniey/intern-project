@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -36,7 +35,7 @@ public class App {
      *
      * @param args Arguments to the library program.
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         String connectionString = VAULT.getConnectionString().block();
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -207,9 +206,11 @@ public class App {
                         newTitle = SCANNER.nextLine();
                     } while (!OPTION_CHECKER.validateString(newTitle));
                     newBook = new Book(newTitle, oldBook.getAuthor(), oldBook.getCover());
-                    return bookCollector.editBook(oldBook, newBook, 0)
-                        .then(Mono.just("Book was changed."))
-                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()));
+                    System.out.println();
+                    return confirmChange(oldBook, newBook) ?
+                        bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
+                            .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        : Mono.just("");
                 case 2:
                     String author;
                     do {
@@ -219,8 +220,10 @@ public class App {
                     String[] authorName = parseAuthorsName(author.split(" "));
                     Author newAuthor = new Author(authorName[0], authorName[1]);
                     newBook = new Book(oldBook.getTitle(), newAuthor, oldBook.getCover());
-                    return bookCollector.editBook(oldBook, newBook, 0).then(Mono.just(
-                        "Book was changed."));
+                    return confirmChange(oldBook, newBook) ?
+                        bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
+                            .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        : Mono.just("");
                 case 3:
                     URI newPath;
                     do {
@@ -229,11 +232,31 @@ public class App {
                         newPath = bookCollector.retrieveURI(filePath);
                     } while (!OPTION_CHECKER.checkImage(newPath));
                     newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), newPath);
-                    return bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"));
+                    System.out.println("Change book cover?");
+                    String choice = getYesOrNo();
+                    return choice.equalsIgnoreCase("y") ?
+                        bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"))
+                            .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        : Mono.just("");
                 default:
                     return Mono.just("");
             }
         });
+    }
+
+    /**
+     * Confirm keeping the changes made to the new book.
+     *
+     * @param oldBook - old Book object
+     * @param newBook - new Book object
+     * @return - boolean that determine whether to save or not
+     * true - save new book
+     * false - keep old book
+     */
+    private static boolean confirmChange(Book oldBook, Book newBook) {
+        System.out.println("Change " + oldBook + " to " + newBook + "?");
+        String confirm = getYesOrNo();
+        return confirm.equalsIgnoreCase("y");
     }
 
     /**
@@ -375,9 +398,9 @@ public class App {
      * @return {@Link Mono} String that tells if the book was successfully deleted or not
      */
     private static Mono<String> deleteBook() {
-        return grabBook("delete").flatMap(book -> bookCollector.deleteBook(book)
+        return grabBook("delete").flatMap(book -> bookCollector.deleteBook(book))
             .then(Mono.just("Book was deleted."))
-            .onErrorResume(error -> Mono.just("Error. Book wasn't deleted.")));
+            .onErrorResume(error -> Mono.just("Error. Book wasn't deleted."));
     }
 
     /**
