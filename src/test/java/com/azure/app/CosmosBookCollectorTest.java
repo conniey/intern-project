@@ -126,7 +126,6 @@ public class CosmosBookCollectorTest {
                 assertEquals(author.getLastName(), bookCopy.getAuthor().getLastName());
                 assertEquals(author.getFirstName(), bookCopy.getAuthor().getFirstName());
             }).verifyComplete();
-        //Since delete doesn't work, you'll have to manually delete the item from your Cosmos storage
         cosmosBC.deleteBook(book).block();
     }
 
@@ -182,7 +181,7 @@ public class CosmosBookCollectorTest {
         StepVerifier.create(cosmosBC.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File(FOLDER.getPath(), "Gingerbread.jpg").toURI())).expectComplete().verify();
         //Cleanup
-        cosmosBC.deleteBook(book1).block();
+        StepVerifier.create(cosmosBC.deleteBook(book1)).verifyComplete();
         StepVerifier.create(cosmosBC.deleteBook(book2)).verifyError();
     }
 }
