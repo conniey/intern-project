@@ -3,23 +3,14 @@
 
 package com.azure.app;
 
-import com.azure.core.http.policy.HttpLogDetailLevel;
-import com.azure.data.appconfiguration.ConfigurationAsyncClient;
-import com.azure.data.appconfiguration.ConfigurationClientBuilder;
-import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -32,24 +23,10 @@ public class CosmosBookCollectorTest {
      */
     @Before
     public void setup() {
-        ObjectMapper mapper = new ObjectMapper();
-        String connectionString = System.getenv("AZURE_APPCONFIG");
-        if (connectionString == null || connectionString.isEmpty()) {
-            System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
-                + " Please set it.");
-            return;
-        }
-        ConfigurationAsyncClient client;
-        try {
-            client = new ConfigurationClientBuilder()
-                .credential(new ConfigurationClientCredentials(connectionString))
-                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
-                .buildAsyncClient();
-            CosmosSettings cosmosSettings = mapper.readValue(client.getSetting("COSMOS_INFO").block().value(), CosmosSettings.class);
-            cosmosBC = new CosmosDocumentProvider(cosmosSettings);
-        } catch (NoSuchAlgorithmException | InvalidKeyException | IOException e) {
-            LoggerFactory.getLogger(BlobImageProviderTest.class).error("Error in setting up the CosmosBookCollector: ", e);
-        }
+        KeyVaultStorage keyVault = new KeyVaultStorage();
+        CosmosSettings cosmosSettings = keyVault.getCosmosInformation().block();
+        assert cosmosSettings != null;
+        cosmosBC = new CosmosDocumentProvider(cosmosSettings);
     }
 
     /**

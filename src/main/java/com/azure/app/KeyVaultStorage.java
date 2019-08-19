@@ -23,7 +23,7 @@ final class KeyVaultStorage {
     KeyVaultStorage() {
         DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
         secretAsyncClient = new SecretClientBuilder()
-            .endpoint("https://readerparadise.vault.azure.net/")
+            .endpoint(System.getenv("KEY_VALUE"))
             .credential(credential)
             .buildAsyncClient();
     }
