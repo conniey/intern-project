@@ -207,8 +207,8 @@ public class App {
                     } while (!OPTION_CHECKER.validateString(newTitle));
                     newBook = new Book(newTitle, oldBook.getAuthor(), oldBook.getCover());
                     System.out.println();
-                    return confirmChange(oldBook, newBook) ?
-                        bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
+                    return confirmChange(oldBook, newBook)
+                        ? bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
                             .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
                         : Mono.just("");
                 case 2:
@@ -220,8 +220,8 @@ public class App {
                     String[] authorName = parseAuthorsName(author.split(" "));
                     Author newAuthor = new Author(authorName[0], authorName[1]);
                     newBook = new Book(oldBook.getTitle(), newAuthor, oldBook.getCover());
-                    return confirmChange(oldBook, newBook) ?
-                        bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
+                    return confirmChange(oldBook, newBook)
+                        ? bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
                             .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
                         : Mono.just("");
                 case 3:
@@ -234,8 +234,8 @@ public class App {
                     newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), newPath);
                     System.out.println("Change book cover?");
                     String choice = getYesOrNo();
-                    return choice.equalsIgnoreCase("y") ?
-                        bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"))
+                    return choice.equalsIgnoreCase("y")
+                        ? bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"))
                             .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
                         : Mono.just("");
                 default:

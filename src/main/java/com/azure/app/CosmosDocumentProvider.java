@@ -124,8 +124,8 @@ final class CosmosDocumentProvider implements DocumentProvider {
      */
     @Override
     public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
-            return deleteBook(oldBook).then(saveBook(newBook.getTitle(), newBook.getAuthor(),
-                newBook.getCover()));
+        return deleteBook(oldBook).then(saveBook(newBook.getTitle(), newBook.getAuthor(),
+            newBook.getCover()));
     }
 
     /**
