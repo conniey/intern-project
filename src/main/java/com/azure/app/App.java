@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -35,7 +36,7 @@ public class App {
      *
      * @param args Arguments to the library program.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         String connectionString = VAULT.getConnectionString().block();
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
@@ -87,6 +88,7 @@ public class App {
             }
             System.out.println("------------------------------------------------");
         } while (choice != 6);
+        System.exit(0);
     }
 
     /**

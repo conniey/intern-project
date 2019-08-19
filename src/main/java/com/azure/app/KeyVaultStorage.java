@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 
-public class KeyVaultStorage {
+final class KeyVaultStorage {
     private SecretAsyncClient secretAsyncClient;
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyVaultStorage.class);
@@ -25,11 +25,11 @@ public class KeyVaultStorage {
             .buildAsyncClient();
     }
 
-    public Mono<BlobSettings> getBlobInformation() {
+    Mono<BlobSettings> getBlobInformation() {
         Mono<Secret> secret = secretAsyncClient.getSecret("BLOB-INFO");
-        return secret.flatMap(value -> {
+        return secret.flatMap(secretValue -> {
             try {
-                return Mono.just(MAPPER.readValue(value.value(), BlobSettings.class));
+                return Mono.just(MAPPER.readValue(secretValue.value(), BlobSettings.class));
             } catch (IOException e) {
                 LOGGER.error("Error setting up Blob Settings: ", e);
                 return Mono.error(new IllegalStateException("Couldn't set up Blob storage settings."));
@@ -37,11 +37,11 @@ public class KeyVaultStorage {
         });
     }
 
-    public Mono<CosmosSettings> getCosmosInformation() {
+    Mono<CosmosSettings> getCosmosInformation() {
         Mono<Secret> secret = secretAsyncClient.getSecret("COSMOS-INFO");
-        return secret.flatMap(value -> {
+        return secret.flatMap(secretValue -> {
             try {
-                return Mono.just(MAPPER.readValue(value.value(), CosmosSettings.class));
+                return Mono.just(MAPPER.readValue(secretValue.value(), CosmosSettings.class));
             } catch (IOException e) {
                 LOGGER.error("Error setting up Cosmos Settings: ", e);
                 return Mono.error(new IllegalStateException("Couldn't set up Cosmos storage settings"));
@@ -49,7 +49,7 @@ public class KeyVaultStorage {
         });
     }
 
-    public Mono<String> getConnectionString() {
+    Mono<String> getConnectionString() {
         Mono<Secret> secret = secretAsyncClient.getSecret("AZURE-APPCONFIG");
         return secret.map(Secret::value).onErrorResume(error -> Mono.just("Couldn't set up App Configuration"));
     }

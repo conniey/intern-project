@@ -177,6 +177,13 @@
     </dependency>
 
     <!-- SL4J Logger -->
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.26</version>
+    </dependency>
+
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
@@ -221,13 +228,6 @@
       <groupId>com.microsoft.azure</groupId>
       <artifactId>azure-cosmos</artifactId>
       <version>3.1.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.microsoft.azure</groupId>
-      <artifactId>azure-keyvault-complete</artifactId>
-      <version>1.2.0</version>
-      <type>pom</type>
     </dependency>
 
     <dependency>
