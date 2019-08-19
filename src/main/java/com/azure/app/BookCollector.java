@@ -33,7 +33,7 @@ final class BookCollector {
     Mono<Void> saveBook(Book book) {
         return book.isValid() && isFile(book.getCover())
             ? documentProvider.saveBook(book.getTitle(), book.getAuthor(), book.getCover())
-                .then(imageProvider.saveImage(book)) : Mono.error(new IllegalArgumentException("Book can't be saved."));
+            .then(imageProvider.saveImage(book)) : Mono.error(new IllegalArgumentException("Book can't be saved."));
     }
 
     /**
@@ -133,5 +133,11 @@ final class BookCollector {
      */
     static boolean isFile(URI entry) {
         return entry != null && new File(entry).isFile();
+    }
+
+    void checkClosure() {
+        if (documentProvider instanceof CosmosDocumentProvider) {
+            ((CosmosDocumentProvider) documentProvider).endProgram();
+        }
     }
 }

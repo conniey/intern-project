@@ -33,6 +33,7 @@ import java.util.List;
 
 final class CosmosDocumentProvider implements DocumentProvider {
     private static Logger logger = LoggerFactory.getLogger(CosmosDocumentProvider.class);
+    private CosmosClient cosmosClient;
     private Mono<CosmosContainer> bookCollection;
     private static ObjectMapper mapper = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -40,7 +41,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
     CosmosDocumentProvider(CosmosSettings cosmosSettings) {
         ConnectionPolicy policy = new ConnectionPolicy();
         policy.connectionMode(ConnectionMode.DIRECT);
-        CosmosClient cosmosClient = CosmosClient.builder()
+        cosmosClient = CosmosClient.builder()
             .endpoint(cosmosSettings.host())
             .key(cosmosSettings.key())
             .connectionPolicy(policy)
@@ -213,5 +214,9 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 }
             });
         });
+    }
+
+    void endProgram() {
+        cosmosClient.close();
     }
 }

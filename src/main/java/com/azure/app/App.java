@@ -87,7 +87,7 @@ public class App {
             }
             System.out.println("------------------------------------------------");
         } while (choice != 6);
-        System.exit(0);
+        bookCollector.checkClosure();
     }
 
     /**

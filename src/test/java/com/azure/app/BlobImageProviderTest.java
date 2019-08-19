@@ -92,7 +92,8 @@ public class BlobImageProviderTest {
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
             new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(oldBook).block();
-        Book newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), new File(folder.getPath() + "GreatGatsby.gif").toURI());
+        Book newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), new File(folder.getPath()
+            + "GreatGatsby.gif").toURI());
         //Act
         StepVerifier.create(blobCollector.editImage(oldBook, newBook, false)).
             //Assert
