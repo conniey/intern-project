@@ -216,7 +216,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
         });
     }
 
-    void endProgram() {
+    void closeStorage() {
         cosmosClient.close();
     }
 }

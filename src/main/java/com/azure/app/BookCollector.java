@@ -137,7 +137,7 @@ final class BookCollector {
 
     void checkClosure() {
         if (documentProvider instanceof CosmosDocumentProvider) {
-            ((CosmosDocumentProvider) documentProvider).endProgram();
+            ((CosmosDocumentProvider) documentProvider).closeStorage();
         }
     }
 }
