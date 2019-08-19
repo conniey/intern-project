@@ -229,7 +229,7 @@
       <artifactId>azure-cosmos</artifactId>
       <version>3.1.0</version>
     </dependency>
-
+    
     <dependency>
       <groupId>com.azure</groupId>
       <artifactId>azure-keyvault-secrets</artifactId>
@@ -252,5 +252,3 @@
 
   </dependencies>
 </project>
-
-

@@ -36,7 +36,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
     private Mono<CosmosContainer> bookCollection;
     private static ObjectMapper mapper = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
+  
     CosmosDocumentProvider(CosmosSettings cosmosSettings) {
         ConnectionPolicy policy = new ConnectionPolicy();
         policy.connectionMode(ConnectionMode.DIRECT);

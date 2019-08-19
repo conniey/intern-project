@@ -31,6 +31,7 @@ public class CosmosBookCollectorTest {
      * Sets up App Configuration to get the information needed for Cosmos.
      */
     @Before
+    @Ignore
     public void setup() {
         ObjectMapper mapper = new ObjectMapper();
         String connectionString = System.getenv("AZURE_APPCONFIG");
@@ -56,6 +57,7 @@ public class CosmosBookCollectorTest {
      * Tests to see that a book can be saved to Cosmos as a JSON file.
      */
     @Test
+    @Ignore
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
             new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
