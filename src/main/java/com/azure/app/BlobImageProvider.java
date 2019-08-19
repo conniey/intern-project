@@ -101,10 +101,8 @@ final class BlobImageProvider implements ImageProvider {
     }
 
     @Override
-    public Mono<Void> editImage(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) { // User selected 3 - change image
-            return deleteImage(oldBook).then(saveImage(newBook));
-        } else {
+    public Mono<Void> editImage(Book oldBook, Book newBook, boolean saveCover) {
+        if (saveCover) {
             String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
             Mono<BlobItem> bookMono = locateImage(blobConversion);
             return imageContainerClient.flatMap(containerAsyncClient ->
@@ -130,6 +128,8 @@ final class BlobImageProvider implements ImageProvider {
                     Book saveBook = new Book(newBook.getTitle(), newBook.getAuthor(), newFile.toURI());
                     return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(deleteImage(oldBook)).then(saveImage(saveBook));
                 }));
+        } else { // User selected 3 - change image
+            return deleteImage(oldBook).then(saveImage(newBook));
         }
     }
 

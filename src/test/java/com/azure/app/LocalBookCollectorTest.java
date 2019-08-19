@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.Assert.assertNotNull;
+
 public class LocalBookCollectorTest {
     private BookCollector localCollector;
     private String root;
@@ -33,6 +35,7 @@ public class LocalBookCollectorTest {
     public void setUp() {
         try {
             URI folder = LocalBookCollectorTest.class.getClassLoader().getResource(".").toURI();
+            assertNotNull(folder);
             root = Paths.get(folder).toString();
         } catch (URISyntaxException e) {
             LoggerFactory.getLogger(LocalBookCollectorTest.class).error("Error in setting up the LocalBookCollectorTest: ", e);
@@ -307,6 +310,7 @@ public class LocalBookCollectorTest {
     public void testOverwritingBook() {
         //Arrange
         File[] files = Paths.get(root, "lib", "images").toFile().listFiles();
+        assertNotNull(files);
         int formerLength = files.length;
         boolean result;
         Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),

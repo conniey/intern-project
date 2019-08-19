@@ -36,7 +36,7 @@ interface DocumentProvider {
      * @param saveCover - determines whether or not the user wants to keep the same cover
      * @return {@Link Mono}
      */
-    Mono<Void> editBook(Book oldBook, Book newBook, int saveCover);
+    Mono<Void> editBook(Book oldBook, Book newBook, boolean saveCover);
 
     /**
      * Deletes the book and the file based off its information.

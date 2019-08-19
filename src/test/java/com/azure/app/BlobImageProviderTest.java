@@ -10,9 +10,11 @@ import reactor.test.StepVerifier;
 import java.io.File;
 import java.net.URL;
 
+import static org.junit.Assert.assertNotNull;
+
 public class BlobImageProviderTest {
     private BlobImageProvider blobCollector;
-    private static final URL FOLDER = BlobImageProviderTest.class.getClassLoader().getResource(".");
+    private static URL folder;
 
     /**
      * Set up the App Configuration to grab the information for the Blob Storage
@@ -21,8 +23,10 @@ public class BlobImageProviderTest {
     public void setup() {
         KeyVaultStorage keyVaultStorage = new KeyVaultStorage();
         BlobSettings data = keyVaultStorage.getBlobInformation().block();
-        assert data != null;
+        assertNotNull(data);
         blobCollector = new BlobImageProvider(data);
+        folder = BlobImageProviderTest.class.getClassLoader().getResource(".");
+        assertNotNull(folder);
     }
 
     /**
@@ -32,7 +36,7 @@ public class BlobImageProviderTest {
     public void saveImageTest() {
         //Arrange
         Book newBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act
         StepVerifier.create(blobCollector.saveImage(newBook))
             //Assert
@@ -48,11 +52,11 @@ public class BlobImageProviderTest {
     public void editTitleImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(oldBook).block();
         Book newBook = new Book("Starships", oldBook.getAuthor(), oldBook.getCover());
         //Act
-        StepVerifier.create(blobCollector.editImage(oldBook, newBook, 1)).
+        StepVerifier.create(blobCollector.editImage(oldBook, newBook, true)).
             //Assert
                 verifyComplete();
         //Double check & Cleanup
@@ -67,11 +71,11 @@ public class BlobImageProviderTest {
     public void editAuthorImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(oldBook).block();
         Book newBook = new Book(oldBook.getTitle(), new Author("Changed", "Person"), oldBook.getCover());
         //Act
-        StepVerifier.create(blobCollector.editImage(oldBook, newBook, 1)).
+        StepVerifier.create(blobCollector.editImage(oldBook, newBook, true)).
             //Assert
                 verifyComplete();
         //Double check & Cleanup
@@ -86,11 +90,11 @@ public class BlobImageProviderTest {
     public void editCoverImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(oldBook).block();
-        Book newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+        Book newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act
-        StepVerifier.create(blobCollector.editImage(oldBook, newBook, 0)).
+        StepVerifier.create(blobCollector.editImage(oldBook, newBook, false)).
             //Assert
                 verifyComplete();
         //Double check & Cleanup
@@ -105,7 +109,7 @@ public class BlobImageProviderTest {
     public void deleteImageTest() {
         //Arrange
         Book book = new Book("Valid", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(book).block();
         //Act
         StepVerifier.create(blobCollector.deleteImage(book))
@@ -120,7 +124,7 @@ public class BlobImageProviderTest {
     public void testDeletingNonexistantImage() {
         //Arrange
         Book book = new Book("Completetly Random", new Author("asdfasdf", "qeryuio"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act & Assert
         StepVerifier.create(blobCollector.deleteImage(book)).verifyError();
     }
@@ -132,9 +136,9 @@ public class BlobImageProviderTest {
     public void testOverwritingImage() {
         //Arrange
         Book book = new Book("Valid", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         Book book2 = new Book("Valid", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "Wonder.png").toURI());
+            new File(folder.getPath() + "Wonder.png").toURI());
         //Act
         StepVerifier.create(blobCollector.saveImage(book)).verifyComplete();
         StepVerifier.create(blobCollector.saveImage(book2)).verifyComplete();
@@ -150,9 +154,9 @@ public class BlobImageProviderTest {
     public void testSavingSameImageDifferentTitle() {
         //Arrange
         Book book = new Book("Miracle", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         Book book2 = new Book("Worker", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act
         StepVerifier.create(blobCollector.saveImage(book)).verifyComplete();
         StepVerifier.create(blobCollector.saveImage(book2)).verifyComplete();
@@ -168,9 +172,9 @@ public class BlobImageProviderTest {
     public void testSavingSameImageDifferentAuthor() {
         //Arrange
         Book book = new Book("Miracle", new Author("Brother", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         Book book2 = new Book("Miracle", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act & Assert
         StepVerifier.create(blobCollector.saveImage(book)).verifyComplete();
         StepVerifier.create(blobCollector.saveImage(book2)).verifyComplete();

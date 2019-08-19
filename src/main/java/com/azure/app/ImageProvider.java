@@ -31,7 +31,7 @@ interface ImageProvider {
      * @param saveCover - determines whether or not the user wants to keep the same cover
      * @return {@Link Mono}
      */
-    Mono<Void> editImage(Book oldBook, Book newBook, int saveCover);
+    Mono<Void> editImage(Book oldBook, Book newBook, boolean saveCover);
 
     /**
      * Deletes the image cover from the Blob Storage

@@ -13,10 +13,11 @@ import java.io.File;
 import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class CosmosBookCollectorTest {
     private CosmosDocumentProvider cosmosBC;
-    private static final URL FOLDER = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
+    private static URL folder;
 
     /**
      * Sets up App Configuration to get the information needed for Cosmos.
@@ -25,8 +26,10 @@ public class CosmosBookCollectorTest {
     public void setup() {
         KeyVaultStorage keyVault = new KeyVaultStorage();
         CosmosSettings cosmosSettings = keyVault.getCosmosInformation().block();
-        assert cosmosSettings != null;
+        assertNotNull(cosmosSettings);
         cosmosBC = new CosmosDocumentProvider(cosmosSettings);
+        folder = CosmosBookCollectorTest.class.getClassLoader().getResource(".");
+        assertNotNull(folder);
     }
 
     /**
@@ -35,7 +38,7 @@ public class CosmosBookCollectorTest {
     @Test
     public void testSaveBook() {
         Book book = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         StepVerifier.create(cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()))
             .expectComplete()
             .verify();
@@ -48,7 +51,7 @@ public class CosmosBookCollectorTest {
     @Test
     public void testDeleteBook() {
         Book book = new Book("Once", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         cosmosBC.deleteBook(book).block();
     }
@@ -60,7 +63,7 @@ public class CosmosBookCollectorTest {
     public void testFindTitle() {
         //Arrange
         String title = "ASD0a3FHJKL";
-        Book book = new Book(title, new Author("Crazy", "Writer"), new File(FOLDER.getPath(), "GreatGatsby.gif").toURI());
+        Book book = new Book(title, new Author("Crazy", "Writer"), new File(folder.getPath(), "GreatGatsby.gif").toURI());
         cosmosBC.saveBook(book.getTitle(), book.getAuthor(), book.getCover()).block();
         //Act
         Flux<Book> length = cosmosBC.findBook(title);
@@ -79,7 +82,7 @@ public class CosmosBookCollectorTest {
     public void testFindNoTitle() {
         //Arrange
         Book book = new Book("Utterly Ridicious", new Author("IMPOssibleToHaveYOu", "Yep"),
-            new File(FOLDER.getPath(), "GreatGatsby.gif").toURI());
+            new File(folder.getPath(), "GreatGatsby.gif").toURI());
         //Act
         int length = cosmosBC.findBook(book.getTitle()).count().block().intValue();
         //Assert
@@ -113,7 +116,7 @@ public class CosmosBookCollectorTest {
     public void testFindNoAuthor() {
         //Arrange
         Book book = new Book("Utterly Ridicious", new Author("IMPOssibleToHaveYOu", "Yep"),
-            new File(FOLDER.getPath(), "GreatGatsby.gif").toURI());
+            new File(folder.getPath(), "GreatGatsby.gif").toURI());
         //Act
         int length = cosmosBC.findBook(book.getAuthor()).count().block().intValue();
         //Assert
@@ -129,14 +132,14 @@ public class CosmosBookCollectorTest {
         boolean result;
         boolean result2;
         Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(FOLDER.getPath(), "Wonder.png").toURI());
+            new File(folder.getPath(), "Wonder.png").toURI());
         Book book2 = new Book("Giant Peach_The Return", new Author("Ronald", "Dahl"),
-            new File(FOLDER.getPath(), "Wonder.png").toURI());
+            new File(folder.getPath(), "Wonder.png").toURI());
         //Act & Assert
         StepVerifier.create(cosmosBC.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(FOLDER.getPath(), "Wonder.png").toURI())).expectComplete().verify();
+            new File(folder.getPath(), "Wonder.png").toURI())).expectComplete().verify();
         StepVerifier.create(cosmosBC.saveBook("Giant Peach_The Return", new Author("Ronald", "Dahl"),
-            new File(FOLDER.getPath(), "Wonder.png").toURI())).expectComplete().verify();
+            new File(folder.getPath(), "Wonder.png").toURI())).expectComplete().verify();
         //Cleanup
         cosmosBC.deleteBook(book1).block();
         cosmosBC.deleteBook(book2).block();
@@ -149,14 +152,14 @@ public class CosmosBookCollectorTest {
     public void testOverwritingBook() {
         //Arrange
         Book book1 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(FOLDER.getPath(), "Wonder.png").toURI());
+            new File(folder.getPath(), "Wonder.png").toURI());
         Book book2 = new Book("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(FOLDER.getPath(), "Gingerbread.jpg").toURI());
+            new File(folder.getPath(), "Gingerbread.jpg").toURI());
         //Act & Assert
         StepVerifier.create(cosmosBC.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
             new File("Wonder.png").toURI())).expectComplete().verify();
         StepVerifier.create(cosmosBC.saveBook("James and the Giant Peach", new Author("Ronald", "Dahl"),
-            new File(FOLDER.getPath(), "Gingerbread.jpg").toURI())).expectComplete().verify();
+            new File(folder.getPath(), "Gingerbread.jpg").toURI())).expectComplete().verify();
         //Cleanup
         StepVerifier.create(cosmosBC.deleteBook(book1)).verifyComplete();
         StepVerifier.create(cosmosBC.deleteBook(book2)).verifyError();

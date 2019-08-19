@@ -123,13 +123,13 @@ final class LocalDocumentProvider implements DocumentProvider {
      * @return {@Link Mono}
      */
     @Override
-    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) { // User selected 3 - changing image
-            return saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover()); //Overwrites old image
-        } else {
+    public Mono<Void> editBook(Book oldBook, Book newBook, boolean saveCover) {
+        if (saveCover) {
             File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
             return saveBook(newBook.getTitle(), newBook.getAuthor(), image.toURI()).then(
                 deleteBook(oldBook));
+        } else {
+            return saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover()); //Overwrites old image
         }
     }
 

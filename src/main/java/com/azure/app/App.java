@@ -7,7 +7,6 @@ import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
-import com.azure.data.appconfiguration.models.ConfigurationSetting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -17,6 +16,7 @@ import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 /**
@@ -119,10 +119,7 @@ public class App {
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
             DocumentProvider document = selectDocumentProvider(client);
-            if (document == null) {
-                return false;
-            }
-            ImageProvider imageProvider;
+            Mono<ImageProvider> imageProvider;
             try {
                 imageProvider = selectImageProvider(client);
             } catch (IllegalArgumentException | IllegalStateException e) {
@@ -130,7 +127,7 @@ public class App {
                 LOGGER.error("Error couldn't set up Image Provider: ", e);
                 return false;
             }
-            bookCollector = new BookCollector(document, imageProvider);
+            bookCollector = new BookCollector(document, imageProvider.block());
             return true;
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             LOGGER.error("Exception with App Configuration: ", e);
@@ -145,14 +142,12 @@ public class App {
      * @return - the specified Document Storage
      */
     private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client) {
-        String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
+        String documentProvider = Objects.requireNonNull(client.getSetting("DOCUMENT_STORAGE_TYPE").block()).value();
         assert documentProvider != null;
         if (documentProvider.equalsIgnoreCase("Cosmos")) {
-            CosmosSettings cosmosInfo = VAULT.getCosmosInformation().block();
-            if (cosmosInfo == null) {
-                return null;
-            }
-            return new CosmosDocumentProvider(cosmosInfo);
+            CosmosSettings cosmosSettings = VAULT.getCosmosInformation().block();
+            assert cosmosSettings != null;
+            return new CosmosDocumentProvider(cosmosSettings);
         } else {
             return new LocalDocumentProvider(System.getProperty("user.dir"));
         }
@@ -164,20 +159,18 @@ public class App {
      * @param client - App Configuration holds a variable taht determines where to store the covers
      * @return - the specified image storage
      */
-    private static ImageProvider selectImageProvider(ConfigurationAsyncClient client) {
-        String imageProvider = client.getSetting("IMAGE_STORAGE_TYPE").map(ConfigurationSetting::value).block();
-        assert imageProvider != null;
-        if (imageProvider.equalsIgnoreCase("Local")) {
-            return new LocalImageProvider(System.getProperty("user.dir"));
-        } else if (imageProvider.equalsIgnoreCase("BlobStorage")) {
-            BlobSettings blobSettings = VAULT.getBlobInformation().block();
-            if (blobSettings == null) {
-                return null;
+    private static Mono<ImageProvider> selectImageProvider(ConfigurationAsyncClient client) {
+        return client.getSetting("IMAGE_STORAGE_TYPE").flatMap(storageImage -> {
+            String imageProvider = storageImage.value();
+            assert imageProvider != null;
+            if (imageProvider.equalsIgnoreCase("Local")) {
+                return Mono.just(new LocalImageProvider(System.getProperty("user.dir")));
+            } else if (imageProvider.equalsIgnoreCase("BlobStorage")) {
+                return VAULT.getBlobInformation().map(BlobImageProvider::new);
+            } else {
+                throw new IllegalArgumentException("Image storage type '" + imageProvider + "' is not recognized.");
             }
-            return new BlobImageProvider(blobSettings);
-        } else {
-            throw new IllegalArgumentException("Image storage type '" + imageProvider + "' is not recognized.");
-        }
+        });
     }
 
     /**
@@ -206,10 +199,9 @@ public class App {
                         newTitle = SCANNER.nextLine();
                     } while (!OPTION_CHECKER.validateString(newTitle));
                     newBook = new Book(newTitle, oldBook.getAuthor(), oldBook.getCover());
-                    System.out.println();
                     return confirmChange(oldBook, newBook)
-                        ? bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
-                            .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        ? bookCollector.editBook(oldBook, newBook, true).then(Mono.just("Book was changed"))
+                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
                         : Mono.just("");
                 case 2:
                     String author;
@@ -221,8 +213,8 @@ public class App {
                     Author newAuthor = new Author(authorName[0], authorName[1]);
                     newBook = new Book(oldBook.getTitle(), newAuthor, oldBook.getCover());
                     return confirmChange(oldBook, newBook)
-                        ? bookCollector.editBook(oldBook, newBook, 0).then(Mono.just("Book was changed"))
-                            .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        ? bookCollector.editBook(oldBook, newBook, true).then(Mono.just("Book was changed"))
+                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
                         : Mono.just("");
                 case 3:
                     URI newPath;
@@ -235,8 +227,8 @@ public class App {
                     System.out.println("Change book cover?");
                     String choice = getYesOrNo();
                     return choice.equalsIgnoreCase("y")
-                        ? bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"))
-                            .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        ? bookCollector.editBook(oldBook, newBook, false).then(Mono.just("Book was changed"))
+                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
                         : Mono.just("");
                 default:
                     return Mono.just("");
@@ -254,7 +246,7 @@ public class App {
      * false - keep old book
      */
     private static boolean confirmChange(Book oldBook, Book newBook) {
-        System.out.println("Change " + oldBook + " to " + newBook + "?");
+        System.out.print("Change " + oldBook + " to " + newBook + "? ");
         String confirm = getYesOrNo();
         return confirm.equalsIgnoreCase("y");
     }
@@ -363,7 +355,7 @@ public class App {
         }
         return booksToFind.collectList().flatMap(list -> {
             if (list.isEmpty()) {
-                System.out.printf("There are no books %s.", option.contentEquals("title") ? "with that title"
+                System.out.printf("There are no books %s.\n", option.contentEquals("title") ? "with that title"
                     : "by that author");
             } else if (list.size() == 1) {
                 System.out.printf("Here is a book %s %s.%n", option.contentEquals("title") ? "titled"
@@ -414,7 +406,7 @@ public class App {
             ? "to delete" : "to edit");
         return bookCollector.findBook(SCANNER.nextLine()).collectList().flatMap(list -> {
             if (list.isEmpty()) {
-                return Mono.error(new IllegalStateException("There are no books with that title."));
+                return Mono.error(new IllegalStateException("There are no books with that title"));
             }
             if (list.size() == 1) {
                 System.out.println("Here is a matching book.");

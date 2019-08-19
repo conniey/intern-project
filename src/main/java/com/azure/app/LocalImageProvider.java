@@ -142,13 +142,13 @@ final class LocalImageProvider implements ImageProvider {
     }
 
     @Override
-    public Mono<Void> editImage(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) { // Overwriting/changing cover
-            return saveImage(newBook);
-        } else {
+    public Mono<Void> editImage(Book oldBook, Book newBook, boolean saveCover) {
+        if (saveCover) {
             File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
             newBook = new Book(newBook.getTitle(), newBook.getAuthor(), image.toURI());
             return saveImage(newBook).then(deleteImage(oldBook));
+        } else { // Overwriting/changing cover
+            return saveImage(newBook);
         }
     }
 

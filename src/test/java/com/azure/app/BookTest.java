@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
@@ -24,6 +25,7 @@ public class BookTest {
     public void testGoodBookChecker() {
         //Arrange
         final URL folder = BookTest.class.getClassLoader().getResource(".");
+        assertNotNull(folder);
         Book book = new Book("Title", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI());
         //Act and Assert
         assertTrue(book.isValid());
@@ -39,6 +41,7 @@ public class BookTest {
     public static Collection<Book[]> data() {
         //Arrange
         final URL folder = BookTest.class.getClassLoader().getResource(".");
+        assertNotNull(folder);
         return Arrays.asList(new Book[][]{
             {new Book("", new Author("Good", "Book"), new File(folder.getPath() + "KK8.jpg").toURI())},
             {new Book("Title", new Author("Good", ""), new File(folder.getPath() + "KK8.jpg").toURI())},
