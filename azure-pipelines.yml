@@ -23,6 +23,7 @@ steps:
     jdkVersionOption: '1.8'
     jdkArchitectureOption: 'x64'
 
+
 - task: Maven@3
   displayName: 'Run tests'
   inputs:
