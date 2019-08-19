@@ -34,7 +34,9 @@ import java.util.List;
 final class CosmosDocumentProvider implements DocumentProvider {
     private static Logger logger = LoggerFactory.getLogger(CosmosDocumentProvider.class);
     private Mono<CosmosContainer> bookCollection;
-    private static ObjectMapper mapper;
+    private static ObjectMapper mapper = new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    ;
 
     CosmosDocumentProvider(CosmosSettings cosmosSettings) {
         ConnectionPolicy policy = new ConnectionPolicy();
@@ -142,8 +144,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
      */
     @Override
     public Mono<Void> deleteBook(Book book) {
-        mapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         String title = book.getTitle();
         Author author = book.getAuthor();
         return bookCollection.flatMap(items -> {

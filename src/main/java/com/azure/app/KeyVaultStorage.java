@@ -15,7 +15,7 @@ import java.io.IOException;
 public class KeyVaultStorage {
     private SecretAsyncClient secretAsyncClient;
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KeyVaultStorage.class);
 
     KeyVaultStorage() {
         DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
@@ -32,7 +32,7 @@ public class KeyVaultStorage {
                 return Mono.just(MAPPER.readValue(value.value(), BlobSettings.class));
             } catch (IOException e) {
                 LOGGER.error("Error setting up Blob Settings: ", e);
-                return Mono.empty();
+                return Mono.error(new IllegalStateException("Couldn't set up Blob storage settings."));
             }
         });
     }
@@ -44,14 +44,14 @@ public class KeyVaultStorage {
                 return Mono.just(MAPPER.readValue(value.value(), CosmosSettings.class));
             } catch (IOException e) {
                 LOGGER.error("Error setting up Cosmos Settings: ", e);
-                return Mono.empty();
+                return Mono.error(new IllegalStateException("Couldn't set up Cosmos storage settings"));
             }
         });
     }
 
     public Mono<String> getConnectionString() {
         Mono<Secret> secret = secretAsyncClient.getSecret("AZURE-APPCONFIG");
-        return secret.map(Secret::value);
+        return secret.map(Secret::value).onErrorResume(error -> Mono.just("Couldn't set up App Configuration"));
     }
 
 }
