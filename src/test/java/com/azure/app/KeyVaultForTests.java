@@ -3,8 +3,8 @@
 
 package com.azure.app;
 
-import com.azure.identity.credential.DeviceCodeCredential;
-import com.azure.identity.credential.DeviceCodeCredentialBuilder;
+import com.azure.identity.credential.DefaultAzureCredential;
+import com.azure.identity.credential.DefaultAzureCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretAsyncClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.azure.security.keyvault.secrets.models.Secret;
@@ -15,16 +15,13 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 
-final class KeyVaultStorage {
+final class KeyVaultForTests {
     private SecretAsyncClient secretAsyncClient;
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyVaultStorage.class);
 
-    KeyVaultStorage() {
-        DeviceCodeCredential credential = new DeviceCodeCredentialBuilder()
-            .deviceCodeChallengeConsumer(challenge -> System.out.println(challenge.message()))
-            .clientId(System.getenv("CLIENT_ID"))
-            .build();
+    KeyVaultForTests() {
+        DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
         secretAsyncClient = new SecretClientBuilder()
             .endpoint(System.getenv("KEY_VALUE"))
             .credential(credential)
@@ -53,10 +50,5 @@ final class KeyVaultStorage {
                 return Mono.error(new IllegalStateException("Couldn't set up Cosmos storage settings"));
             }
         });
-    }
-
-    Mono<String> getConnectionString() {
-        Mono<Secret> secret = secretAsyncClient.getSecret("AZURE-APPCONFIG");
-        return secret.map(Secret::value).onErrorResume(error -> Mono.just("Couldn't set up App Configuration"));
     }
 }

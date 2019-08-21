@@ -15,13 +15,13 @@ import static org.junit.Assert.assertNotNull;
 public class BlobImageProviderTest {
     private BlobImageProvider blobCollector;
     private static URL folder;
+    private static KeyVaultForTests keyVaultStorage = new KeyVaultForTests();
 
     /**
      * Set up the App Configuration to grab the information for the Blob Storage
      */
     @Before
     public void setup() {
-        KeyVaultStorage keyVaultStorage = new KeyVaultStorage();
         BlobSettings data = keyVaultStorage.getBlobInformation().block();
         assertNotNull(data);
         blobCollector = new BlobImageProvider(data);

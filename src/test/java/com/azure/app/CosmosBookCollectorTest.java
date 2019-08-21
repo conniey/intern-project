@@ -18,13 +18,14 @@ import static org.junit.Assert.assertNotNull;
 public class CosmosBookCollectorTest {
     private CosmosDocumentProvider cosmosBC;
     private static URL folder;
+    private static KeyVaultForTests keyVault = new KeyVaultForTests();
+
 
     /**
      * Sets up App Configuration to get the information needed for Cosmos.
      */
     @Before
     public void setup() {
-        KeyVaultStorage keyVault = new KeyVaultStorage();
         CosmosSettings cosmosSettings = keyVault.getCosmosInformation().block();
         assertNotNull(cosmosSettings);
         cosmosBC = new CosmosDocumentProvider(cosmosSettings);
