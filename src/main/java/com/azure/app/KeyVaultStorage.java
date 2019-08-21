@@ -31,6 +31,11 @@ final class KeyVaultStorage {
             .buildAsyncClient();
     }
 
+    /**
+     * Acquires the information needed to set up the Blob Storage from a Key Vault secret.
+     *
+     * @return - A Mono with the blob settings
+     */
     Mono<BlobSettings> getBlobInformation() {
         Mono<Secret> secret = secretAsyncClient.getSecret("BLOB-INFO");
         return secret.flatMap(secretValue -> {
@@ -43,6 +48,11 @@ final class KeyVaultStorage {
         });
     }
 
+    /**
+     * Acquires the information needed to set up the cosmos storage from a Key Vault secret.
+     *
+     * @return - Mono with the cosmos settings
+     */
     Mono<CosmosSettings> getCosmosInformation() {
         Mono<Secret> secret = secretAsyncClient.getSecret("COSMOS-INFO");
         return secret.flatMap(secretValue -> {
