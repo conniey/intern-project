@@ -12,13 +12,11 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Scanner;
 
 /**
@@ -38,15 +36,6 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        final Properties oAuthProperties = new Properties();
-        try {
-            oAuthProperties.load(App.class.getClassLoader().getResourceAsStream("oAuth.properties"));
-        } catch (IOException e) {
-            System.out.println("Unable to read oAuth configuration. Make sure you have a properly formatted oAuth.properties file. See README for details.");
-            return;
-        }
-        final String appId = oAuthProperties.getProperty("app.id");
-        Authentication.initialize(appId);
         String connectionString = VAULT.getConnectionString().block();
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
