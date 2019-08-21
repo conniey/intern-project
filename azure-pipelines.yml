@@ -22,6 +22,10 @@ steps:
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.8'
     jdkArchitectureOption: 'x64'
+  env:
+      CLIENT_ID: '$(INTERACTIVE_CLIENT_ID)'
+
+
 
 - task: Maven@3
   displayName: 'Run tests'
@@ -36,4 +40,6 @@ steps:
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
   env:
     KEY_VALUE: '$(VAULT_URL)'
-    CLIENT_ID: '$(AZURE_CLIENT_ID)'
+    AZURE_CLIENT_ID: '$(AZURE_ID)'
+    AZURE_TENANT_ID: '$(TENANT_ID)'
+    AZURE_CLIENT_SECRET: '$(CLIENT_SECRET)'
