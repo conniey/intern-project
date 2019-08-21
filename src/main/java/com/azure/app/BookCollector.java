@@ -3,6 +3,9 @@
 
 package com.azure.app;
 
+import com.azure.data.cosmos.internal.User;
+import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -12,6 +15,8 @@ import java.net.URI;
 final class BookCollector {
     private ImageProvider imageProvider;
     private DocumentProvider documentProvider;
+    private IGraphServiceClient graphClient = null;
+    private SimpleAuthProvider authProvider = null;
 
     /**
      * Constructor for BookCollector
@@ -135,9 +140,28 @@ final class BookCollector {
         return entry != null && new File(entry).isFile();
     }
 
+    /**
+     * In the case where the user's document provider is Cosmos, it must be closed.
+     */
     void checkClosure() {
         if (documentProvider instanceof CosmosDocumentProvider) {
             ((CosmosDocumentProvider) documentProvider).closeStorage();
+        }
+    }
+
+    User getUser(String accessToken) {
+        return null;
+
+    }
+
+    private void ensureGraphClient(String accessToken) {
+        if (graphClient == null) {
+            // Create the auth provider
+            authProvider = new SimpleAuthProvider(accessToken);
+            // Build a Graph client
+            graphClient = GraphServiceClient.builder()
+                .authenticationProvider(authProvider)
+                .buildClient();
         }
     }
 }

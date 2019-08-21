@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 final class BlobImageProvider implements ImageProvider {
@@ -34,9 +33,9 @@ final class BlobImageProvider implements ImageProvider {
     BlobImageProvider(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),
             blobSettings.getKey());
-        String endpoint = String.format(Locale.ROOT, blobSettings.getUrl());
+
         BlobServiceAsyncClient storageAsyncClient = new BlobServiceClientBuilder()
-            .endpoint(endpoint)
+            .endpoint(blobSettings.getUrl())
             .credential(credential)
             .buildAsyncClient();
         ContainerAsyncClient container = storageAsyncClient.getContainerAsyncClient("book-covers");
