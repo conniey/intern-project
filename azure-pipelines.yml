@@ -23,7 +23,7 @@ steps:
     jdkVersionOption: '1.8'
     jdkArchitectureOption: 'x64'
   env:
-      CLIENT_ID: '$(INTERACTIVE_CLIENT_ID)'
+    CLIENT_ID: '$(INTERACTIVE_CLIENT_ID)'
 
 - task: Maven@3
   displayName: 'Run tests'
