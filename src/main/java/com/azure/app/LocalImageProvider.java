@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.azure.app.Constants.IMAGE_PATH;
+
 final class LocalImageProvider implements ImageProvider {
     private final Set<String> supportedImageFormats;
     private List<File> jsonFiles;
@@ -33,7 +35,7 @@ final class LocalImageProvider implements ImageProvider {
     LocalImageProvider(String root) {
         this.root = root;
         supportedImageFormats = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("gif", "png", "jpg")));
-        File directory = new File(Paths.get(root, Constants.IMAGE_PATH).toString());
+        File directory = new File(Paths.get(root, IMAGE_PATH).toString());
         if (!directory.exists() && !directory.mkdirs()) {
             LOGGER.error("Couldn't create non-existent JSON directory: " + directory.getAbsolutePath());
         }
@@ -61,7 +63,7 @@ final class LocalImageProvider implements ImageProvider {
     }
 
     private List<File> retrieveJsonFiles() {
-        try (Stream<Path> walk = Files.walk(Paths.get(Constants.IMAGE_PATH))) {
+        try (Stream<Path> walk = Files.walk(Paths.get(IMAGE_PATH))) {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith("gif") || f.getName().endsWith("png")
                 || f.getName().endsWith("jpg"))
                 .collect(Collectors.toList());
@@ -75,7 +77,7 @@ final class LocalImageProvider implements ImageProvider {
      * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
      */
     private void deleteEmptyDirectories() {
-        File[] imageFiles = new File(Constants.IMAGE_PATH).listFiles();
+        File[] imageFiles = new File(IMAGE_PATH).listFiles();
         clearFiles(imageFiles);
     }
 
@@ -115,7 +117,7 @@ final class LocalImageProvider implements ImageProvider {
     @Override
     public Mono<Void> saveImage(Book book) {
         File imagePath = new File(book.getCover());
-        final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, book.getAuthor().getLastName(),
+        final Path fullImagePath = Paths.get(root, IMAGE_PATH, book.getAuthor().getLastName(),
             book.getAuthor().getFirstName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.exists() && !imageFile.mkdirs()) {

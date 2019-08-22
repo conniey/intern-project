@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.azure.app.Constants.IMAGE_PATH;
+import static com.azure.app.Constants.JSON_PATH;
 import static org.junit.Assert.assertNotNull;
 
 public class LocalBookCollectorTest {
@@ -210,13 +212,13 @@ public class LocalBookCollectorTest {
      */
     private boolean deleteJsonFile(Book book) {
         boolean delete = false;
-        try (Stream<Path> walk = Files.walk(Paths.get(root, Constants.JSON_PATH))) {
+        try (Stream<Path> walk = Files.walk(Paths.get(root, JSON_PATH))) {
             List<String> result = walk.map(Path::toString).filter(f -> f.endsWith(".json")).collect(Collectors.toList());
             for (String file : result) {
                 File newFile = new File(file);
                 if (new OptionChecker().checkFile(newFile, book)) {
                     if (newFile.delete()) {
-                        new File(Paths.get(root, Constants.IMAGE_PATH, book.getAuthor().getLastName(),
+                        new File(Paths.get(root, IMAGE_PATH, book.getAuthor().getLastName(),
                             book.getAuthor().getFirstName(),
                             new File(book.getCover()).getName()).toString()).delete();
                         deleteEmptyDirectories();
@@ -236,9 +238,9 @@ public class LocalBookCollectorTest {
      * from when the JSON file was deleted.
      */
     private void deleteEmptyDirectories() {
-        File[] files = new File(Paths.get(root, Constants.JSON_PATH).toString()).listFiles();
+        File[] files = new File(Paths.get(root, JSON_PATH).toString()).listFiles();
         clearFiles(files);
-        File[] imageFiles = new File(Paths.get(root, Constants.IMAGE_PATH).toString()).listFiles();
+        File[] imageFiles = new File(Paths.get(root, IMAGE_PATH).toString()).listFiles();
         clearFiles(imageFiles);
     }
 

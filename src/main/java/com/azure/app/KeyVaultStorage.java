@@ -15,6 +15,12 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 
+import static com.azure.app.Constants.APP_CONFIGURATION_CREDENTIALS;
+import static com.azure.app.Constants.AZURE_CLIENT_ID;
+import static com.azure.app.Constants.BLOB_CREDENTIALS;
+import static com.azure.app.Constants.COSMOS_CREDENTIALS;
+import static com.azure.app.Constants.KEY_VAULT_URL;
+
 final class KeyVaultStorage {
     private SecretAsyncClient secretAsyncClient;
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -23,10 +29,10 @@ final class KeyVaultStorage {
     KeyVaultStorage() {
         DeviceCodeCredential credential = new DeviceCodeCredentialBuilder()
             .deviceCodeChallengeConsumer(challenge -> System.out.println(challenge.message()))
-            .clientId(System.getenv("CLIENT_ID"))
+            .clientId(System.getenv(AZURE_CLIENT_ID))
             .build();
         secretAsyncClient = new SecretClientBuilder()
-            .endpoint(System.getenv("KEY_VALUE"))
+            .endpoint(System.getenv(KEY_VAULT_URL))
             .credential(credential)
             .buildAsyncClient();
     }
@@ -37,7 +43,7 @@ final class KeyVaultStorage {
      * @return - A Mono with the blob settings
      */
     Mono<BlobSettings> getBlobInformation() {
-        Mono<Secret> secret = secretAsyncClient.getSecret("BLOB-INFO");
+        Mono<Secret> secret = secretAsyncClient.getSecret(BLOB_CREDENTIALS);
         return secret.flatMap(secretValue -> {
             try {
                 return Mono.just(MAPPER.readValue(secretValue.value(), BlobSettings.class));
@@ -54,7 +60,7 @@ final class KeyVaultStorage {
      * @return - Mono with the cosmos settings
      */
     Mono<CosmosSettings> getCosmosInformation() {
-        Mono<Secret> secret = secretAsyncClient.getSecret("COSMOS-INFO");
+        Mono<Secret> secret = secretAsyncClient.getSecret(COSMOS_CREDENTIALS);
         return secret.flatMap(secretValue -> {
             try {
                 return Mono.just(MAPPER.readValue(secretValue.value(), CosmosSettings.class));
@@ -66,7 +72,7 @@ final class KeyVaultStorage {
     }
 
     Mono<String> getConnectionString() {
-        Mono<Secret> secret = secretAsyncClient.getSecret("AZURE-APPCONFIG");
+        Mono<Secret> secret = secretAsyncClient.getSecret(APP_CONFIGURATION_CREDENTIALS);
         return secret.map(Secret::value).onErrorResume(error -> Mono.just("Couldn't set up App Configuration"));
     }
 }

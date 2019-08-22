@@ -15,6 +15,8 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 
+import static com.azure.app.Constants.COSMOS_CREDENTIALS;
+
 final class KeyVaultForTests {
     private SecretAsyncClient secretAsyncClient;
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -51,7 +53,7 @@ final class KeyVaultForTests {
      * @return - Mono with the cosmos settings
      */
     Mono<CosmosSettings> getCosmosInformation() {
-        Mono<Secret> secret = secretAsyncClient.getSecret("COSMOS-INFO");
+        Mono<Secret> secret = secretAsyncClient.getSecret(COSMOS_CREDENTIALS);
         return secret.flatMap(secretValue -> {
             try {
                 return Mono.just(MAPPER.readValue(secretValue.value(), CosmosSettings.class));
