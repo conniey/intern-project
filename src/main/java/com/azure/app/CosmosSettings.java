@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 class CosmosSettings {
     @JsonProperty("host")
     private String host;
-
     @JsonProperty("key")
     private String key;
 

@@ -177,6 +177,7 @@
     </dependency>
 
     <!-- SL4J Logger -->
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
@@ -228,6 +229,18 @@
       <artifactId>azure-cosmos</artifactId>
       <version>3.1.0</version>
     </dependency>
+    
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-keyvault-secrets</artifactId>
+      <version>4.0.0-preview.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-identity</artifactId>
+      <version>1.0.0-preview.2</version>
+    </dependency>
 
     <!-- Junit -->
     <dependency>
@@ -238,6 +251,5 @@
     </dependency>
 
   </dependencies>
+
 </project>
-
-

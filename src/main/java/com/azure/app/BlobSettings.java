@@ -8,10 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 final class BlobSettings {
     @JsonProperty("blobUrl")
     private String blobUrl;
-
     @JsonProperty("blobKey")
     private String blobKey;
-
     @JsonProperty("blobAccountName")
     private String blobAccountName;
 

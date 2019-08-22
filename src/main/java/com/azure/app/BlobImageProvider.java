@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 final class BlobImageProvider implements ImageProvider {
@@ -34,9 +33,8 @@ final class BlobImageProvider implements ImageProvider {
     BlobImageProvider(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),
             blobSettings.getKey());
-        String endpoint = String.format(Locale.ROOT, blobSettings.getUrl());
         BlobServiceAsyncClient storageAsyncClient = new BlobServiceClientBuilder()
-            .endpoint(endpoint)
+            .endpoint(blobSettings.getUrl())
             .credential(credential)
             .buildAsyncClient();
         ContainerAsyncClient container = storageAsyncClient.getContainerAsyncClient("book-covers");
@@ -101,10 +99,8 @@ final class BlobImageProvider implements ImageProvider {
     }
 
     @Override
-    public Mono<Void> editImage(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) { //don't want to change image
-            return deleteImage(oldBook).then(saveImage(newBook));
-        } else {
+    public Mono<Void> editImage(Book oldBook, Book newBook, boolean saveCover) {
+        if (saveCover) {
             String[] blobConversion = getBlobInformation(oldBook.getAuthor(), oldBook.getTitle());
             Mono<BlobItem> bookMono = locateImage(blobConversion);
             return imageContainerClient.flatMap(containerAsyncClient ->
@@ -130,6 +126,8 @@ final class BlobImageProvider implements ImageProvider {
                     Book saveBook = new Book(newBook.getTitle(), newBook.getAuthor(), newFile.toURI());
                     return blockBlob.downloadToFile(newFile.getAbsolutePath()).then(deleteImage(oldBook)).then(saveImage(saveBook));
                 }));
+        } else { // User selected 3 - change image
+            return deleteImage(oldBook).then(saveImage(newBook));
         }
     }
 

@@ -17,7 +17,7 @@ import java.util.Collection;
 
 @RunWith(Parameterized.class)
 public class BookCollectorTest {
-    BookCollector bookCollector;
+    private BookCollector bookCollector;
 
     /**
      * Sets up the BookCollector object

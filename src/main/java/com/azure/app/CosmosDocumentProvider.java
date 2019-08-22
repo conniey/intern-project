@@ -31,15 +31,19 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.azure.app.Constants.IMAGE_PATH;
+
 final class CosmosDocumentProvider implements DocumentProvider {
     private static Logger logger = LoggerFactory.getLogger(CosmosDocumentProvider.class);
+    private CosmosClient cosmosClient;
     private Mono<CosmosContainer> bookCollection;
-    private static ObjectMapper mapper;
-
+    private static ObjectMapper mapper = new ObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  
     CosmosDocumentProvider(CosmosSettings cosmosSettings) {
         ConnectionPolicy policy = new ConnectionPolicy();
         policy.connectionMode(ConnectionMode.DIRECT);
-        CosmosClient cosmosClient = CosmosClient.builder()
+        cosmosClient = CosmosClient.builder()
             .endpoint(cosmosSettings.host())
             .key(cosmosSettings.key())
             .connectionPolicy(policy)
@@ -95,7 +99,7 @@ final class CosmosDocumentProvider implements DocumentProvider {
             logger.error("Error encoding names: ", e);
             return Mono.error(e);
         }
-        File relativeFile = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(), titleImage).toFile();
+        File relativeFile = Paths.get(IMAGE_PATH, author.getLastName(), author.getFirstName(), titleImage).toFile();
         URI saved = relativeFile.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
@@ -122,14 +126,9 @@ final class CosmosDocumentProvider implements DocumentProvider {
      * @return {@Link Mono}
      */
     @Override
-    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) {
-            return deleteBook(oldBook).then(saveBook(newBook.getTitle(), newBook.getAuthor(),
-                newBook.getCover()));
-        } else {
-            return deleteBook(oldBook).then(saveBook(newBook.getTitle(), newBook.getAuthor(),
-                newBook.getCover()));
-        }
+    public Mono<Void> editBook(Book oldBook, Book newBook, boolean saveCover) {
+        return deleteBook(oldBook).then(saveBook(newBook.getTitle(), newBook.getAuthor(),
+            newBook.getCover()));
     }
 
     /**
@@ -142,8 +141,6 @@ final class CosmosDocumentProvider implements DocumentProvider {
      */
     @Override
     public Mono<Void> deleteBook(Book book) {
-        mapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         String title = book.getTitle();
         Author author = book.getAuthor();
         return bookCollection.flatMap(items -> {
@@ -219,5 +216,9 @@ final class CosmosDocumentProvider implements DocumentProvider {
                 }
             });
         });
+    }
+
+    void closeStorage() {
+        cosmosClient.close();
     }
 }

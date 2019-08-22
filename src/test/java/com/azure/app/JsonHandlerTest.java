@@ -20,6 +20,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.azure.app.Constants.IMAGE_PATH;
+import static com.azure.app.Constants.JSON_PATH;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -56,7 +58,7 @@ public class JsonHandlerTest {
         //Assert
         assertTrue(result);
         //Cleanup
-        deleteJsonFile(new File(Constants.JSON_PATH), b);
+        deleteJsonFile(new File(JSON_PATH), b);
     }
 
     /**
@@ -146,10 +148,10 @@ public class JsonHandlerTest {
      * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
      */
     private void deleteEmptyDirectories() {
-        File[] files = new File(Constants.JSON_PATH).listFiles();
+        File[] files = new File(JSON_PATH).listFiles();
         assert files != null;
         clearFiles(files);
-        File[] imageFiles = new File(Constants.IMAGE_PATH).listFiles();
+        File[] imageFiles = new File(IMAGE_PATH).listFiles();
         assert imageFiles != null;
         clearFiles(imageFiles);
     }

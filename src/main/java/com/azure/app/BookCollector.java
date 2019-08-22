@@ -33,7 +33,7 @@ final class BookCollector {
     Mono<Void> saveBook(Book book) {
         return book.isValid() && isFile(book.getCover())
             ? documentProvider.saveBook(book.getTitle(), book.getAuthor(), book.getCover())
-                .then(imageProvider.saveImage(book)) : Mono.error(new IllegalArgumentException("Book can't be saved."));
+            .then(imageProvider.saveImage(book)) : Mono.error(new IllegalArgumentException("Book can't be saved."));
     }
 
     /**
@@ -53,7 +53,7 @@ final class BookCollector {
      * @param saveCover - determines whether or not the user wants to keep the same cover
      * @return {@Link Mono}
      */
-    Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
+    Mono<Void> editBook(Book oldBook, Book newBook, boolean saveCover) {
         return documentProvider.editBook(oldBook, newBook, saveCover).
             then(imageProvider.editImage(oldBook, newBook, saveCover));
     }
@@ -133,5 +133,11 @@ final class BookCollector {
      */
     static boolean isFile(URI entry) {
         return entry != null && new File(entry).isFile();
+    }
+
+    void checkClosure() {
+        if (documentProvider instanceof CosmosDocumentProvider) {
+            ((CosmosDocumentProvider) documentProvider).closeStorage();
+        }
     }
 }

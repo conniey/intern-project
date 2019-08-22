@@ -7,18 +7,16 @@ import com.azure.core.http.policy.HttpLogDetailLevel;
 import com.azure.data.appconfiguration.ConfigurationAsyncClient;
 import com.azure.data.appconfiguration.ConfigurationClientBuilder;
 import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
-import com.azure.data.appconfiguration.models.ConfigurationSetting;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 /**
@@ -30,6 +28,7 @@ public class App {
     private static final OptionChecker OPTION_CHECKER = new OptionChecker();
     private static BookCollector bookCollector;
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final KeyVaultStorage VAULT = new KeyVaultStorage();
 
     /**
      * Starting point for the library application.
@@ -37,7 +36,7 @@ public class App {
      * @param args Arguments to the library program.
      */
     public static void main(String[] args) {
-        String connectionString = System.getenv("AZURE_APPCONFIG");
+        String connectionString = VAULT.getConnectionString().block();
         if (connectionString == null || connectionString.isEmpty()) {
             System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
                 + " Please set it.");
@@ -88,6 +87,20 @@ public class App {
             }
             System.out.println("------------------------------------------------");
         } while (choice != 6);
+        bookCollector.checkClosure();
+    }
+
+    /**
+     * Displays the options.
+     */
+    private static void showMenu() {
+        System.out.println("Select one of the options below (1 - 6).");
+        System.out.println("1. List books");
+        System.out.println("2. Add a book");
+        System.out.println("3. Edit a book");
+        System.out.println("4. Find a book");
+        System.out.println("5. Delete book");
+        System.out.println("6. Quit");
     }
 
     /**
@@ -100,25 +113,21 @@ public class App {
      */
     private static boolean setBookCollector(String connectionString) {
         ConfigurationAsyncClient client;
-        final ObjectMapper mapper = new ObjectMapper();
         try {
             client = new ConfigurationClientBuilder()
                 .credential(new ConfigurationClientCredentials(connectionString))
                 .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
                 .buildAsyncClient();
-            DocumentProvider document = selectDocumentProvider(client, mapper);
-            if (document == null) {
-                return false;
-            }
-            ImageProvider imageProvider;
+            DocumentProvider document = selectDocumentProvider(client);
+            Mono<ImageProvider> imageProvider;
             try {
-                imageProvider = selectImageProvider(client, mapper);
+                imageProvider = selectImageProvider(client);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 System.err.println("Could not set up image storage provider. Please check your settings: " + e.getMessage());
                 LOGGER.error("Error couldn't set up Image Provider: ", e);
                 return false;
             }
-            bookCollector = new BookCollector(document, imageProvider);
+            bookCollector = new BookCollector(document, imageProvider.block());
             return true;
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             LOGGER.error("Exception with App Configuration: ", e);
@@ -126,47 +135,49 @@ public class App {
         }
     }
 
-    private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client, ObjectMapper mapper) {
-        String documentProvider = client.getSetting("DOCUMENT_STORAGE_TYPE").map(ConfigurationSetting::value).block();
+    /**
+     * Sets up the location to store the book text files.
+     *
+     * @param client - App Configuration holds a variable that determines where to store the books
+     * @return - the specified Document Storage
+     */
+    private static DocumentProvider selectDocumentProvider(ConfigurationAsyncClient client) {
+        String documentProvider = Objects.requireNonNull(client.getSetting("DOCUMENT_STORAGE_TYPE").block()).value();
         assert documentProvider != null;
         if (documentProvider.equalsIgnoreCase("Cosmos")) {
-            CosmosSettings cosmosInfo = client.getSetting("COSMOS_INFO").map(info -> {
-                try {
-                    return (mapper.readValue(info.value(), CosmosSettings.class));
-                } catch (IOException e) {
-                    LOGGER.error("Invalid information for document storage: ", e);
-                    return null;
-                }
-            }).block();
-            if (cosmosInfo == null) {
-                return null;
-            }
-            return new CosmosDocumentProvider(cosmosInfo);
+            CosmosSettings cosmosSettings = VAULT.getCosmosInformation().block();
+            assert cosmosSettings != null;
+            return new CosmosDocumentProvider(cosmosSettings);
         } else {
             return new LocalDocumentProvider(System.getProperty("user.dir"));
         }
     }
 
-    private static ImageProvider selectImageProvider(ConfigurationAsyncClient client, ObjectMapper mapper) {
-        return client.getSetting("IMAGE_STORAGE_TYPE").flatMap(input -> {
-            String storageType = input.value();
-            if (storageType.equalsIgnoreCase("Local")) {
+    /**
+     * Sets up where to save the book image covers
+     *
+     * @param client - App Configuration holds a variable taht determines where to store the covers
+     * @return - the specified image storage
+     */
+    private static Mono<ImageProvider> selectImageProvider(ConfigurationAsyncClient client) {
+        return client.getSetting("IMAGE_STORAGE_TYPE").flatMap(storageImage -> {
+            String imageProvider = storageImage.value();
+            assert imageProvider != null;
+            if (imageProvider.equalsIgnoreCase("Local")) {
                 return Mono.just(new LocalImageProvider(System.getProperty("user.dir")));
-            } else if (storageType.equalsIgnoreCase("BlobStorage")) {
-                return client.getSetting("BLOB_INFO").flatMap(info -> {
-                    try {
-                        return Mono.just(new BlobImageProvider(mapper.readValue(info.value(), BlobSettings.class)));
-                    } catch (IOException e) {
-                        LOGGER.error("Invalid information: ", e);
-                        return Mono.error(new IllegalStateException("Environment variable COSMOS_INFO is not set properly."));
-                    }
-                });
+            } else if (imageProvider.equalsIgnoreCase("BlobStorage")) {
+                return VAULT.getBlobInformation().map(BlobImageProvider::new);
             } else {
-                return Mono.error(new IllegalArgumentException("Image storage type '" + storageType + "' is not recognized."));
+                throw new IllegalArgumentException("Image storage type '" + imageProvider + "' is not recognized.");
             }
-        }).block();
+        });
     }
 
+    /**
+     * Edits a book based off the three specifics
+     *
+     * @return - {@Link Mono} String which alerts the user whether it was successfully completed or not
+     */
     private static Mono<String> edit() {
         Mono<Book> editBook = grabBook("edit");
         return editBook.flatMap(oldBook -> {
@@ -188,9 +199,10 @@ public class App {
                         newTitle = SCANNER.nextLine();
                     } while (!OPTION_CHECKER.validateString(newTitle));
                     newBook = new Book(newTitle, oldBook.getAuthor(), oldBook.getCover());
-                    return bookCollector.editBook(oldBook, newBook, 0)
-                        .then(Mono.just("Book was changed."))
-                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()));
+                    return confirmChange(oldBook, newBook)
+                        ? bookCollector.editBook(oldBook, newBook, true).then(Mono.just("Book was changed"))
+                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        : Mono.just("");
                 case 2:
                     String author;
                     do {
@@ -200,8 +212,10 @@ public class App {
                     String[] authorName = parseAuthorsName(author.split(" "));
                     Author newAuthor = new Author(authorName[0], authorName[1]);
                     newBook = new Book(oldBook.getTitle(), newAuthor, oldBook.getCover());
-                    return bookCollector.editBook(oldBook, newBook, 0).then(Mono.just(
-                        "Book was changed."));
+                    return confirmChange(oldBook, newBook)
+                        ? bookCollector.editBook(oldBook, newBook, true).then(Mono.just("Book was changed"))
+                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        : Mono.just("");
                 case 3:
                     URI newPath;
                     do {
@@ -210,23 +224,36 @@ public class App {
                         newPath = bookCollector.retrieveURI(filePath);
                     } while (!OPTION_CHECKER.checkImage(newPath));
                     newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), newPath);
-                    return bookCollector.editBook(oldBook, newBook, 1).then(Mono.just("Book was changed"));
+                    System.out.println("Change book cover?");
+                    String choice = getYesOrNo();
+                    return choice.equalsIgnoreCase("y")
+                        ? bookCollector.editBook(oldBook, newBook, false).then(Mono.just("Book was changed"))
+                        .onErrorResume(error -> Mono.just("Book wasn't changed. Error:" + error.toString()))
+                        : Mono.just("");
                 default:
                     return Mono.just("");
             }
         });
     }
 
-    private static void showMenu() {
-        System.out.println("Select one of the options below (1 - 6).");
-        System.out.println("1. List books");
-        System.out.println("2. Add a book");
-        System.out.println("3. Edit a book");
-        System.out.println("4. Find a book");
-        System.out.println("5. Delete book");
-        System.out.println("6. Quit");
+    /**
+     * Confirm keeping the changes made to the new book.
+     *
+     * @param oldBook - old Book object
+     * @param newBook - new Book object
+     * @return - boolean that determine whether to save or not
+     * true - save new book
+     * false - keep old book
+     */
+    private static boolean confirmChange(Book oldBook, Book newBook) {
+        System.out.print("Change " + oldBook + " to " + newBook + "? ");
+        String confirm = getYesOrNo();
+        return confirm.equalsIgnoreCase("y");
     }
 
+    /**
+     * Gets the list of book stored in the document storage
+     */
     private static Mono<Void> listBooks() {
         return bookCollector.getBooks().collectList().map(list -> {
             if (list.isEmpty()) {
@@ -242,6 +269,11 @@ public class App {
         }).then();
     }
 
+    /**
+     * Adds a book to the document storage and its cover to the image storage
+     *
+     * @return - String that alerts a successful completion
+     */
     private static Mono<String> addBook() {
         System.out.println("Please enter the following information:");
         String title;
@@ -275,6 +307,11 @@ public class App {
         return Mono.just("");
     }
 
+    /**
+     * Finds the book in the list
+     *
+     * @return - String which tells whether the book was found or not
+     */
     private static Mono<String> findBook() {
         int choice;
         System.out.println("How would you like to find the book? (Enter \"Q\" to return to menu.)");
@@ -301,6 +338,13 @@ public class App {
         return Mono.just("");
     }
 
+    /**
+     * Looks for the book based on title/author.
+     *
+     * @param option - String that determines whether the user is looking by title or author
+     * @param input  - the title/author the user wants to find in the list
+     * @return - {@Link Mono} String which tells if the book was found or not
+     */
     private static Mono<String> find(String option, String input) {
         Flux<Book> booksToFind;
         if (option.contentEquals("author")) {
@@ -311,7 +355,7 @@ public class App {
         }
         return booksToFind.collectList().flatMap(list -> {
             if (list.isEmpty()) {
-                System.out.printf("There are no books %s.", option.contentEquals("title") ? "with that title"
+                System.out.printf("There are no books %s.\n", option.contentEquals("title") ? "with that title"
                     : "by that author");
             } else if (list.size() == 1) {
                 System.out.printf("Here is a book %s %s.%n", option.contentEquals("title") ? "titled"
@@ -340,18 +384,29 @@ public class App {
         });
     }
 
+    /**
+     * Deletes a specific book in the list
+     *
+     * @return {@Link Mono} String that tells if the book was successfully deleted or not
+     */
     private static Mono<String> deleteBook() {
-        return grabBook("delete").flatMap(book -> bookCollector.deleteBook(book)
+        return grabBook("delete").flatMap(book -> bookCollector.deleteBook(book))
             .then(Mono.just("Book was deleted."))
-            .onErrorResume(error -> Mono.just("Error. Book wasn't deleted.")));
+            .onErrorResume(error -> Mono.just("Error. Book wasn't deleted."));
     }
 
+    /**
+     * Looks for a specific book within the list and returns that book
+     *
+     * @param modifier - String which contains the purpose of why the book is being searched for (editting/deleting?)
+     * @return {@Link Mono} Book object being looked for
+     */
     private static Mono<Book> grabBook(String modifier) {
         System.out.printf("Please enter the title of the book %s:%n", modifier.contentEquals("delete")
             ? "to delete" : "to edit");
         return bookCollector.findBook(SCANNER.nextLine()).collectList().flatMap(list -> {
             if (list.isEmpty()) {
-                return Mono.error(new IllegalStateException("There are no books with that title."));
+                return Mono.error(new IllegalStateException("There are no books with that title"));
             }
             if (list.size() == 1) {
                 System.out.println("Here is a matching book.");
@@ -380,6 +435,12 @@ public class App {
         });
     }
 
+    /**
+     * Lists all the books and determines which one the user wants to pick.
+     *
+     * @param allBooks - List of all the books
+     * @return - the integer that the book corresponds with
+     */
     private static int getBook(List<Book> allBooks) {
         for (int i = 0; i < allBooks.size(); i++) {
             System.out.println(i + 1 + ". " + allBooks.get(i));
@@ -392,6 +453,11 @@ public class App {
         return choice;
     }
 
+    /**
+     * Prompts the user to enter Y/N
+     *
+     * @return - String containing yes or no
+     */
     private static String getYesOrNo() {
         System.out.println("Enter 'Y' or 'N'.");
         String yesOrNo;
@@ -401,6 +467,12 @@ public class App {
         return yesOrNo;
     }
 
+    /**
+     * Breaks up the author's name to first and last.
+     *
+     * @param author -  An array of strings that should contain the author's name
+     * @return - a array of Strings with only two elements - first and last name
+     */
     private static String[] parseAuthorsName(String[] author) {
         String lastName = author[author.length - 1];
         StringBuilder firstName = new StringBuilder(author[0]);

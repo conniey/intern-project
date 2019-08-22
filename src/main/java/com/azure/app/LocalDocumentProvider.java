@@ -24,6 +24,10 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.azure.app.Constants.IMAGE_PATH;
+import static com.azure.app.Constants.JSON_PATH;
+import static com.azure.app.Constants.SERIALIZER;
+
 final class LocalDocumentProvider implements DocumentProvider {
     private Flux<Book> jsonBooks;
     private List<File> jsonFiles;
@@ -33,7 +37,7 @@ final class LocalDocumentProvider implements DocumentProvider {
 
     LocalDocumentProvider(String root) {
         this.root = root;
-        File directoryJSON = new File(Paths.get(root, Constants.JSON_PATH).toString());
+        File directoryJSON = new File(Paths.get(root, JSON_PATH).toString());
         if (!directoryJSON.exists() && !directoryJSON.mkdirs()) {
             LOGGER.error("Couldn't create non-existent JSON directory: " + directoryJSON.getAbsolutePath());
         }
@@ -59,9 +63,9 @@ final class LocalDocumentProvider implements DocumentProvider {
      */
     private Flux<Book> initializeBooks() {
         try {
-            return Flux.fromStream(Files.walk(Paths.get(root, Constants.JSON_PATH)))
+            return Flux.fromStream(Files.walk(Paths.get(root, JSON_PATH)))
                 .filter(f -> f.toFile().getName().endsWith(".json"))
-                .map(path -> Constants.SERIALIZER.fromJSONtoBook(new File(path.toString())));
+                .map(path -> SERIALIZER.fromJSONtoBook(new File(path.toString())));
         } catch (IOException e) {
             LOGGER.error("Error making Flux: ", e);
             return Flux.error(e);
@@ -82,7 +86,7 @@ final class LocalDocumentProvider implements DocumentProvider {
     public Mono<Void> saveBook(String title, Author author, URI path) {
         File imagePath = new File(path);
         String extension = FilenameUtils.getExtension(imagePath.getAbsolutePath());
-        final Path fullImagePath = Paths.get(root, Constants.IMAGE_PATH, author.getLastName(),
+        final Path fullImagePath = Paths.get(root, IMAGE_PATH, author.getLastName(),
             author.getFirstName());
         File imageFile = fullImagePath.toFile();
         if (!imageFile.exists() && !imageFile.mkdirs()) {
@@ -95,14 +99,14 @@ final class LocalDocumentProvider implements DocumentProvider {
             LOGGER.error("Error encoding: ", e);
             return Mono.error(e);
         }
-        File relativePath = Paths.get(Constants.IMAGE_PATH, author.getLastName(), author.getFirstName(),
+        File relativePath = Paths.get(IMAGE_PATH, author.getLastName(), author.getFirstName(),
             blobTitle + "." + extension).toFile();
         URI saved = relativePath.toURI();
         URI relative = new File(System.getProperty("user.dir")).toURI().relativize(saved);
         Book book = new Book(title, author, relative);
         duplicateBook(book);
         if (book.isValid()) {
-            boolean bookSaved = Constants.SERIALIZER.writeJSON(book, root);
+            boolean bookSaved = SERIALIZER.writeJSON(book, root);
             jsonBooks = initializeBooks().cache();
             jsonFiles = retrieveJsonFiles();
             if (bookSaved) {
@@ -123,13 +127,13 @@ final class LocalDocumentProvider implements DocumentProvider {
      * @return {@Link Mono}
      */
     @Override
-    public Mono<Void> editBook(Book oldBook, Book newBook, int saveCover) {
-        if (saveCover == 1) { // Overwriting/changing cover
-            return saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover());
-        } else {
+    public Mono<Void> editBook(Book oldBook, Book newBook, boolean saveCover) {
+        if (saveCover) {
             File image = Paths.get(System.getProperty("user.dir"), oldBook.getCover().getPath()).toFile();
             return saveBook(newBook.getTitle(), newBook.getAuthor(), image.toURI()).then(
                 deleteBook(oldBook));
+        } else {
+            return saveBook(newBook.getTitle(), newBook.getAuthor(), newBook.getCover()); //Overwrites old image
         }
     }
 
@@ -143,7 +147,7 @@ final class LocalDocumentProvider implements DocumentProvider {
         jsonFiles.removeIf(x -> {
             boolean result = optionChecker.checkFile(x, bookToCompare);
             if (result) {
-                Book imageToDelete = Constants.SERIALIZER.fromJSONtoBook(x);
+                Book imageToDelete = SERIALIZER.fromJSONtoBook(x);
                 Paths.get(System.getProperty("user.dir"),
                     imageToDelete.getCover().getPath()).toFile().delete();
                 return true;
@@ -183,7 +187,7 @@ final class LocalDocumentProvider implements DocumentProvider {
      * @return a List of Files
      */
     private List<File> retrieveJsonFiles() {
-        try (Stream<Path> walk = Files.walk(Paths.get(Constants.JSON_PATH))) {
+        try (Stream<Path> walk = Files.walk(Paths.get(JSON_PATH))) {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith(".json"))
                 .collect(Collectors.toList());
         } catch (IOException e) {
@@ -196,7 +200,7 @@ final class LocalDocumentProvider implements DocumentProvider {
      * Clears out any empty directories that might have been leftover from when the JSON file was deleted.
      */
     private void deleteEmptyDirectories() {
-        File[] files = new File(Constants.JSON_PATH).listFiles();
+        File[] files = new File(JSON_PATH).listFiles();
         assert files != null;
         clearFiles(files);
     }

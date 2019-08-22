@@ -3,65 +3,40 @@
 
 package com.azure.app;
 
-import com.azure.core.http.policy.HttpLogDetailLevel;
-import com.azure.data.appconfiguration.ConfigurationAsyncClient;
-import com.azure.data.appconfiguration.ConfigurationClientBuilder;
-import com.azure.data.appconfiguration.credentials.ConfigurationClientCredentials;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.LoggerFactory;
 import reactor.test.StepVerifier;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
+
+import static org.junit.Assert.assertNotNull;
 
 public class BlobImageProviderTest {
     private BlobImageProvider blobCollector;
-    private static final URL FOLDER = BlobImageProviderTest.class.getClassLoader().getResource(".");
+    private static URL folder;
+    private static KeyVaultForTests keyVaultStorage = new KeyVaultForTests();
 
     /**
      * Set up the App Configuration to grab the information for the Blob Storage
      */
     @Before
-    @Ignore
     public void setup() {
-        ObjectMapper mapper = new ObjectMapper();
-        String connectionString = System.getenv("AZURE_APPCONFIG");
-        if (connectionString == null || connectionString.isEmpty()) {
-            System.err.println("Environment variable AZURE_APPCONFIG is not set. Cannot connect to App Configuration."
-                + " Please set it.");
-            return;
-        }
-        ConfigurationAsyncClient client;
-        try {
-            client = new ConfigurationClientBuilder()
-                .credential(new ConfigurationClientCredentials(connectionString))
-                .httpLogDetailLevel(HttpLogDetailLevel.HEADERS)
-                .buildAsyncClient();
-            BlobSettings blobSettings = mapper.readValue(Objects.requireNonNull(client.getSetting("BLOB_INFO").block()).value(), BlobSettings.class);
-            blobCollector = new BlobImageProvider(blobSettings);
-        } catch (NoSuchAlgorithmException | InvalidKeyException | IOException e) {
-            Assert.fail("Failed to initialize the Blob Image Provider.");
-            LoggerFactory.getLogger(BlobImageProviderTest.class).error("Error in setting up the BlobImageProvider: ", e);
-        }
+        BlobSettings data = keyVaultStorage.getBlobInformation().block();
+        assertNotNull(data);
+        blobCollector = new BlobImageProvider(data);
+        folder = BlobImageProviderTest.class.getClassLoader().getResource(".");
+        assertNotNull(folder);
     }
 
     /**
      * Verifies that you can save an image.
      */
     @Test
-    @Ignore
     public void saveImageTest() {
         //Arrange
         Book newBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act
         StepVerifier.create(blobCollector.saveImage(newBook))
             //Assert
@@ -74,15 +49,14 @@ public class BlobImageProviderTest {
      * Tests that you can edit an image if the user decides to change the book's title
      */
     @Test
-    @Ignore
     public void editTitleImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(oldBook).block();
         Book newBook = new Book("Starships", oldBook.getAuthor(), oldBook.getCover());
         //Act
-        StepVerifier.create(blobCollector.editImage(oldBook, newBook, 1)).
+        StepVerifier.create(blobCollector.editImage(oldBook, newBook, true)).
             //Assert
                 verifyComplete();
         //Double check & Cleanup
@@ -94,15 +68,14 @@ public class BlobImageProviderTest {
      * Tests that you can edit an image if the user decided to change the book's author
      */
     @Test
-    @Ignore
     public void editAuthorImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(oldBook).block();
         Book newBook = new Book(oldBook.getTitle(), new Author("Changed", "Person"), oldBook.getCover());
         //Act
-        StepVerifier.create(blobCollector.editImage(oldBook, newBook, 1)).
+        StepVerifier.create(blobCollector.editImage(oldBook, newBook, true)).
             //Assert
                 verifyComplete();
         //Double check & Cleanup
@@ -114,15 +87,15 @@ public class BlobImageProviderTest {
      * Tests that you can edit an image if the user decided to change the book's cover image
      */
     @Test
-    @Ignore
     public void editCoverImage() {
         //Arrange
         Book oldBook = new Book("Valid", new Author("Work", "Hard"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(oldBook).block();
-        Book newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+        Book newBook = new Book(oldBook.getTitle(), oldBook.getAuthor(), new File(folder.getPath()
+            + "GreatGatsby.gif").toURI());
         //Act
-        StepVerifier.create(blobCollector.editImage(oldBook, newBook, 0)).
+        StepVerifier.create(blobCollector.editImage(oldBook, newBook, false)).
             //Assert
                 verifyComplete();
         //Double check & Cleanup
@@ -134,11 +107,10 @@ public class BlobImageProviderTest {
      * Checks that deleting an image that exists works
      */
     @Test
-    @Ignore
     public void deleteImageTest() {
         //Arrange
         Book book = new Book("Valid", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         blobCollector.saveImage(book).block();
         //Act
         StepVerifier.create(blobCollector.deleteImage(book))
@@ -150,11 +122,10 @@ public class BlobImageProviderTest {
      * Tests that you cannot delete an image that doesn't exist
      */
     @Test
-    @Ignore
     public void testDeletingNonexistantImage() {
         //Arrange
         Book book = new Book("Completetly Random", new Author("asdfasdf", "qeryuio"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act & Assert
         StepVerifier.create(blobCollector.deleteImage(book)).verifyError();
     }
@@ -163,13 +134,12 @@ public class BlobImageProviderTest {
      * Tests overwriting image
      */
     @Test
-    @Ignore
     public void testOverwritingImage() {
         //Arrange
         Book book = new Book("Valid", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         Book book2 = new Book("Valid", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "Wonder.png").toURI());
+            new File(folder.getPath() + "Wonder.png").toURI());
         //Act
         StepVerifier.create(blobCollector.saveImage(book)).verifyComplete();
         StepVerifier.create(blobCollector.saveImage(book2)).verifyComplete();
@@ -182,13 +152,12 @@ public class BlobImageProviderTest {
      * Tests saving same image by different title but same author
      */
     @Test
-    @Ignore
     public void testSavingSameImageDifferentTitle() {
         //Arrange
         Book book = new Book("Miracle", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         Book book2 = new Book("Worker", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act
         StepVerifier.create(blobCollector.saveImage(book)).verifyComplete();
         StepVerifier.create(blobCollector.saveImage(book2)).verifyComplete();
@@ -201,13 +170,12 @@ public class BlobImageProviderTest {
      * Tests saving same image by different authors
      */
     @Test
-    @Ignore
     public void testSavingSameImageDifferentAuthor() {
         //Arrange
         Book book = new Book("Miracle", new Author("Brother", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         Book book2 = new Book("Miracle", new Author("Work", "Harder"),
-            new File(FOLDER.getPath() + "GreatGatsby.gif").toURI());
+            new File(folder.getPath() + "GreatGatsby.gif").toURI());
         //Act & Assert
         StepVerifier.create(blobCollector.saveImage(book)).verifyComplete();
         StepVerifier.create(blobCollector.saveImage(book2)).verifyComplete();
