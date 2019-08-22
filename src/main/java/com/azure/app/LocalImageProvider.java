@@ -62,6 +62,11 @@ final class LocalImageProvider implements ImageProvider {
         });
     }
 
+    /**
+     * Grabs all the JSON files
+     *
+     * @return List of all the JSON files
+     */
     private List<File> retrieveJsonFiles() {
         try (Stream<Path> walk = Files.walk(Paths.get(IMAGE_PATH))) {
             return walk.map(Path::toFile).filter(f -> f.getName().endsWith("gif") || f.getName().endsWith("png")
