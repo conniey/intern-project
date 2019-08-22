@@ -35,7 +35,6 @@ steps:
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
   env:
-    KEY_VAULT_URL: '$(VAULT_URL)'
     AZURE_CLIENT_ID: '$(CLIENT_ID)'
     AZURE_TENANT_ID: '$(TENANT_ID)'
     AZURE_CLIENT_SECRET: '$(CLIENT_SECRET)'

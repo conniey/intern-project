@@ -14,9 +14,11 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.Properties;
 
 import static com.azure.app.Constants.APP_CONFIGURATION_CREDENTIALS;
-import static com.azure.app.Constants.AZURE_CLIENT_ID;
+import static com.azure.app.Constants.AZURE_SIGN_IN_CLIENT_ID;
 import static com.azure.app.Constants.BLOB_CREDENTIALS;
 import static com.azure.app.Constants.COSMOS_CREDENTIALS;
 import static com.azure.app.Constants.KEY_VAULT_URL;
@@ -27,12 +29,22 @@ final class KeyVaultStorage {
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyVaultStorage.class);
 
     KeyVaultStorage() {
+        Properties keyVaultCredentials = new Properties();
+        try {
+            keyVaultCredentials.load(Objects.requireNonNull(KeyVaultStorage.class
+                .getClassLoader()
+                .getResourceAsStream("credential.properties")));
+        } catch (IOException e) {
+            System.out.println("Unable to read credentials.");
+            LOGGER.error("Couldn't read Credential properties: ", e);
+            return;
+        }
         DeviceCodeCredential credential = new DeviceCodeCredentialBuilder()
             .deviceCodeChallengeConsumer(challenge -> System.out.println(challenge.message()))
-            .clientId(System.getenv(AZURE_CLIENT_ID))
+            .clientId(keyVaultCredentials.getProperty(AZURE_SIGN_IN_CLIENT_ID))
             .build();
         secretAsyncClient = new SecretClientBuilder()
-            .endpoint(System.getenv(KEY_VAULT_URL))
+            .endpoint(keyVaultCredentials.getProperty(KEY_VAULT_URL))
             .credential(credential)
             .buildAsyncClient();
     }

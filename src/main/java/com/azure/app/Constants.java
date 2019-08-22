@@ -11,9 +11,7 @@ final class Constants {
     static final String IMAGE_PATH = Paths.get("lib", "images").toString();
     static final String BLOB_CREDENTIALS = "BLOB-INFO";
     static final String COSMOS_CREDENTIALS = "COSMOS-INFO";
-    static final String APP_CONFIGURATION_CREDENTIALS = "AZURE_APPCONFIG";
-    static final String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
-    static final String AZURE_CLIENT_SECRET = "AZURE_CLIENT_SECRET";
-    static final String AZURE_TENANT_ID = "AZURE_TENANT_ID";
-    static final String KEY_VAULT_URL = "KEY_VAULT_URL";
+    static final String APP_CONFIGURATION_CREDENTIALS = "AZURE-APPCONFIG";
+    static final String KEY_VAULT_URL = "key_vault.url";
+    static final String AZURE_SIGN_IN_CLIENT_ID = "client.ID";
 }

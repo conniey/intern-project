@@ -33,7 +33,6 @@ final class BlobImageProvider implements ImageProvider {
     BlobImageProvider(BlobSettings blobSettings) {
         SharedKeyCredential credential = new SharedKeyCredential(blobSettings.getAccountName(),
             blobSettings.getKey());
-
         BlobServiceAsyncClient storageAsyncClient = new BlobServiceClientBuilder()
             .endpoint(blobSettings.getUrl())
             .credential(credential)
