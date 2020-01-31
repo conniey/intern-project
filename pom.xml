@@ -14,7 +14,7 @@
     <packageOutputDirectory>${project.build.directory}</packageOutputDirectory>
 
     <!-- All the plugin and dependency versions. -->
-    <checkstyle.version>8.18</checkstyle.version>
+    <checkstyle.version>8.29</checkstyle.version>
     <junit.version>4.12</junit.version>
 
     <maven-checkstyle-plugin.version>3.1.0</maven-checkstyle-plugin.version>
